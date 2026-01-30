@@ -102,11 +102,63 @@ node "$SKILL_DIR/scripts/generate_subtitles.js" volcengine_result.json
 # 输出: subtitles_words.json
 ```
 
-### 步骤 5: AI 分析口误（Claude 手动）
+### 步骤 5: AI 分析口误（手动，禁止脚本）
 
-1. 先读 `用户习惯/` 目录下所有规则
-2. 分析 `subtitles_words.json`
-3. 输出预选索引到 `auto_selected.json`
+#### 5.1 生成易读格式
+
+```bash
+node -e "
+const data = require('./subtitles_words.json');
+let output = [];
+data.forEach((w, i) => {
+  if (w.isGap) {
+    const dur = (w.end - w.start).toFixed(2);
+    if (dur >= 0.5) output.push(i + '|[静' + dur + 's]|' + w.start.toFixed(2) + '-' + w.end.toFixed(2));
+  } else {
+    output.push(i + '|' + w.text + '|' + w.start.toFixed(2) + '-' + w.end.toFixed(2));
+  }
+});
+require('fs').writeFileSync('readable.txt', output.join('\n'));
+"
+```
+
+#### 5.2 读取用户习惯
+
+先读 `用户习惯/` 目录下所有规则文件。
+
+#### 5.3 分段读取分析
+
+每次读取 300 行，逐段分析：
+
+```
+Read readable.txt offset=0 limit=300
+Read readable.txt offset=300 limit=300
+...
+```
+
+#### 5.4 边分析边记录
+
+创建 `口误分析.md` 记录删除清单：
+
+```markdown
+| idx范围 | 时间 | 类型 | 内容 | 处理 |
+|---------|------|------|------|------|
+| 0 | 0.00-1.44 | 静音1.44s | 开头静音 | 删 |
+| 64-74 | 15.80-17.66 | 重复句 | "这是我剪出来的一个案例" | 删 |
+```
+
+#### 5.5 检测规则（按优先级）
+
+1. **静音 ≥1s** → 按1秒格子拆分输出
+2. **重复句** → 相邻句子开头≥5字相同，删短的
+3. **句内重复** → A+中间+A 模式，删前面
+4. **卡顿词** → 那个那个、就是就是，删前面
+5. **重说纠正** → 部分重复/否定纠正，删前面
+6. **语气词** → 标记但不自动删，留给用户
+
+#### 5.6 生成预选索引
+
+分析完成后，汇总所有要删除的 idx 到 `auto_selected.json`
 
 ### 步骤 6-7: 审核
 
