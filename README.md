@@ -6,6 +6,7 @@
 
 | Skill | 功能 | 触发词 |
 |-------|------|--------|
+| `podcastcut-install` | 环境准备：安装依赖、下载模型 | 安装、初始化 |
 | `podcastcut-content` | 内容剪辑：识别寒暄、跑题、隐私等需要删除的内容 | 内容剪辑、剪内容 |
 | `podcastcut-edit-raw` | 粗剪：句子级 FFmpeg 剪辑 | 粗剪、rough cut |
 | `podcastcut-transcribe` | 口误识别：语气词、叠词、短语重复检测 | 识别口误、transcribe |
@@ -15,6 +16,8 @@
 ## 推荐工作流
 
 ```
+/podcastcut-install     ← 首次使用：安装依赖、下载模型
+    ↓
 原始音频/视频
     ↓
 /podcastcut-content     ← 标记大段内容（寒暄、跑题、啰嗦、隐私）
@@ -71,6 +74,8 @@ cp -r podcastcut-* ~/.claude/skills/
 ```
 podcastcut-skills/
 ├── README.md
+├── podcastcut-install/
+│   └── SKILL.md                    # 环境准备方法论
 ├── podcastcut-content/
 │   ├── SKILL.md                    # 内容剪辑方法论
 │   ├── scripts/
