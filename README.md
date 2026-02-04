@@ -2,72 +2,244 @@
 
 一套用于播客/视频剪辑的 Claude Code Skills。支持内容剪辑、口误识别、粗剪/精剪等完整工作流。
 
-## 功能概览
-
-| Skill | 功能 | 触发词 |
-|-------|------|--------|
-| `podcastcut-install` | 环境准备：安装依赖、下载模型 | 安装、初始化 |
-| `podcastcut-content` | 内容剪辑：识别寒暄、跑题、隐私等需要删除的内容 | 内容剪辑、剪内容 |
-| `podcastcut-edit-raw` | 粗剪：句子级 FFmpeg 剪辑 | 粗剪、rough cut |
-| `podcastcut-transcribe` | 口误识别：语气词、叠词、短语重复检测 | 识别口误、transcribe |
-| `podcastcut-edit-fine` | 精剪：字符级 FFmpeg 剪辑 | 精剪、fine cut |
-| `podcastcut-final-touch` | 最终润色：片头预览、主题曲、时间戳章节 | final touch、加片头 |
-
-## 推荐工作流
-
-```
-/podcastcut-install     ← 首次使用：安装依赖、下载模型
-    ↓
-原始音频/视频
-    ↓
-/podcastcut-content     ← 标记大段内容（寒暄、跑题、啰嗦、隐私）
-    ↓
-/podcastcut-edit-raw    ← 粗剪，输出 v2
-    ↓
-【可选】还需要处理口误？
-    ↓ 是
-/podcastcut-transcribe  ← 识别口误、语气词、静音
-    ↓
-/podcastcut-edit-fine   ← 精剪，输出 v3
-    ↓
-/podcastcut-final-touch ← 片头预览 + 主题曲 + 时间戳 + 标题
-    ↓
-发布
-```
-
-## 技术栈
-
-- **转录**: [FunASR](https://github.com/modelscope/FunASR) (阿里开源，中文识别最优)
-- **剪辑**: FFmpeg (filter_complex)
-- **AI分析**: Claude (语义分析、内容审核)
-
 ## 安装
 
-### 1. 安装 FunASR
-
-```bash
-pip install funasr modelscope
-```
-
-首次运行会自动下载模型到 `~/.cache/modelscope/`（约 2GB）。
-
-### 2. 安装 FFmpeg
-
-```bash
-# macOS
-brew install ffmpeg
-
-# Ubuntu
-sudo apt install ffmpeg
-```
-
-### 3. 安装 Skills
+### 1. 安装 Skills
 
 将 skill 目录复制到 `~/.claude/skills/`:
 
 ```bash
-cp -r podcastcut-* ~/.claude/skills/
+git clone https://github.com/luoyuweidu1/podcastcut-skills.git
+cp -r podcastcut-skills/podcastcut-* ~/.claude/skills/
 ```
+
+### 2. 安装依赖
+
+在 Claude Code 中运行：
+
+```
+/podcastcut-install
+```
+
+这会自动安装所有依赖：
+- **FunASR** - 语音转录
+- **ModelScope** - 模型下载
+- **FFmpeg** - 音视频剪辑
+
+首次运行会下载 FunASR 模型到 `~/.cache/modelscope/`（约 2GB）。
+
+---
+
+## 功能概览
+
+| Skill | 功能 | 输入 | 输出 |
+|-------|------|------|------|
+| `/podcastcut-install` | 环境准备 | 无 | 依赖安装完成 |
+| `/podcastcut-content` | 内容剪辑 | 原始音频 | 审查稿 v1 |
+| `/podcastcut-edit-raw` | 粗剪 | 原始音频 + 审查稿 v1（用户确认后） | 音频 v2 |
+| `/podcastcut-transcribe` | 口误识别 | 音频 v2 + 审查稿 v1 | 审查稿 v2 |
+| `/podcastcut-edit-fine` | 精剪 | 音频 v2 + 审查稿 v2（用户确认后） | 音频 v3 |
+| `/podcastcut-final-touch` | 最终润色 | 音频 v3 + 主题曲 | 最终音频 + 时间戳 + 标题 |
+
+---
+
+## 推荐工作流
+
+```
+/podcastcut-install        ← 首次使用：安装依赖、下载模型
+    ↓
+原始音频/视频
+    ↓
+/podcastcut-content        ← 输入：原始音频
+    ↓                         输出：审查稿 v1（AI 标记删除建议）
+【用户在审查稿中确认/修改删除标记】
+    ↓
+/podcastcut-edit-raw       ← 输入：原始音频 + 审查稿 v1
+    ↓                         输出：音频 v2（粗剪后）
+【可选】还需要处理口误？
+    ↓ 是
+/podcastcut-transcribe     ← 输入：音频 v2 + 审查稿 v1
+    ↓                         输出：审查稿 v2（口误标记）
+【用户在审查稿中确认/修改删除标记】
+    ↓
+/podcastcut-edit-fine      ← 输入：音频 v2 + 审查稿 v2
+    ↓                         输出：音频 v3（精剪后）
+/podcastcut-final-touch    ← 输入：音频 v3 + 你的主题曲
+    ↓                         输出：最终音频 + 时间戳 + 标题 + 简介
+发布
+```
+
+---
+
+## 审查稿删除标记方法
+
+在审查稿中，使用 **Markdown 删除线** `~~文字~~` 标记需要删除的内容。
+
+### 格式
+
+```markdown
+**说话人** 00:15
+~~这段话需要删除~~ `[删除: 原因]` 这段话保留。
+```
+
+### 示例
+
+```markdown
+**Maia** 00:05
+~~开始了吗？能听到吗？~~ `[删除: 片头寒暄]`
+
+**响歌歌** 00:08
+~~我这边OK。~~ `[删除: 片头寒暄]` Hello，大家好，欢迎来到今天的播客。
+
+**安安** 05:32
+~~我之前在Google工作的时候~~ `[删除: 隐私-公司名]` 我之前工作的时候，遇到过类似的情况。
+```
+
+### 操作步骤
+
+1. AI 生成审查稿，自动标记建议删除的内容（用 `~~删除线~~`）
+2. 用户打开审查稿文件，检查每个删除标记
+3. **确认删除**：保持删除线不变
+4. **取消删除**：移除 `~~` 符号
+5. **新增删除**：给需要删除的文字加上 `~~删除线~~`
+6. 保存后告诉 AI "按审查稿剪辑"
+
+### 删除类型
+
+| 类型 | 标记 | 示例 |
+|------|------|------|
+| 片头寒暄 | `[删除: 片头寒暄]` | "开始了吗？" "能听到吗？" |
+| 录制讨论 | `[删除: 录制讨论]` | "这段要剪掉" "回头看看" |
+| 隐私-公司 | `[删除: 隐私-公司名]` | "我在Google工作" |
+| 隐私-人名 | `[删除: 隐私-人名]` | "我同事张三说" |
+| 跑题 | `[删除: 跑题]` | 与主题无关的讨论 |
+| 啰嗦 | `[删除: 啰嗦]` | 同一观点反复说 |
+| 口误 | `[删除: 口误]` | 说错重说 |
+| 语气词 | `[删除: 语气词]` | "嗯"、"啊"、"就是说" |
+
+---
+
+## 各 Skill 详细说明
+
+### /podcastcut-install
+
+**用途**：首次使用前的环境准备
+
+**输入**：无
+
+**执行**：
+```
+/podcastcut-install
+```
+
+**安装内容**：
+- `pip install funasr modelscope`
+- `brew install ffmpeg`（macOS）或 `apt install ffmpeg`（Ubuntu）
+- 下载 FunASR 模型（约 2GB）
+
+---
+
+### /podcastcut-content
+
+**用途**：分析播客内容，生成审查稿，AI 标记建议删除的内容
+
+**输入**：
+- 原始音频/视频文件
+- （可选）说话人名字列表
+
+**输出**：
+- `podcast_transcript.json` - 句子级时间戳
+- `podcast_审查稿.md` - 带删除标记的审查稿
+
+**示例**：
+```
+用户: /podcastcut-content
+用户: 帮我剪掉播客里的废话，音频是 /path/to/podcast.mp3，说话人是 Maia 和响歌歌
+```
+
+---
+
+### /podcastcut-edit-raw
+
+**用途**：根据审查稿执行粗剪（句子级删除）
+
+**输入**：
+- 原始音频文件
+- 用户确认后的审查稿（`podcast_审查稿.md`）
+
+**输出**：
+- `podcast_v2.mp3` - 粗剪后音频
+
+**示例**：
+```
+用户: /podcastcut-edit-raw
+用户: 按审查稿粗剪，音频是 /path/to/podcast.mp3
+```
+
+---
+
+### /podcastcut-transcribe
+
+**用途**：识别口误、语气词、短语重复
+
+**输入**：
+- 粗剪后的音频（v2）
+- 原审查稿（v1，用于提取未处理的半句删除）
+
+**输出**：
+- `transcript_chars.json` - 字符级时间戳
+- `审查稿.md` - 统一审查稿（v2）
+
+**示例**：
+```
+用户: /podcastcut-transcribe
+用户: 识别口误，音频是 /path/to/podcast_v2.mp3
+```
+
+---
+
+### /podcastcut-edit-fine
+
+**用途**：根据审查稿执行精剪（字符级删除）
+
+**输入**：
+- 粗剪后的音频（v2）
+- 用户确认后的审查稿（v2）
+
+**输出**：
+- `podcast_v3.mp3` - 精剪后音频
+
+**示例**：
+```
+用户: /podcastcut-edit-fine
+用户: 执行精剪
+```
+
+---
+
+### /podcastcut-final-touch
+
+**用途**：最终润色（片头预览、主题曲、时间戳章节）
+
+**输入**：
+- 精剪后的音频（v3）
+- **你的主题曲文件**（AI 会询问路径）
+- （可选）逐字稿
+
+**输出**：
+- `podcast_final.mp3` - 最终音频
+- `podcast_时间戳.txt` - 章节时间戳
+- `podcast_标题建议.txt` - 标题选项
+- `podcast_简介.txt` - 播客简介
+
+**示例**：
+```
+用户: /podcastcut-final-touch
+AI: 请提供主题曲文件路径...
+用户: ~/Music/my-theme.mp3
+```
+
+---
 
 ## 目录结构
 
@@ -75,82 +247,41 @@ cp -r podcastcut-* ~/.claude/skills/
 podcastcut-skills/
 ├── README.md
 ├── podcastcut-install/
-│   └── SKILL.md                    # 环境准备方法论
+│   └── SKILL.md
 ├── podcastcut-content/
-│   ├── SKILL.md                    # 内容剪辑方法论
+│   ├── SKILL.md
 │   ├── scripts/
-│   │   ├── transcribe.py           # FunASR 转录（句子级）
-│   │   └── generate_transcript.py  # 生成逐字稿
+│   │   ├── transcribe.py
+│   │   └── generate_transcript.py
 │   └── tips/
-│       └── 转录最佳实践.md
 ├── podcastcut-edit-raw/
-│   ├── SKILL.md                    # 粗剪方法论
+│   ├── SKILL.md
 │   └── scripts/
-│       └── rough_cut.py            # 粗剪脚本
+│       └── rough_cut.py
 ├── podcastcut-transcribe/
-│   ├── SKILL.md                    # 口误识别方法论
+│   ├── SKILL.md
 │   ├── scripts/
-│   │   ├── transcribe_chars.py     # FunASR 转录（字符级）
-│   │   ├── detect_phrase_repeats.py # 短语重复检测
-│   │   └── extract_original_deletions.py # 提取审查稿删除标记
+│   │   ├── transcribe_chars.py
+│   │   ├── detect_phrase_repeats.py
+│   │   └── extract_original_deletions.py
 │   └── tips/
-│       ├── 转录最佳实践.md
-│       └── 口误识别方法论.md
 ├── podcastcut-edit-fine/
-│   ├── SKILL.md                    # 精剪方法论
+│   ├── SKILL.md
 │   └── scripts/
-│       └── merge_deletions_fast.py # 快速模式合并
+│       └── merge_deletions_fast.py
 └── podcastcut-final-touch/
-    └── SKILL.md                    # 最终润色方法论
+    └── SKILL.md
 ```
 
-## 核心脚本
+---
 
-### 转录
+## 技术栈
 
-```bash
-# 句子级转录（内容剪辑用）
-python podcastcut-content/scripts/transcribe.py <音频> <输出目录>
+- **转录**: [FunASR](https://github.com/modelscope/FunASR) (阿里开源，中文识别最优)
+- **剪辑**: FFmpeg (filter_complex)
+- **AI分析**: Claude (语义分析、内容审核)
 
-# 字符级转录（口误识别用）
-python podcastcut-transcribe/scripts/transcribe_chars.py <音频> <输出目录>
-```
-
-### 剪辑
-
-```bash
-# 粗剪（句子级）
-python podcastcut-edit-raw/scripts/rough_cut.py <工作目录> <输入音频>
-
-# 精剪（字符级，快速模式）
-python podcastcut-edit-fine/scripts/merge_deletions_fast.py <工作目录> <输入> <输出>
-```
-
-## 输出文件
-
-### 粗剪后
-
-```
-工作目录/
-├── podcast_transcript.json   # 句子级时间戳
-├── podcast_审查稿.md         # 带删除标记的审查稿
-├── podcast_删除清单.json     # 删除时间段
-├── keep_segments.json        # 保留片段
-├── filter.txt                # FFmpeg filter
-└── podcast_v2.mp3            # 粗剪后音频
-```
-
-### 精剪后
-
-```
-工作目录/
-├── transcript_chars.json     # 字符级时间戳
-├── 审查稿.md                 # 统一审查稿
-├── deletions_fast.json       # 合并后删除清单
-├── keep_segments_fast.json   # 保留片段
-├── filter_fast.txt           # FFmpeg filter
-└── podcast_v3.mp3            # 精剪后音频
-```
+---
 
 ## 性能参考
 
@@ -162,14 +293,7 @@ python podcastcut-edit-fine/scripts/merge_deletions_fast.py <工作目录> <输�
 
 *测试环境：M1 Mac，CPU 推理*
 
-### FFmpeg 剪辑性能
-
-| 模式 | 分段数 | 处理时间 |
-|------|--------|----------|
-| 原版 | 570 | 38 分钟 |
-| 快速模式 | 154 | 3.5 分钟 |
-
-快速模式通过合并微小删除，加速约 11 倍。
+---
 
 ## License
 
