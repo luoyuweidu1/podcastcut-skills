@@ -35,11 +35,12 @@ cp -r podcastcut-skills/podcastcut-* ~/.claude/skills/
 | Skill | 功能 | 输入 | 输出 |
 |-------|------|------|------|
 | `/podcastcut-install` | 环境准备 | 无 | 依赖安装完成 |
-| `/podcastcut-content` | 内容剪辑 | 原始音频 | 审查稿 v1 |
-| `/podcastcut-edit-raw` | 粗剪 | 原始音频 + 审查稿 v1（用户确认后） | 音频 v2 |
-| `/podcastcut-transcribe` | 口误识别 | 音频 v2 + 审查稿 v1 | 审查稿 v2 |
-| `/podcastcut-edit-fine` | 精剪 | 音频 v2 + 审查稿 v2（用户确认后） | 音频 v3 |
+| `/podcastcut-content` | 端到端剪辑 | 原始音频 +（可选）剪辑指令 | 统一审查稿（内容+口误标记） |
+| `/podcastcut-edit-raw` | 粗剪 | 原始音频 + 审查稿（由 content 自动调用） | 音频 v2 |
+| `/podcastcut-transcribe` | 口误识别 | 音频 v2（由 content 自动调用） | 统一审查稿 |
+| `/podcastcut-edit-fine` | 精剪 | 音频 v2 + 统一审查稿（用户确认后） | 音频 v3 |
 | `/podcastcut-final-touch` | 最终润色 | 音频 v3 + 主题曲 | 最终音频 + 时间戳 + 标题 |
+| `/podcastcut-voiceclone` | 声音克隆重生成 | 原始音频 + 修正稿 | TTS 重新生成的干净音频 |
 
 ---
 
@@ -48,21 +49,22 @@ cp -r podcastcut-skills/podcastcut-* ~/.claude/skills/
 ```
 /podcastcut-install        ← 首次使用：安装依赖、下载模型
     ↓
-原始音频/视频
+原始音频/视频 +（可选）剪辑指令
     ↓
-/podcastcut-content        ← 输入：原始音频
-    ↓                         输出：审查稿 v1（AI 标记删除建议）
-【用户在审查稿中确认/修改删除标记】
+/podcastcut-content        ← 方式一：传统剪辑（删除不要的）
+/podcastcut-voiceclone     ← 方式二：声音克隆（TTS重新生成）
+
+--- 方式一：传统剪辑 ---
+
+/podcastcut-content        ← 输入：原始音频 + 剪辑指令
+    ↓                         自动执行以下步骤：
+    ├─ AI分析内容           →  标记内容级删除（寒暄、跑题、隐私、啰嗦）
+    ├─ /podcastcut-edit-raw →  自动粗剪，输出音频 v2
+    └─ /podcastcut-transcribe → 自动口误识别
+    ↓                         输出：统一审查稿（内容+口误标记）
+【用户在统一审查稿中确认/修改删除标记】← 唯一等待点
     ↓
-/podcastcut-edit-raw       ← 输入：原始音频 + 审查稿 v1
-    ↓                         输出：音频 v2（粗剪后）
-【可选】还需要处理口误？
-    ↓ 是
-/podcastcut-transcribe     ← 输入：音频 v2 + 审查稿 v1
-    ↓                         输出：审查稿 v2（口误标记）
-【用户在审查稿中确认/修改删除标记】
-    ↓
-/podcastcut-edit-fine      ← 输入：音频 v2 + 审查稿 v2
+/podcastcut-edit-fine      ← 输入：音频 v2 + 统一审查稿
     ↓                         输出：音频 v3（精剪后）
 /podcastcut-final-touch    ← 输入：音频 v3 + 你的主题曲
     ↓                         输出：最终音频 + 时间戳 + 标题 + 简介
@@ -141,20 +143,22 @@ cp -r podcastcut-skills/podcastcut-* ~/.claude/skills/
 
 ### /podcastcut-content
 
-**用途**：分析播客内容，生成审查稿，AI 标记建议删除的内容
+**用途**：端到端播客剪辑入口。AI分析内容 → 自动粗剪 → 自动口误识别 → 输出统一审查稿
 
 **输入**：
 - 原始音频/视频文件
 - （可选）说话人名字列表
+- （可选）剪辑指令，如"不删隐私"、"保留闲聊"、"严格删跑题"
 
 **输出**：
 - `podcast_transcript.json` - 句子级时间戳
-- `podcast_审查稿.md` - 带删除标记的审查稿
+- `podcast_审查稿.md` - 统一审查稿（内容级+口误级删除标记）
 
 **示例**：
 ```
 用户: /podcastcut-content
 用户: 帮我剪掉播客里的废话，音频是 /path/to/podcast.mp3，说话人是 Maia 和响歌歌
+用户: 帮我剪播客，本期不需要删除隐私信息
 ```
 
 ---
@@ -241,6 +245,32 @@ AI: 请提供主题曲文件路径...
 
 ---
 
+### /podcastcut-voiceclone
+
+**用途**：声音克隆播客剪辑。用 TTS 重新生成干净音频，替代传统的删除式剪辑。
+
+**思路**：ASR 转录 → AI 修正文字 → 提取说话人样本 → Fish Audio 声音克隆 → TTS 逐段重新生成
+
+**输入**：
+- 原始音频文件
+- `podcast_transcript.json`（已有则跳过转录）
+- （可选）说话人名字
+
+**输出**：
+- `podcast_voiceclone.mp3` - 重新生成的干净音频
+
+**依赖**：
+- `FISH_API_KEY` in `.env`
+- `pip install requests python-dotenv`
+
+**示例**：
+```
+用户: /podcastcut-voiceclone
+用户: 用声音克隆重新生成这段播客
+```
+
+---
+
 ## 目录结构
 
 ```
@@ -269,8 +299,15 @@ podcastcut-skills/
 │   ├── SKILL.md
 │   └── scripts/
 │       └── merge_deletions_fast.py
-└── podcastcut-final-touch/
-    └── SKILL.md
+├── podcastcut-final-touch/
+│   └── SKILL.md
+└── podcastcut-voiceclone/
+    ├── SKILL.md
+    └── scripts/
+        ├── extract_speaker_samples.py
+        ├── create_voice_model.py
+        ├── tts_generate.py
+        └── merge_segments.py
 ```
 
 ---

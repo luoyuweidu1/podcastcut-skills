@@ -1,0 +1,36 @@
+# Claude Code
+.claude/
+
+# Python
+*.pyc
+__pycache__/
+.venv/
+*.egg-info/
+
+# Environment / secrets
+.env
+
+# Audio files (large, user-specific)
+*.WAV
+*.wav
+*.mp3
+*.mp4
+*.m4a
+*.flac
+
+# Generated outputs
+samples/
+tts_output/
+podcast_transcript.json
+podcast_voiceclone.mp3
+podcast_修正稿.json
+podcast_审查稿.md
+podcast_逐字稿.md
+transcript_chars.json
+
+# OS
+.DS_Store
+
+# Python version
+.python-version
+pyproject.toml
