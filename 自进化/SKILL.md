@@ -1,5 +1,5 @@
 ---
-name: videocut:自进化
+name: podcastcut:自进化
 description: 自进化 skills。记录用户反馈，更新方法论和规则。触发词：更新规则、记录反馈、改进skill
 ---
 

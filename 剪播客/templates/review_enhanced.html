@@ -1,0 +1,2639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>__TITLE__</title>
+<style>
+:root {
+  --blue: #2563eb;
+  --green: #16a34a;
+  --purple: #9333ea;
+  --red-bg: #fef2f2;
+  --red-border: #fecaca;
+  --orange: #ea580c;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background: var(--gray-50);
+  color: var(--gray-800);
+  line-height: 1.6;
+}
+
+/* Fixed top audio bar */
+.audio-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  padding: 8px 16px;
+}
+
+.audio-bar-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.audio-player {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.audio-player .label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-600);
+  white-space: nowrap;
+  min-width: 50px;
+}
+
+.audio-player .play-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--blue);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.audio-player .play-btn:hover { background: #1d4ed8; }
+.audio-player .play-btn.playing { background: #dc2626; }
+
+.progress-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--gray-200);
+  border-radius: 3px;
+  cursor: pointer;
+  position: relative;
+  min-width: 80px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--blue);
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.1s;
+}
+
+.time-display {
+  font-size: 11px;
+  color: var(--gray-500);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  min-width: 80px;
+}
+
+.speed-btn {
+  font-size: 11px;
+  padding: 2px 6px;
+  border: 1px solid var(--gray-300);
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+
+.speed-btn:hover { background: var(--gray-100); }
+
+.export-btn {
+  font-size: 12px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  background: #059669;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.export-btn:hover { background: #047857; }
+
+/* Missed Catch styles */
+.missed-catch {
+  text-decoration: underline dashed;
+  text-decoration-color: #2563eb;
+  background: #eff6ff;
+  color: #1e40af;
+  padding: 0 2px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.missed-catch:hover {
+  background: #dbeafe;
+  outline: 1px dashed #2563eb;
+}
+.missed-catch-tag {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 600;
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  margin-right: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+#missed-catch-panel {
+  display: none;
+  position: fixed;
+  z-index: 1001;
+  background: white;
+  border: 1px solid var(--gray-300);
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  font-size: 13px;
+  width: 320px;
+}
+#missed-catch-panel.visible { display: block; }
+#missed-catch-panel .mc-title {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 10px;
+  color: var(--gray-800);
+}
+#missed-catch-panel .mc-preview {
+  background: #eff6ff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #1e40af;
+  margin-bottom: 10px;
+  max-height: 60px;
+  overflow: hidden;
+  word-break: break-all;
+}
+#missed-catch-panel select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+#missed-catch-panel input[type="text"] {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+#missed-catch-panel .mc-btns {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+#missed-catch-panel .mc-btn {
+  padding: 5px 14px;
+  border-radius: 6px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+#missed-catch-panel .mc-btn-ok {
+  background: #2563eb;
+  color: white;
+}
+#missed-catch-panel .mc-btn-ok:hover { background: #1d4ed8; }
+#missed-catch-panel .mc-btn-cancel {
+  background: var(--gray-100);
+  color: var(--gray-600);
+}
+#missed-catch-panel .mc-btn-cancel:hover { background: var(--gray-200); }
+
+/* Stats header */
+.stats-header {
+  margin-top: 56px;
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+  padding: 16px 24px;
+}
+
+.stats-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.stats-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--gray-900);
+}
+
+.stats-grid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 8px 14px;
+  min-width: 100px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--gray-500);
+}
+
+.stat-card.dynamic {
+  border-color: #059669;
+  background: #f0fdf4;
+}
+
+.stat-card.dynamic .stat-value {
+  color: #059669;
+}
+
+/* Summary Panel */
+.summary-panel {
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+}
+.summary-panel-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.summary-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  cursor: pointer;
+  user-select: none;
+}
+.summary-toggle:hover { opacity: 0.8; }
+.summary-toggle h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin: 0;
+}
+.summary-arrow {
+  font-size: 12px;
+  color: var(--gray-400);
+  transition: transform 0.2s;
+}
+.summary-arrow.collapsed { transform: rotate(-90deg); }
+.summary-body { padding-bottom: 16px; overflow-x: auto; }
+.summary-body.collapsed { display: none; }
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.summary-table th {
+  background: var(--gray-50);
+  text-align: left;
+  padding: 8px 10px;
+  font-weight: 600;
+  color: var(--gray-600);
+  border-bottom: 2px solid var(--gray-200);
+  white-space: nowrap;
+}
+.summary-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--gray-100);
+  vertical-align: middle;
+}
+.summary-table tbody tr:hover td { background: #fefce8; }
+.summary-table tbody tr.block-unchecked td { opacity: 0.45; }
+.summary-table tbody tr.block-unchecked .st-topic,
+.summary-table tbody tr.block-unchecked .st-reason { text-decoration: line-through; }
+.summary-table .st-check { width: 30px; text-align: center; }
+.summary-table .st-id { width: 30px; color: var(--gray-400); font-size: 12px; }
+.summary-table .st-topic { font-weight: 600; white-space: nowrap; }
+.summary-table .st-type { width: 80px; }
+.summary-table .st-pos {
+  width: 80px;
+  font-variant-numeric: tabular-nums;
+  color: var(--gray-500);
+  cursor: pointer;
+  font-size: 12px;
+}
+.summary-table .st-pos:hover { color: var(--blue); text-decoration: underline; }
+.summary-table .st-dur {
+  width: 55px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: right;
+}
+.summary-table .st-reason { color: var(--gray-600); font-size: 12px; max-width: 400px; }
+.summary-type-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: white;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.summary-footer {
+  display: flex;
+  gap: 32px;
+  padding: 14px 10px 4px;
+  border-top: 2px solid var(--gray-200);
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+.sf-item { display: flex; align-items: baseline; gap: 6px; }
+.sf-label { color: var(--gray-500); font-size: 13px; }
+.sf-value { font-weight: 700; font-size: 18px; font-variant-numeric: tabular-nums; }
+.sf-value.cut { color: #dc2626; }
+.sf-value.result { color: #059669; }
+
+/* Filter controls */
+.filter-bar {
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+  padding: 10px 24px;
+  position: sticky;
+  top: 56px;
+  z-index: 999;
+}
+
+.filter-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-500);
+  margin-right: 4px;
+}
+
+.filter-btn {
+  font-size: 12px;
+  padding: 4px 10px;
+  border: 1px solid var(--gray-300);
+  border-radius: 16px;
+  background: white;
+  cursor: pointer;
+  color: var(--gray-600);
+  transition: all 0.15s;
+}
+
+.filter-btn:hover { border-color: var(--gray-400); background: var(--gray-50); }
+.filter-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
+.filter-btn.active-red { background: #dc2626; color: white; border-color: #dc2626; }
+
+.filter-separator {
+  width: 1px; height: 20px;
+  background: var(--gray-300);
+  margin: 0 4px;
+}
+
+/* Transcript container */
+.transcript {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px 24px;
+  padding-bottom: 120px;
+}
+
+/* Sentence row */
+.sentence-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 6px 8px;
+  border-radius: 6px;
+  margin-bottom: 2px;
+  transition: background 0.15s, border-color 0.15s;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.sentence-row:hover { background: var(--gray-100); }
+.sentence-row.highlight { background: #fef9c3 !important; }
+.sentence-row.deleted { background: #fef2f2; }
+.sentence-row.deleted:hover { background: #fee2e2; }
+.sentence-row.hidden { display: none; }
+
+/* User-modified highlight */
+.sentence-row.user-modified {
+  border-color: var(--blue) !important;
+}
+
+/* Checkbox column */
+.s-check {
+  width: 28px;
+  flex-shrink: 0;
+  padding-top: 2px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.s-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #dc2626;
+}
+
+/* Block summary bar */
+.block-bar {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 8px 0 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.block-bar.hidden { display: none; }
+.block-bar-icon { font-size: 16px; }
+.block-bar-id { font-weight: 700; color: #dc2626; }
+
+.block-bar-type {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+}
+
+.block-bar-reason { color: var(--gray-600); flex: 1; }
+.block-bar-duration { color: var(--gray-400); font-size: 12px; white-space: nowrap; }
+
+/* Sentence parts */
+.s-idx {
+  width: 40px;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--gray-400);
+  text-align: right;
+  padding-right: 8px;
+  padding-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.s-speaker {
+  width: 56px;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  padding-top: 2px;
+  white-space: nowrap;
+}
+
+__SPEAKER_STYLES__
+
+.s-time {
+  width: 65px;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--gray-400);
+  padding-top: 2px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.s-time:hover { color: var(--blue); text-decoration: underline; }
+
+.s-text {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.7;
+  min-width: 0;
+}
+
+.s-text.deleted-text {
+  text-decoration: line-through;
+  color: #dc2626;
+  opacity: 0.7;
+}
+
+.s-badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+/* Tags */
+.tag {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: white;
+  margin-left: 4px;
+  vertical-align: middle;
+  line-height: 18px;
+}
+
+.ai-badge {
+  display: inline-block;
+  padding: 0 5px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  background: #ef4444;
+  color: white;
+  vertical-align: middle;
+  line-height: 16px;
+  letter-spacing: 0.5px;
+}
+
+.fine-tag {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  background: #fff7ed;
+  color: var(--orange);
+  border: 1px solid #fed7aa;
+  margin-right: 6px;
+  vertical-align: middle;
+  line-height: 18px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s;
+}
+
+.fine-tag:hover { background: #fed7aa; }
+
+.fine-tag.disabled {
+  background: var(--gray-100);
+  color: var(--gray-400);
+  border-color: var(--gray-300);
+  text-decoration: line-through;
+}
+
+.fine-delete {
+  text-decoration: line-through;
+  background: #fff7ed;
+  color: var(--orange);
+  padding: 0 2px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.fine-delete:hover {
+  background: #fed7aa;
+  outline: 1px dashed var(--orange);
+}
+
+.fine-delete.disabled {
+  background: var(--gray-100);
+  color: var(--gray-400);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.fine-delete.disabled:hover {
+  background: #e5e7eb;
+  outline: 1px dashed var(--gray-400);
+}
+
+
+/* Manual text selection deletion */
+.manual-delete {
+  text-decoration: line-through;
+  background: #fef3c7;
+  color: #d97706;
+  padding: 0 2px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.manual-delete:hover {
+  background: #fde68a;
+  outline: 1px dashed #d97706;
+}
+
+.manual-delete.disabled {
+  text-decoration: none;
+  background: var(--gray-100);
+  color: var(--gray-400);
+}
+
+.manual-tag {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 600;
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fde68a;
+  margin-right: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.manual-tag.disabled {
+  background: var(--gray-100);
+  color: var(--gray-400);
+  border-color: var(--gray-300);
+  text-decoration: line-through;
+}
+
+#selection-toolbar {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  background: white;
+  border: 1px solid var(--gray-300);
+  border-radius: 8px;
+  padding: 4px 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  font-size: 13px;
+  gap: 6px;
+  align-items: center;
+}
+
+#selection-toolbar.visible {
+  display: flex;
+}
+
+#selection-toolbar button {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid #d97706;
+  background: #fef3c7;
+  color: #d97706;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#selection-toolbar button:hover {
+  background: #fde68a;
+}
+
+#selection-toolbar .sel-text {
+  color: var(--gray-500);
+  font-size: 11px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Scroll to top */
+.scroll-top {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  font-size: 18px;
+  display: none;
+  z-index: 1001;
+  align-items: center;
+  justify-content: center;
+}
+
+.scroll-top.visible { display: flex; }
+
+/* Search */
+.search-input {
+  font-size: 12px;
+  padding: 4px 10px;
+  border: 1px solid var(--gray-300);
+  border-radius: 16px;
+  width: 160px;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+/* Undo toast */
+.undo-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gray-800);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  z-index: 1002;
+  display: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.undo-toast.visible { display: block; }
+
+/* Keyboard shortcut hint */
+.kbd {
+  display: inline-block;
+  background: var(--gray-100);
+  border: 1px solid var(--gray-300);
+  border-radius: 3px;
+  padding: 0px 4px;
+  font-size: 10px;
+  font-family: monospace;
+  color: var(--gray-600);
+  margin-left: 4px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .audio-bar-inner { flex-direction: column; gap: 8px; }
+  .s-speaker { width: 44px; font-size: 11px; }
+  .s-time { width: 50px; }
+  .s-idx { width: 32px; }
+  .s-check { width: 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Audio Bar -->
+<div class="audio-bar">
+  <div class="audio-bar-inner">
+    <div class="audio-player" id="player-original">
+      <span class="label">原始</span>
+      <button class="play-btn" onclick="togglePlay('original')">&#9654;</button>
+      <div class="progress-container">
+        <div class="progress-bar" onclick="seekAudio(event, 'original')">
+          <div class="progress-fill" id="progress-original"></div>
+        </div>
+        <span class="time-display" id="time-original">0:00 / 0:00</span>
+      </div>
+      <button class="speed-btn" onclick="cycleSpeed('original')">1x</button>
+    </div>
+    <div class="audio-player" id="player-cut">
+      <span class="label">精剪(实时)</span>
+      <button class="play-btn" onclick="togglePlay('cut')">&#9654;</button>
+      <div class="progress-container">
+        <div class="progress-bar" onclick="seekAudio(event, 'cut')">
+          <div class="progress-fill" id="progress-cut"></div>
+        </div>
+        <span class="time-display" id="time-cut">0:00 / 0:00</span>
+      </div>
+      <button class="speed-btn" onclick="cycleSpeed('cut')">1x</button>
+    </div>
+    <button class="export-btn" onclick="exportDeleteSegments()" style="background:#2d7d46;">&#9986; 导出剪辑文件</button>
+    <button class="export-btn" onclick="exportFeedback()" style="background:#2563eb;">&#128270; 导出AI反馈</button>
+  </div>
+</div>
+
+<audio id="audio-original" src="__AUDIO_SRC__" preload="auto"></audio>
+<!-- cut audio is now virtual - plays original with dynamic skipping -->
+
+<!-- Stats Header -->
+<div class="stats-header">
+  <div class="stats-inner">
+    <div class="stats-title">__TITLE__</div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-value" id="stat-total">--</div><div class="stat-label">总句数</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#dc2626" id="stat-ai-deleted">--</div><div class="stat-label">AI删除</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#16a34a" id="stat-ai-kept">--</div><div class="stat-label">AI保留</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--orange)" id="stat-fine-edits">--</div><div class="stat-label">精剪编辑</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-blocks">--</div><div class="stat-label">删除段落</div></div>
+      <div class="stat-card dynamic"><div class="stat-value" id="stat-user-add">+0</div><div class="stat-label">手动添加删除</div></div>
+      <div class="stat-card dynamic"><div class="stat-value" id="stat-user-remove">-0</div><div class="stat-label">手动恢复</div></div>
+      <div class="stat-card dynamic"><div class="stat-value" id="stat-final-delete">--</div><div class="stat-label">最终删除</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Summary Panel -->
+<div class="summary-panel">
+  <div class="summary-panel-inner">
+    <div class="summary-toggle" onclick="toggleSummaryPanel()">
+      <h3>内容删减概览</h3>
+      <span class="summary-arrow" id="summary-arrow">&#9660;</span>
+    </div>
+    <div class="summary-body" id="summary-body">
+      <table class="summary-table">
+        <thead><tr>
+          <th class="st-check"><input type="checkbox" id="summary-check-all" onchange="toggleAllBlocks(this.checked)" title="全选/全不选" checked></th>
+          <th class="st-id">#</th>
+          <th class="st-topic">话题</th>
+          <th class="st-type">类型</th>
+          <th class="st-pos">时间位置</th>
+          <th class="st-dur">时长</th>
+          <th class="st-reason">删减理由</th>
+        </tr></thead>
+        <tbody id="summary-tbody"></tbody>
+      </table>
+      <div class="summary-footer" id="summary-footer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+  <div class="filter-inner">
+    <span class="filter-label">显示:</span>
+    <button class="filter-btn active" onclick="setFilter('all')">全部</button>
+    <button class="filter-btn" onclick="setFilter('deleted')">仅删除</button>
+    <button class="filter-btn" onclick="setFilter('kept')">仅保留</button>
+    <div class="filter-separator"></div>
+    <span class="filter-label">类型:</span>
+    <button class="filter-btn active" data-type="all" onclick="setTypeFilter('all')">全部类型</button>
+    <button class="filter-btn" data-type="pre_show" onclick="setTypeFilter('pre_show')">录前准备</button>
+    <button class="filter-btn" data-type="tech_debug" onclick="setTypeFilter('tech_debug')">技术调试</button>
+    <button class="filter-btn" data-type="chit_chat" onclick="setTypeFilter('chit_chat')">跑题闲聊</button>
+    <button class="filter-btn" data-type="repeated_content" onclick="setTypeFilter('repeated_content')">重复内容</button>
+    <button class="filter-btn" data-type="production_talk" onclick="setTypeFilter('production_talk')">制作讨论</button>
+    <button class="filter-btn" data-type="privacy" onclick="setTypeFilter('privacy')">隐私保护</button>
+    <div class="filter-separator"></div>
+    <input class="search-input" type="text" placeholder="搜索文本..." oninput="searchText(this.value)">
+    <span style="font-size:11px;color:var(--gray-400)">快捷键: <span class="kbd">D</span> 切换删除 <span class="kbd">Ctrl+Z</span> 撤销</span>
+  </div>
+</div>
+
+<!-- Transcript -->
+<div class="transcript" id="transcript"></div>
+
+<!-- Scroll to top -->
+<button class="scroll-top" id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
+
+<!-- Undo toast -->
+<div class="undo-toast" id="undo-toast">已撤销</div>
+
+<script>
+// ===== DELETE SEGMENTS (for original->cut time mapping) =====
+const deleteSegments = [{"start": 0, "end": 67.82}, {"start": 85.06, "end": 87.34}, {"start": 176.09, "end": 177.89}, {"start": 205.18, "end": 211.66}, {"start": 249.51, "end": 249.79}, {"start": 284.19, "end": 731.36}, {"start": 738.88, "end": 739.16}, {"start": 754.73, "end": 755.45}, {"start": 856.92, "end": 858.36}, {"start": 1021.1, "end": 1021.54}, {"start": 1055, "end": 1055.56}, {"start": 1113.49, "end": 1114.45}, {"start": 1240.18, "end": 1240.74}, {"start": 1245.66, "end": 1246.7}, {"start": 1259.6, "end": 1260.08}, {"start": 1309.29, "end": 1309.97}, {"start": 1319.59, "end": 1320.35}, {"start": 1326.99, "end": 1327.91}, {"start": 1336.11, "end": 1336.83}, {"start": 1344.87, "end": 1345.27}, {"start": 1359.2, "end": 1359.8}, {"start": 1381.36, "end": 1382.04}, {"start": 1438.95, "end": 1439.43}, {"start": 1478.81, "end": 1479.17}, {"start": 1595.44, "end": 1596.88}, {"start": 1665.14, "end": 1665.5}, {"start": 1672.9, "end": 1673.38}, {"start": 1805.28, "end": 1806.12}, {"start": 1872.3, "end": 1873.02}, {"start": 1874.25, "end": 1874.45}, {"start": 2021.26, "end": 2021.94}, {"start": 2121.98, "end": 2122.98}, {"start": 2189.81, "end": 2230.38}, {"start": 2298.47, "end": 2298.91}, {"start": 2319.07, "end": 2448.31}, {"start": 2492.18, "end": 2492.62}, {"start": 2515.74, "end": 2516.06}, {"start": 2634.4, "end": 2635.44}, {"start": 2652.77, "end": 2653.17}, {"start": 2653.77, "end": 2654.13}, {"start": 2660.81, "end": 2661.25}, {"start": 2743.61, "end": 2743.73}, {"start": 2755.96, "end": 2756.6}, {"start": 2760.24, "end": 2760.52}, {"start": 2791.38, "end": 2791.82}, {"start": 2822.02, "end": 2822.18}, {"start": 2863.41, "end": 2923.28}, {"start": 2936.4, "end": 2936.72}, {"start": 2970.1, "end": 2970.34}, {"start": 3024.62, "end": 3024.86}, {"start": 3054.09, "end": 3054.57}, {"start": 3082.45, "end": 3082.65}, {"start": 3089.33, "end": 3089.73}, {"start": 3157.35, "end": 3158.03}, {"start": 3452.76, "end": 3452.88}, {"start": 3484.86, "end": 3485.46}, {"start": 3562.84, "end": 3563.04}, {"start": 3652.18, "end": 3653.22}, {"start": 3749.76, "end": 3750.08}, {"start": 3762.13, "end": 3762.45}, {"start": 3845.05, "end": 3845.25}, {"start": 3867.19, "end": 3867.31}, {"start": 3922.03, "end": 3922.23}, {"start": 4044.33, "end": 4044.93}, {"start": 4218.02, "end": 4218.1}, {"start": 4230.14, "end": 4230.7}, {"start": 4234.18, "end": 4234.46}, {"start": 4374.82, "end": 4380.78}, {"start": 4392.6, "end": 4397.04}, {"start": 4437.23, "end": 4437.71}, {"start": 4797.58, "end": 4798.22}, {"start": 4892.43, "end": 4894.39}, {"start": 4977.43, "end": 4978.19}, {"start": 5177.29, "end": 5179.17}, {"start": 5339.18, "end": 5340.06}, {"start": 5454.62, "end": 5455.39}, {"start": 5561.47, "end": 5562.67}, {"start": 5635.83, "end": 5636.35}, {"start": 5674.41, "end": 5677.25}, {"start": 5699.64, "end": 5700.04}, {"start": 5724.26, "end": 5724.54}, {"start": 5745.66, "end": 5746.14}, {"start": 5753.21, "end": 5767.43}, {"start": 5785.11, "end": 5785.87}, {"start": 5967.51, "end": 5968.11}, {"start": 6029.96, "end": 6030.16}, {"start": 6045.65, "end": 6045.97}, {"start": 6126.3, "end": 6126.46}, {"start": 6154.01, "end": 6154.21}, {"start": 6177.75, "end": 6178.91}, {"start": 6184.19, "end": 6185.07}, {"start": 6232.87, "end": 6234.59}, {"start": 6382.61, "end": 6382.77}, {"start": 6402.83, "end": 6405.55}, {"start": 6457.22, "end": 6457.58}, {"start": 6482.9, "end": 6483.42}, {"start": 6616.57, "end": 6618.33}, {"start": 6623.5, "end": 6692.44}, {"start": 6749.04, "end": 6749.44}, {"start": 6784.64, "end": 6784.84}, {"start": 6802.52, "end": 6802.8}, {"start": 6811.96, "end": 6812.52}, {"start": 6830.68, "end": 6831.96}, {"start": 6849.52, "end": 6850.04}, {"start": 6887.38, "end": 6887.58}, {"start": 6965.99, "end": 6966.43}, {"start": 6994.94, "end": 6995.1}, {"start": 7071.92, "end": 7072.12}, {"start": 7135.56, "end": 7147.04}, {"start": 7147.56, "end": 7150.36}, {"start": 7187.71, "end": 7187.95}, {"start": 7214.84, "end": 7216.36}, {"start": 7260.16, "end": 7307.84}, {"start": 7574.95, "end": 7576.43}];
+
+// originalToCutTime replaced by dynamic originalToVirtual() in audio player
+
+// ===== DATA =====
+const sentencesData = __SENTENCES_DATA__;
+
+const blocksData = __BLOCKS_DATA__;
+
+const typeLabels = {"pre_show": "录前准备", "tech_debug": "技术调试", "chit_chat": "跑题闲聊", "repeated_content": "重复内容", "production_talk": "制作讨论", "privacy": "隐私保护"};
+const typeColors = {"pre_show": "#6b7280", "tech_debug": "#0891b2", "chit_chat": "#d97706", "repeated_content": "#7c3aed", "production_talk": "#2563eb", "privacy": "#dc2626"};
+
+const AI_DELETED_COUNT = __AI_DELETED_COUNT__;
+const TOTAL_SENTENCES = __TOTAL_SENTENCES__;
+
+// ===== STATE =====
+let currentFilter = 'all';
+let currentTypeFilter = 'all';
+let searchQuery = '';
+let highlightedIdx = -1;
+
+// Track user modifications
+// aiDeletedSet: the original set of AI-deleted sentence indices
+const aiDeletedSet = new Set(sentencesData.filter(s => s.isAiDeleted).map(s => s.idx));
+// currentDeletedSet: current state of deletions (starts as copy of AI)
+const currentDeletedSet = new Set(aiDeletedSet);
+// Track which sentences user has manually changed
+const userAddedDeletions = new Set();   // user added these to deletion
+const userRemovedDeletions = new Set(); // user removed these from deletion
+
+// Fine edits state
+const fineEditsOriginal = new Set(); // indices of fine edits that were originally active
+const fineEditsDisabled = new Set(); // fine edit indices user disabled
+const fineEditsReEnabled = new Set(); // fine edit indices user re-enabled (if any start disabled)
+sentencesData.forEach(s => {
+  if (s.fineEdit !== undefined) {
+    fineEditsOriginal.add(s.fineEdit.idx);
+  }
+});
+
+// Undo stack
+const undoStack = [];
+
+// ===== BUILD TRANSCRIPT =====
+function buildTranscript() {
+  const container = document.getElementById('transcript');
+  let html = '';
+
+  // Build a set of block start indices for efficient lookup
+  const blockStartMap = {};
+  blocksData.forEach(b => { blockStartMap[b.range[0]] = b; });
+
+  sentencesData.forEach(s => {
+    // Check if this is the start of a block
+    const block = blockStartMap[s.idx];
+    if (block) {
+      const color = typeColors[block.type] || '#6b7280';
+      const label = typeLabels[block.type] || block.type;
+      html += `<div class="block-bar" id="block-${block.id}" data-block-id="${block.id}" data-type="${block.type}">`;
+      html += `<span class="block-bar-icon">&#9888;</span>`;
+      html += `<span class="block-bar-id">#${block.id}</span>`;
+      html += `<span class="block-bar-type" style="background:${color}">${label}</span>`;
+      html += `<span class="block-bar-reason">${escapeHtml(block.reason)}</span>`;
+      html += `<span class="block-bar-duration">${block.duration}</span>`;
+      html += `</div>`;
+    }
+
+    const isDeleted = currentDeletedSet.has(s.idx);
+    const isUserModified = userAddedDeletions.has(s.idx) || userRemovedDeletions.has(s.idx);
+    const isAiDel = aiDeletedSet.has(s.idx);
+
+    let rowClass = 'sentence-row';
+    if (isDeleted) rowClass += ' deleted';
+    if (isUserModified) rowClass += ' user-modified';
+
+    const spClass = __SPEAKER_CLASS_FUNC__;
+
+    html += `<div class="${rowClass}" id="row-${s.idx}" data-idx="${s.idx}" onclick="highlightRow(${s.idx})">`;
+
+    // Checkbox
+    html += `<div class="s-check"><input type="checkbox" ${isDeleted ? 'checked' : ''} onclick="event.stopPropagation(); toggleDeletion(${s.idx})" title="标记删除"></div>`;
+
+    // Index
+    html += `<div class="s-idx">${s.idx}</div>`;
+
+    // Speaker
+    html += `<div class="s-speaker ${spClass}">${escapeHtml(s.speaker)}</div>`;
+
+    // Time
+    html += `<div class="s-time" onclick="event.stopPropagation(); seekToTime(${s.startTime})">${s.timeStr}</div>`;
+
+    // Text with fine edit markers
+    let textHtml = '';
+    if (s.fineEdit) {
+      const fe = s.fineEdit;
+      const feDisabled = fineEditsDisabled.has(fe.idx);
+      const feClass = feDisabled ? 'fine-tag disabled' : 'fine-tag';
+      const delClass = feDisabled ? 'fine-delete disabled' : 'fine-delete';
+
+      textHtml += `<span class="${feClass}" data-fine-idx="${fe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="${escapeHtml(fe.reason)}">${escapeHtml(fe.type)}</span>`;
+
+      // Show text with deletion marked (clickable to toggle)
+      if (fe.deleteText) {
+        const escapedText = escapeHtml(s.text);
+        const escapedDel = escapeHtml(fe.deleteText);
+        const pos = escapedText.indexOf(escapedDel);
+        if (pos >= 0) {
+          textHtml += escapedText.substring(0, pos);
+          textHtml += `<span class="${delClass}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="点击切换保留/删除">${escapedDel}</span>`;
+          textHtml += escapedText.substring(pos + escapedDel.length);
+        } else {
+          textHtml += escapedText;
+        }
+      } else {
+        textHtml += escapeHtml(s.text);
+      }
+    } else {
+      textHtml += escapeHtml(s.text);
+    }
+
+    const textClass = isDeleted ? 's-text deleted-text' : 's-text';
+    html += `<div class="${textClass}">${textHtml}</div>`;
+
+    // Badges
+    html += `<div class="s-badges">`;
+    if (isAiDel) {
+      html += `<span class="ai-badge">AI</span>`;
+    }
+    if (isDeleted && s.deleteType) {
+      const color = typeColors[s.deleteType] || '#6b7280';
+      const label = typeLabels[s.deleteType] || s.deleteType;
+      html += `<span class="tag" style="background:${color}">${label}</span>`;
+    }
+    html += `</div>`;
+
+    html += `</div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ===== TOGGLE DELETION =====
+function toggleDeletion(idx) {
+  // Save undo state
+  undoStack.push({
+    type: 'deletion',
+    idx: idx,
+    wasDeleted: currentDeletedSet.has(idx)
+  });
+
+  const isCurrentlyDeleted = currentDeletedSet.has(idx);
+  const isAiDel = aiDeletedSet.has(idx);
+
+  if (isCurrentlyDeleted) {
+    // Un-delete
+    currentDeletedSet.delete(idx);
+    if (isAiDel) {
+      userRemovedDeletions.add(idx);
+      userAddedDeletions.delete(idx);
+    } else {
+      userAddedDeletions.delete(idx);
+    }
+  } else {
+    // Delete
+    currentDeletedSet.add(idx);
+    if (!isAiDel) {
+      userAddedDeletions.add(idx);
+      userRemovedDeletions.delete(idx);
+    } else {
+      userRemovedDeletions.delete(idx);
+    }
+  }
+
+  updateRowVisual(idx);
+  updateStats();
+}
+
+function updateRowVisual(idx) {
+  const row = document.getElementById('row-' + idx);
+  if (!row) return;
+
+  const isDeleted = currentDeletedSet.has(idx);
+  const isUserModified = userAddedDeletions.has(idx) || userRemovedDeletions.has(idx);
+
+  row.classList.toggle('deleted', isDeleted);
+  row.classList.toggle('user-modified', isUserModified);
+
+  // Update checkbox
+  const cb = row.querySelector('input[type="checkbox"]');
+  if (cb) cb.checked = isDeleted;
+
+  // Update text styling
+  const textEl = row.querySelector('.s-text');
+  if (textEl) {
+    textEl.classList.toggle('deleted-text', isDeleted);
+  }
+
+  // Apply filter visibility
+  applyFilters();
+  invalidateSkipRanges();
+}
+
+// ===== TOGGLE FINE EDIT =====
+function toggleFineEdit(feIdx) {
+  undoStack.push({
+    type: 'fineEdit',
+    feIdx: feIdx,
+    wasDisabled: fineEditsDisabled.has(feIdx)
+  });
+
+  if (fineEditsDisabled.has(feIdx)) {
+    fineEditsDisabled.delete(feIdx);
+  } else {
+    fineEditsDisabled.add(feIdx);
+  }
+
+  invalidateSkipRanges();
+  // Rebuild just the affected row
+  // Find the sentence with this fine edit
+  const s = sentencesData.find(s => s.fineEdit && s.fineEdit.idx === feIdx);
+  if (s) {
+    rebuildRowText(s);
+  }
+  updateStats();
+}
+
+function rebuildRowText(s) {
+  const row = document.getElementById('row-' + s.idx);
+  if (!row) return;
+  const textEl = row.querySelector('.s-text');
+  if (!textEl || !s.fineEdit) return;
+
+  const fe = s.fineEdit;
+  const feDisabled = fineEditsDisabled.has(fe.idx);
+
+  let textHtml = '';
+  const feClass = feDisabled ? 'fine-tag disabled' : 'fine-tag';
+  const delClass = feDisabled ? 'fine-delete disabled' : 'fine-delete';
+
+  textHtml += `<span class="${feClass}" data-fine-idx="${fe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="${escapeHtml(fe.reason)}">${escapeHtml(fe.type)}</span>`;
+
+  if (fe.deleteText) {
+    const escapedText = escapeHtml(s.text);
+    const escapedDel = escapeHtml(fe.deleteText);
+    const pos = escapedText.indexOf(escapedDel);
+    if (pos >= 0) {
+      textHtml += escapedText.substring(0, pos);
+      textHtml += `<span class="${delClass}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="点击切换保留/删除">${escapedDel}</span>`;
+      textHtml += escapedText.substring(pos + escapedDel.length);
+    } else {
+      textHtml += escapedText;
+    }
+  } else {
+    textHtml += escapeHtml(s.text);
+  }
+
+  textEl.innerHTML = textHtml;
+}
+
+// ===== UPDATE STATS =====
+function updateStats() {
+  const addCount = userAddedDeletions.size;
+  const removeCount = userRemovedDeletions.size;
+  const finalDelete = currentDeletedSet.size;
+
+  document.getElementById('stat-user-add').textContent = '+' + addCount;
+  document.getElementById('stat-user-remove').textContent = '-' + removeCount;
+  document.getElementById('stat-final-delete').textContent = finalDelete;
+  updateSummaryFooter();
+}
+
+// ===== SUMMARY TABLE =====
+function fmtDur(sec) {
+  sec = Math.round(sec);
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  return h > 0 ? h + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0') : m + ':' + String(s).padStart(2,'0');
+}
+
+function extractTopic(reason) {
+  const sep = reason.indexOf('\uff1a');
+  if (sep > 0 && sep < 25) return reason.substring(0, sep);
+  const sep2 = reason.indexOf('\u2014\u2014');
+  if (sep2 > 0 && sep2 < 25) return reason.substring(0, sep2);
+  return reason.length > 20 ? reason.substring(0, 20) + '\u2026' : reason;
+}
+
+function extractDetail(reason) {
+  const sep = reason.indexOf('\uff1a');
+  if (sep > 0) return reason.substring(sep + 1);
+  const sep2 = reason.indexOf('\u2014\u2014');
+  if (sep2 > 0) return reason.substring(sep2 + 2);
+  return reason;
+}
+
+function getBlockTimeInfo(block) {
+  const startSent = sentencesData.find(s => s.idx === block.range[0]);
+  const endSent = sentencesData.find(s => s.idx === block.range[1]);
+  const st = startSent ? startSent.startTime : 0;
+  const et = endSent ? endSent.endTime : 0;
+  return { startTime: st, endTime: et, duration: et - st };
+}
+
+function isBlockFullyDeleted(block) {
+  for (let i = block.range[0]; i <= block.range[1]; i++) {
+    const sent = sentencesData.find(s => s.idx === i);
+    if (sent && !currentDeletedSet.has(i)) return false;
+  }
+  return true;
+}
+
+function buildSummaryTable() {
+  const tbody = document.getElementById('summary-tbody');
+  // Sort blocks chronologically
+  const sorted = [...blocksData].sort((a, b) => a.range[0] - b.range[0]);
+  let html = '';
+  sorted.forEach(block => {
+    const info = getBlockTimeInfo(block);
+    const topic = extractTopic(block.reason);
+    const detail = extractDetail(block.reason);
+    const color = typeColors[block.type] || '#6b7280';
+    const typeLabel = typeLabels[block.type] || block.type;
+    const checked = isBlockFullyDeleted(block);
+    html += '<tr id="summary-row-' + block.id + '" class="' + (checked ? '' : 'block-unchecked') + '">';
+    html += '<td class="st-check"><input type="checkbox" ' + (checked ? 'checked' : '') + ' onchange="toggleBlockDeletion(' + block.id + ', this.checked)"></td>';
+    html += '<td class="st-id">' + block.id + '</td>';
+    html += '<td class="st-topic">' + escapeHtml(topic) + '</td>';
+    html += '<td class="st-type"><span class="summary-type-tag" style="background:' + color + '">' + typeLabel + '</span></td>';
+    html += '<td class="st-pos" onclick="seekToTime(' + info.startTime + ')">' + fmtDur(info.startTime) + '</td>';
+    html += '<td class="st-dur">' + fmtDur(info.duration) + '</td>';
+    html += '<td class="st-reason">' + escapeHtml(detail) + '</td>';
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+  updateSummaryFooter();
+}
+
+function toggleBlockDeletion(blockId, checked) {
+  const block = blocksData.find(b => b.id === blockId);
+  if (!block) return;
+
+  // Batch undo: save state for all sentences in block
+  const batchUndo = [];
+  for (let i = block.range[0]; i <= block.range[1]; i++) {
+    const sent = sentencesData.find(s => s.idx === i);
+    if (!sent) continue;
+    batchUndo.push({ idx: i, wasDeleted: currentDeletedSet.has(i) });
+  }
+  undoStack.push({ type: 'batch', items: batchUndo });
+
+  // Apply
+  for (let i = block.range[0]; i <= block.range[1]; i++) {
+    const sent = sentencesData.find(s => s.idx === i);
+    if (!sent) continue;
+    if (checked) {
+      currentDeletedSet.add(i);
+    } else {
+      currentDeletedSet.delete(i);
+    }
+  }
+
+  rederiveUserMods();
+
+  // Update row visuals for all sentences in block
+  for (let i = block.range[0]; i <= block.range[1]; i++) {
+    updateRowVisual(i);
+  }
+
+  // Update summary row visual
+  const row = document.getElementById('summary-row-' + blockId);
+  if (row) row.className = checked ? '' : 'block-unchecked';
+
+  // Update header checkbox
+  updateSummaryCheckAll();
+  updateStats();
+}
+
+function toggleAllBlocks(checked) {
+  blocksData.forEach(block => {
+    const row = document.getElementById('summary-row-' + block.id);
+    if (row) {
+      const cb = row.querySelector('input[type="checkbox"]');
+      if (cb && cb.checked !== checked) {
+        cb.checked = checked;
+        toggleBlockDeletion(block.id, checked);
+      }
+    }
+  });
+}
+
+function updateSummaryCheckAll() {
+  const allChecked = blocksData.every(b => isBlockFullyDeleted(b));
+  document.getElementById('summary-check-all').checked = allChecked;
+}
+
+function updateSummaryFooter() {
+  const footer = document.getElementById('summary-footer');
+  if (!footer) return;
+
+  // Total duration from last sentence
+  const totalDur = sentencesData.length > 0
+    ? sentencesData[sentencesData.length - 1].endTime
+    : 0;
+
+  // Deleted duration (sentence-level only, approximate)
+  let deletedDur = 0;
+  sentencesData.forEach(s => {
+    if (currentDeletedSet.has(s.idx)) {
+      deletedDur += (s.endTime - s.startTime);
+    }
+  });
+
+  // Block-level breakdown for checked blocks
+  let blockDeleteDur = 0;
+  const sorted = [...blocksData].sort((a, b) => a.range[0] - b.range[0]);
+  sorted.forEach(block => {
+    if (isBlockFullyDeleted(block)) {
+      const info = getBlockTimeInfo(block);
+      blockDeleteDur += info.duration;
+    }
+  });
+
+  const remaining = Math.max(0, totalDur - deletedDur);
+
+  footer.innerHTML =
+    '<div class="sf-item"><span class="sf-label">原始总时长</span><span class="sf-value">' + fmtDur(totalDur) + '</span></div>' +
+    '<div class="sf-item"><span class="sf-label">段落删减</span><span class="sf-value cut">' + fmtDur(blockDeleteDur) + '</span></div>' +
+    '<div class="sf-item"><span class="sf-label">总删减(含精剪)</span><span class="sf-value cut">' + fmtDur(deletedDur) + '</span></div>' +
+    '<div class="sf-item"><span class="sf-label">预计剩余</span><span class="sf-value result">' + fmtDur(remaining) + '</span></div>';
+}
+
+function toggleSummaryPanel() {
+  const body = document.getElementById('summary-body');
+  const arrow = document.getElementById('summary-arrow');
+  body.classList.toggle('collapsed');
+  arrow.classList.toggle('collapsed');
+}
+
+// ===== UNDO =====
+function undo() {
+  if (undoStack.length === 0) return;
+  const action = undoStack.pop();
+
+  if (action.type === 'deletion') {
+    const idx = action.idx;
+    const isAiDel = aiDeletedSet.has(idx);
+
+    if (action.wasDeleted) {
+      currentDeletedSet.add(idx);
+      if (!isAiDel) {
+        userAddedDeletions.add(idx);
+      } else {
+        userRemovedDeletions.delete(idx);
+      }
+    } else {
+      currentDeletedSet.delete(idx);
+      if (!isAiDel) {
+        userAddedDeletions.delete(idx);
+      } else {
+        userRemovedDeletions.add(idx);
+      }
+    }
+
+    // Wait... we need to be more careful. Let's just restore state exactly.
+    // Actually since we're only undoing one step, let's re-derive user mod state.
+    // Re-derive userAdded/Removed from currentDeleted vs aiDeleted
+    rederiveUserMods();
+    updateRowVisual(idx);
+  } else if (action.type === 'fineEdit') {
+    if (action.wasDisabled) {
+      fineEditsDisabled.add(action.feIdx);
+    } else {
+      fineEditsDisabled.delete(action.feIdx);
+    }
+    const s = sentencesData.find(s => s.fineEdit && s.fineEdit.idx === action.feIdx);
+    if (s) {
+      rebuildRowWithManualEdits(s.idx);
+    }
+  } else if (action.type === 'manualEdit') {
+    // Undo adding a manual edit - remove it
+    const idx = manualEdits.findIndex(e => e.id === action.editId);
+    if (idx >= 0) {
+      const edit = manualEdits[idx];
+      const sentIdx = edit.sentenceIdx;
+      manualEdits.splice(idx, 1);
+      rebuildRowWithManualEdits(sentIdx);
+    }
+  } else if (action.type === 'manualEditToggle') {
+    const edit = manualEdits.find(e => e.id === action.editId);
+    if (edit) {
+      edit.disabled = action.wasDisabled;
+      rebuildRowWithManualEdits(edit.sentenceIdx);
+    }
+  } else if (action.type === 'batch') {
+    action.items.forEach(item => {
+      if (item.wasDeleted) {
+        currentDeletedSet.add(item.idx);
+      } else {
+        currentDeletedSet.delete(item.idx);
+      }
+      updateRowVisual(item.idx);
+    });
+    rederiveUserMods();
+    buildSummaryTable();
+  }
+
+  updateStats();
+  showUndoToast();
+}
+
+function rederiveUserMods() {
+  userAddedDeletions.clear();
+  userRemovedDeletions.clear();
+
+  currentDeletedSet.forEach(idx => {
+    if (!aiDeletedSet.has(idx)) {
+      userAddedDeletions.add(idx);
+    }
+  });
+
+  aiDeletedSet.forEach(idx => {
+    if (!currentDeletedSet.has(idx)) {
+      userRemovedDeletions.add(idx);
+    }
+  });
+
+  // Update all row visuals for user-modified class
+  sentencesData.forEach(s => {
+    const row = document.getElementById('row-' + s.idx);
+    if (row) {
+      const isUserModified = userAddedDeletions.has(s.idx) || userRemovedDeletions.has(s.idx);
+      row.classList.toggle('user-modified', isUserModified);
+    }
+  });
+}
+
+function showUndoToast() {
+  const toast = document.getElementById('undo-toast');
+  toast.classList.add('visible');
+  setTimeout(() => toast.classList.remove('visible'), 1500);
+}
+
+// ===== EXPORT =====
+function exportModifications() {
+  const addedDeletions = Array.from(userAddedDeletions).sort((a,b) => a-b);
+  const removedDeletions = Array.from(userRemovedDeletions).sort((a,b) => a-b);
+  const disabledFE = Array.from(fineEditsDisabled).sort((a,b) => a-b);
+
+  // Compute enabled fine edits (those originally active that are NOT disabled)
+  const enabledFE = Array.from(fineEditsOriginal).filter(i => !fineEditsDisabled.has(i)).sort((a,b) => a-b);
+
+  const finalDeleteSentences = Array.from(currentDeletedSet).sort((a,b) => a-b);
+
+  // Build active fine edits list
+  const activeFineEdits = [];
+  sentencesData.forEach(s => {
+    if (s.fineEdit && !fineEditsDisabled.has(s.fineEdit.idx)) {
+      activeFineEdits.push({
+        sentenceIdx: s.idx,
+        fineEditIdx: s.fineEdit.idx,
+        type: s.fineEdit.type,
+        deleteText: s.fineEdit.deleteText,
+        keepText: s.fineEdit.keepText
+      });
+    }
+  });
+
+  // Manual edits (active only)
+  const activeManualEdits = manualEdits.filter(e => !e.disabled).map(e => ({
+    sentenceIdx: e.sentenceIdx,
+    deleteText: e.deleteText
+  }));
+
+  const exportData = {
+    exported_at: new Date().toISOString(),
+    modifications: {
+      added_deletions: addedDeletions,
+      removed_deletions: removedDeletions,
+      disabled_fine_edits: disabledFE,
+      enabled_fine_edits: enabledFE,
+      manual_edits: activeManualEdits
+    },
+    final_selection: {
+      delete_sentences: finalDeleteSentences,
+      fine_edits: activeFineEdits,
+      manual_edits: activeManualEdits
+    }
+  };
+
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'review_modifications_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Export delete_segments.json for cut_audio.py
+// Uses clean ranges (no player-specific lookahead/nudge adjustments)
+function exportDeleteSegments() {
+  const ranges = [];
+
+  sentencesData.forEach(s => {
+    // Sentence-level deletions
+    if (currentDeletedSet.has(s.idx)) {
+      ranges.push([s.startTime, s.endTime]);
+      return;
+    }
+
+    // Fine edits (word-level)
+    if (s.fineEdit && !fineEditsDisabled.has(s.fineEdit.idx)) {
+      const fe = s.fineEdit;
+      if (fe.ds !== undefined && fe.de !== undefined) {
+        ranges.push([fe.ds, fe.de]);
+      }
+    }
+
+    // Manual edits (word-level)
+    const sentManual = manualEdits.filter(e => e.sentenceIdx === s.idx && !e.disabled);
+    for (const me of sentManual) {
+      if (!s.words || s.words.length === 0) continue;
+      const wordTexts = s.words.map(w => w.t);
+      const fullText = wordTexts.join('');
+      const pos = fullText.indexOf(me.deleteText);
+      if (pos < 0) continue;
+
+      let charCount = 0, startW = null, endW = null;
+      for (let i = 0; i < wordTexts.length; i++) {
+        const wEnd = charCount + wordTexts[i].length;
+        if (startW === null && wEnd > pos) startW = i;
+        if (wEnd >= pos + me.deleteText.length) { endW = i; break; }
+        charCount = wEnd;
+      }
+      if (startW !== null && endW !== null) {
+        ranges.push([s.words[startW].s, s.words[endW].e]);
+      }
+    }
+  });
+
+  // Sort and merge overlapping ranges
+  ranges.sort((a, b) => a[0] - b[0]);
+  const merged = [];
+  for (const r of ranges) {
+    if (merged.length > 0 && r[0] <= merged[merged.length - 1][1] + 0.05) {
+      merged[merged.length - 1][1] = Math.max(merged[merged.length - 1][1], r[1]);
+    } else {
+      merged.push([r[0], r[1]]);
+    }
+  }
+
+  // Extend first range to 0 if starts within 5s (pre-recording noise)
+  if (merged.length > 0 && merged[0][0] > 0 && merged[0][0] < 5) {
+    merged[0][0] = 0;
+  }
+
+  // Align export ranges with HTML player behavior for consistent results.
+  // Two adjustments:
+  // 1. Range start: nudge 50ms earlier for tight gaps (ASR timestamps lag
+  //    behind actual sound onset by ~30-50ms, e.g. "放" onset before ASR mark)
+  // 2. Range end: snap to next kept sentence/word start (same as HTML player's
+  //    seekTarget logic, prevents eating into next word like "对")
+  for (let i = 0; i < merged.length; i++) {
+    const s = merged[i][0], e = merged[i][1];
+
+    // --- Range start: nudge for tight gaps ---
+    if (s > 0) {
+      let closestPrevEnd = 0;
+      for (const sent of sentencesData) {
+        if (currentDeletedSet.has(sent.idx)) continue;
+        if (sent.startTime > s + 1) break;
+        if (!sent.words) continue;
+        for (const w of sent.words) {
+          if (w.e <= s && w.e > closestPrevEnd) closestPrevEnd = w.e;
+        }
+      }
+      const gapBefore = s - closestPrevEnd;
+      if (gapBefore < 0.20 && s > 0.05) {
+        merged[i][0] = Math.max(0, s - 0.05);
+      }
+    }
+
+    // --- Range end: align with next kept content (seekTarget logic) ---
+    // Find the next kept sentence whose first word starts near range end.
+    // This matches the HTML player's seekTarget behavior.
+    const nextKept = sentencesData.find(ns =>
+      !currentDeletedSet.has(ns.idx) && ns.startTime >= e - 0.1
+    );
+    if (nextKept && nextKept.startTime <= e + 0.5) {
+      // Snap end to next kept sentence's start — exactly where playback resumes
+      merged[i][1] = nextKept.startTime;
+    }
+  }
+
+  // Convert to delete_segments.json format
+  const segments = merged.map(([start, end]) => ({
+    start: Math.round(start * 1000) / 1000,
+    end: Math.round(end * 1000) / 1000
+  }));
+
+  // Compute stats
+  const totalDeleted = segments.reduce((sum, s) => sum + (s.end - s.start), 0);
+  const totalMin = Math.round(totalDeleted / 60);
+
+  const blob = new Blob([JSON.stringify(segments, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'delete_segments_edited.json';
+  a.click();
+  URL.revokeObjectURL(url);
+
+  // Show command hint
+  const cmdText = `python3 cut_audio.py 播客_精剪版.mp3 audio.mp3 delete_segments_edited.json`;
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a2e;color:#e0e0e0;padding:24px;border-radius:12px;z-index:9999;max-width:600px;box-shadow:0 8px 32px rgba(0,0,0,0.5);font-size:14px;';
+  toast.innerHTML = `
+    <div style="margin-bottom:12px;font-size:16px;font-weight:bold;">&#9989; 已导出 delete_segments_edited.json</div>
+    <div style="margin-bottom:8px;">${segments.length} 个删除片段，共删除约 ${totalMin} 分钟</div>
+    <div style="margin-bottom:8px;">将文件放到分析目录，运行：</div>
+    <div style="background:#0d1117;padding:12px;border-radius:8px;font-family:monospace;font-size:13px;word-break:break-all;cursor:pointer;" onclick="navigator.clipboard.writeText('${cmdText}');this.style.background='#1a3a1a';" title="点击复制">${cmdText}</div>
+    <div style="margin-top:8px;color:#888;font-size:12px;">点击命令可复制到剪贴板</div>
+    <button onclick="this.parentElement.remove()" style="margin-top:12px;padding:6px 16px;background:#333;color:#fff;border:none;border-radius:6px;cursor:pointer;">关闭</button>
+  `;
+  document.body.appendChild(toast);
+}
+
+// ===== FILTERS =====
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-inner .filter-btn').forEach(btn => {
+    if (!btn.dataset.type && btn.textContent.includes('全部') && f === 'all') btn.className = 'filter-btn active';
+    else if (!btn.dataset.type && btn.textContent.includes('仅删除') && f === 'deleted') btn.className = 'filter-btn active-red';
+    else if (!btn.dataset.type && btn.textContent.includes('仅保留') && f === 'kept') btn.className = 'filter-btn active';
+    else if (!btn.dataset.type) btn.className = 'filter-btn';
+  });
+  applyFilters();
+}
+
+function setTypeFilter(t) {
+  currentTypeFilter = t;
+  document.querySelectorAll('.filter-inner .filter-btn[data-type]').forEach(btn => {
+    btn.className = btn.dataset.type === t ? 'filter-btn active' : 'filter-btn';
+  });
+  applyFilters();
+}
+
+function searchText(query) {
+  searchQuery = query.toLowerCase();
+  applyFilters();
+}
+
+function applyFilters() {
+  sentencesData.forEach(s => {
+    const row = document.getElementById('row-' + s.idx);
+    if (!row) return;
+
+    let visible = true;
+    const isDeleted = currentDeletedSet.has(s.idx);
+
+    // Show/hide filter
+    if (currentFilter === 'deleted' && !isDeleted) visible = false;
+    if (currentFilter === 'kept' && isDeleted) visible = false;
+
+    // Type filter
+    if (currentTypeFilter !== 'all') {
+      if (!isDeleted || s.deleteType !== currentTypeFilter) {
+        // Also hide if it's user-added deletion (no type)
+        if (!(isDeleted && userAddedDeletions.has(s.idx))) {
+          visible = false;
+        }
+      }
+    }
+
+    // Search filter
+    if (searchQuery && !s.text.toLowerCase().includes(searchQuery) && !s.speaker.toLowerCase().includes(searchQuery)) {
+      visible = false;
+    }
+
+    row.classList.toggle('hidden', !visible);
+  });
+
+  // Also show/hide block bars
+  document.querySelectorAll('.block-bar').forEach(bar => {
+    const blockId = parseInt(bar.dataset.blockId);
+    const block = blocksData.find(b => b.id === blockId);
+    if (!block) return;
+
+    let visible = true;
+    if (currentFilter === 'kept') visible = false;
+    if (currentTypeFilter !== 'all' && block.type !== currentTypeFilter) visible = false;
+
+    bar.classList.toggle('hidden', !visible);
+  });
+}
+
+// ===== HIGHLIGHT ROW =====
+function highlightRow(idx) {
+  // Remove previous highlight
+  if (highlightedIdx >= 0) {
+    const prev = document.getElementById('row-' + highlightedIdx);
+    if (prev) prev.classList.remove('highlight');
+  }
+  highlightedIdx = idx;
+  const row = document.getElementById('row-' + idx);
+  if (row) row.classList.add('highlight');
+
+  // Jump audio to this sentence
+  const s = sentencesData.find(s => s.idx === idx);
+  if (s && s.startTime !== undefined) {
+    const audio = document.getElementById('audio-original');
+    audio.currentTime = s.startTime;
+  }
+}
+
+
+// ===== MANUAL TEXT EDITS =====
+// manualEdits: array of {sentenceIdx, deleteText, id}
+const manualEdits = [];
+let manualEditCounter = 0;
+
+// Listen for text selection
+document.addEventListener('mouseup', function(e) {
+  const toolbar = document.getElementById('selection-toolbar');
+  const sel = window.getSelection();
+  
+  if (!sel || sel.isCollapsed || sel.toString().trim().length === 0) {
+    toolbar.classList.remove('visible');
+    return;
+  }
+  
+  // Check if selection is within a sentence text element
+  const anchor = sel.anchorNode;
+  const focus = sel.focusNode;
+  if (!anchor || !focus) { toolbar.classList.remove('visible'); return; }
+  
+  const textEl = anchor.parentElement.closest('.s-text');
+  if (!textEl) { toolbar.classList.remove('visible'); return; }
+  
+  const focusTextEl = focus.parentElement.closest('.s-text');
+  if (textEl !== focusTextEl) { toolbar.classList.remove('visible'); return; }
+  
+  // Don't show toolbar if selecting within already-deleted text
+  if (anchor.parentElement.closest('.fine-delete') || anchor.parentElement.closest('.manual-delete')) {
+    toolbar.classList.remove('visible');
+    return;
+  }
+  
+  const selectedText = sel.toString().trim();
+  if (selectedText.length === 0) { toolbar.classList.remove('visible'); return; }
+  
+  // Show toolbar near selection
+  const range = sel.getRangeAt(0);
+  const rect = range.getBoundingClientRect();
+  toolbar.style.left = Math.min(rect.left, window.innerWidth - 220) + 'px';
+  toolbar.style.top = (rect.top - 40) + 'px';
+  document.getElementById('sel-preview').textContent = '"' + (selectedText.length > 20 ? selectedText.slice(0,20) + '...' : selectedText) + '"';
+  toolbar.classList.add('visible');
+});
+
+// Hide toolbar on click elsewhere
+document.addEventListener('mousedown', function(e) {
+  if (!e.target.closest('#selection-toolbar')) {
+    // Don't hide immediately - let mouseup handler decide
+    setTimeout(() => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed) {
+        document.getElementById('selection-toolbar').classList.remove('visible');
+      }
+    }, 200);
+  }
+});
+
+function markSelectionDeleted() {
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) return;
+  
+  const selectedText = sel.toString().trim();
+  if (!selectedText) return;
+  
+  // Find which sentence this is in
+  const anchor = sel.anchorNode;
+  const textEl = anchor.parentElement.closest('.s-text');
+  if (!textEl) return;
+  
+  const row = textEl.closest('[id^="row-"]');
+  if (!row) return;
+  const sentenceIdx = parseInt(row.id.replace('row-', ''));
+  
+  // Create manual edit
+  const editId = ++manualEditCounter;
+  const edit = { id: editId, sentenceIdx: sentenceIdx, deleteText: selectedText };
+  manualEdits.push(edit);
+  
+  // Push undo
+  undoStack.push({ type: 'manualEdit', editId: editId });
+  
+  // Clear selection
+  sel.removeAllRanges();
+  document.getElementById('selection-toolbar').classList.remove('visible');
+  
+  invalidateSkipRanges();
+  // Re-render the sentence
+  rebuildRowWithManualEdits(sentenceIdx);
+  updateStats();
+}
+
+function toggleManualEdit(editId) {
+  const edit = manualEdits.find(e => e.id === editId);
+  if (!edit) return;
+  
+  undoStack.push({ type: 'manualEditToggle', editId: editId, wasDisabled: !!edit.disabled });
+  
+  edit.disabled = !edit.disabled;
+  invalidateSkipRanges();
+  rebuildRowWithManualEdits(edit.sentenceIdx);
+  updateStats();
+}
+
+function rebuildRowWithManualEdits(sentenceIdx) {
+  const s = sentencesData.find(s => s.idx === sentenceIdx);
+  if (!s) return;
+  const row = document.getElementById('row-' + sentenceIdx);
+  if (!row) return;
+  const textEl = row.querySelector('.s-text');
+  if (!textEl) return;
+  
+  // Start with the sentence text
+  let fullText = s.text;
+  
+  // Collect all active deletions (fine edits + manual edits) as ranges
+  const deletions = [];
+  
+  // AI fine edit
+  if (s.fineEdit && s.fineEdit.deleteText && !fineEditsDisabled.has(s.fineEdit.idx)) {
+    const pos = fullText.indexOf(s.fineEdit.deleteText);
+    if (pos >= 0) {
+      deletions.push({
+        start: pos,
+        end: pos + s.fineEdit.deleteText.length,
+        type: 'fine',
+        feIdx: s.fineEdit.idx,
+        label: s.fineEdit.type,
+        reason: s.fineEdit.reason
+      });
+    }
+  }
+  
+  // Manual edits for this sentence
+  const sentManual = manualEdits.filter(e => e.sentenceIdx === sentenceIdx);
+  for (const me of sentManual) {
+    // Find the deleteText in fullText, skipping positions already covered
+    let searchFrom = 0;
+    let pos = -1;
+    while (true) {
+      pos = fullText.indexOf(me.deleteText, searchFrom);
+      if (pos < 0) break;
+      // Check if this position overlaps with existing deletions
+      const overlaps = deletions.some(d => pos < d.end && pos + me.deleteText.length > d.start);
+      if (!overlaps) break;
+      searchFrom = pos + 1;
+    }
+    if (pos >= 0) {
+      deletions.push({
+        start: pos,
+        end: pos + me.deleteText.length,
+        type: 'manual',
+        editId: me.id,
+        disabled: !!me.disabled
+      });
+    }
+  }
+  
+  // Sort deletions by position
+  deletions.sort((a, b) => a.start - b.start);
+  
+  // Build HTML
+  const escaped = escapeHtml(fullText);
+  let html = '';
+  
+  // Add fine edit tag if present
+  if (s.fineEdit) {
+    const feDisabled = fineEditsDisabled.has(s.fineEdit.idx);
+    const feClass = feDisabled ? 'fine-tag disabled' : 'fine-tag';
+    html += '<span class="' + feClass + '" data-fine-idx="' + s.fineEdit.idx + '" onclick="event.stopPropagation(); toggleFineEdit(' + s.fineEdit.idx + ')" title="' + escapeHtml(s.fineEdit.reason || '') + '">' + escapeHtml(s.fineEdit.type) + '</span>';
+  }
+  
+  // Add manual edit tags
+  for (const me of sentManual) {
+    const tagClass = me.disabled ? 'manual-tag disabled' : 'manual-tag';
+    html += '<span class="' + tagClass + '" onclick="event.stopPropagation(); toggleManualEdit(' + me.id + ')" title="手动标记删除">手动</span>';
+  }
+  
+  // Render text with deletion spans
+  let lastEnd = 0;
+  for (const d of deletions) {
+    const escStart = escapeHtml(fullText.substring(lastEnd, d.start));
+    const escDel = escapeHtml(fullText.substring(d.start, d.end));
+    html += escStart;
+    
+    if (d.type === 'fine') {
+      const delClass = 'fine-delete';
+      html += '<span class="' + delClass + '" onclick="event.stopPropagation(); toggleFineEdit(' + d.feIdx + ')" title="点击切换保留/删除">' + escDel + '</span>';
+    } else if (d.type === 'manual') {
+      if (d.disabled) {
+        html += escDel; // Just plain text when disabled
+      } else {
+        html += '<span class="manual-delete" onclick="event.stopPropagation(); toggleManualEdit(' + d.editId + ')" title="手动删除 - 点击恢复">' + escDel + '</span>';
+      }
+    }
+    lastEnd = d.end;
+  }
+  html += escapeHtml(fullText.substring(lastEnd));
+  
+  textEl.innerHTML = html;
+}
+
+// ===== AUDIO PLAYER (with dynamic cut mode) =====
+const speeds = [1, 1.25, 1.5, 2, 0.75];
+const currentSpeed = { original: 0, cut: 0 };
+let cutMode = false;
+let _skipRangesCache = null;
+let _skipRangesDirty = true;
+
+
+// Mark skip ranges dirty whenever edits change
+function invalidateSkipRanges() { _skipRangesDirty = true; }
+
+// Compute delete time ranges from current edit state
+function getSkipRanges() {
+  if (!_skipRangesDirty && _skipRangesCache) return _skipRangesCache;
+  
+  const ranges = [];
+  
+  sentencesData.forEach(s => {
+    // Sentence-level deletions
+    if (currentDeletedSet.has(s.idx)) {
+      ranges.push([s.startTime, s.endTime]);
+      return; // Whole sentence deleted, skip fine/manual edits
+    }
+    
+    // Fine edits (word-level)
+    if (s.fineEdit && !fineEditsDisabled.has(s.fineEdit.idx)) {
+      const fe = s.fineEdit;
+      if (fe.ds !== undefined && fe.de !== undefined) {
+        ranges.push([fe.ds, fe.de]);
+      }
+    }
+    
+    // Manual edits (word-level)
+    const sentManual = manualEdits.filter(e => e.sentenceIdx === s.idx && !e.disabled);
+    for (const me of sentManual) {
+      if (!s.words || s.words.length === 0) continue;
+      const wordTexts = s.words.map(w => w.t);
+      const fullText = wordTexts.join('');
+      const pos = fullText.indexOf(me.deleteText);
+      if (pos < 0) continue;
+      
+      let charCount = 0, startW = null, endW = null;
+      for (let i = 0; i < wordTexts.length; i++) {
+        const wEnd = charCount + wordTexts[i].length;
+        if (startW === null && wEnd > pos) startW = i;
+        if (wEnd >= pos + me.deleteText.length) { endW = i; break; }
+        charCount = wEnd;
+      }
+      if (startW !== null && endW !== null) {
+        ranges.push([s.words[startW].s, s.words[endW].e]);
+      }
+    }
+  });
+  
+  // Sort and merge overlapping ranges
+  ranges.sort((a, b) => a[0] - b[0]);
+  const merged = [];
+  for (const r of ranges) {
+    if (merged.length > 0 && r[0] <= merged[merged.length - 1][1] + 0.05) {
+      merged[merged.length - 1][1] = Math.max(merged[merged.length - 1][1], r[1]);
+    } else {
+      merged.push([...r]);
+    }
+  }
+
+  // Extend first range to 0 if it starts within 5s (pre-recording noise)
+  if (merged.length > 0 && merged[0][0] > 0 && merged[0][0] < 5) {
+    merged[0][0] = 0;
+  }
+
+  // Compute adaptive lookahead for each range: [start, end, lookahead]
+  // Based on gap to closest preceding kept word. Sentence gaps are large (~1s),
+  // fine edit gaps are tiny (~0ms). Lookahead capped at 50ms-300ms.
+  // For tight gaps (< 100ms), also nudge range start earlier by 50ms so that
+  // even with JS timer jitter (~50ms), deleted content can't leak through.
+  for (let i = 0; i < merged.length; i++) {
+    const s = merged[i][0];
+    let closestPrevEnd = 0;
+    for (const sent of sentencesData) {
+      if (currentDeletedSet.has(sent.idx)) continue;
+      if (sent.startTime > s + 1) break;
+      if (!sent.words) continue;
+      for (const w of sent.words) {
+        if (w.e <= s && w.e > closestPrevEnd) closestPrevEnd = w.e;
+      }
+    }
+    const gap = s - closestPrevEnd;
+    // For tight gaps: extend range start back 200ms for safety buffer
+    // Accounts for JS timer jitter (~100ms) + audio buffer delay (~20ms)
+    // Clips previous word's vowel tail — imperceptible in conversation
+    if (gap < 0.20 && merged[i][0] > 0.20) {
+      merged[i][0] = Math.max(0, merged[i][0] - 0.20);
+    }
+    const adjustedGap = merged[i][0] - closestPrevEnd;
+    merged[i][2] = Math.min(0.30, Math.max(0.05, adjustedGap));
+  }
+
+  _skipRangesCache = merged;
+  _skipRangesDirty = false;
+  return merged;
+}
+
+// Convert original time → virtual cut time
+function originalToVirtual(t) {
+  const ranges = getSkipRanges();
+  let skipped = 0;
+  for (const [s, e] of ranges) {
+    if (e <= t) skipped += e - s;
+    else if (s < t) { skipped += t - s; break; }
+    else break;
+  }
+  return t - skipped;
+}
+
+// Convert virtual cut time → original time
+function virtualToOriginal(vt) {
+  const ranges = getSkipRanges();
+  let accumulated = 0;
+  let origTime = vt;
+  
+  for (const [s, e] of ranges) {
+    if (s <= origTime + accumulated) {
+      accumulated += e - s;
+      origTime = vt + accumulated;
+    } else {
+      break;
+    }
+  }
+  return origTime;
+}
+
+// Total virtual duration
+function getVirtualDuration() {
+  const audio = document.getElementById('audio-original');
+  if (!audio || !audio.duration) return 0;
+  const ranges = getSkipRanges();
+  let totalSkip = 0;
+  for (const [s, e] of ranges) totalSkip += e - s;
+  return audio.duration - totalSkip;
+}
+
+function togglePlay(which) {
+  const audio = document.getElementById('audio-original');
+  const btn = document.querySelector('#player-' + which + ' .play-btn');
+
+  // Stop the other player
+  const other = which === 'original' ? 'cut' : 'original';
+  const otherBtn = document.querySelector('#player-' + other + ' .play-btn');
+  
+  if (which === 'cut') {
+    // If original was playing, stop it
+    if (!cutMode && !audio.paused) {
+      audio.pause();
+    }
+    const origBtn = document.querySelector('#player-original .play-btn');
+    origBtn.classList.remove('playing');
+    origBtn.innerHTML = '&#9654;';
+    
+    cutMode = true;
+    if (audio.paused) {
+      // Seek past any current skip range, wait for seek to complete, then play
+      const ranges = getSkipRanges();
+      const t = audio.currentTime;
+      let needSeek = false;
+      for (const [s, e] of ranges) {
+        if (t >= s - 0.01 && t < e) {
+          let seekTarget = e;
+          const nextKept = sentencesData.find(ns => !currentDeletedSet.has(ns.idx) && ns.startTime >= e - 0.1);
+          if (nextKept && nextKept.startTime <= e + 0.5) seekTarget = nextKept.startTime;
+          audio.currentTime = seekTarget;
+          needSeek = true;
+          break;
+        }
+      }
+      if (needSeek) {
+        audio.addEventListener('seeked', function onReady() {
+          audio.removeEventListener('seeked', onReady);
+          audio.play();
+          scheduleNextSkip();
+        }, { once: true });
+      } else {
+        audio.play();
+        scheduleNextSkip();
+      }
+      btn.classList.add('playing');
+      btn.innerHTML = '&#10074;&#10074;';
+    } else {
+      audio.pause();
+      btn.classList.remove('playing');
+      btn.innerHTML = '&#9654;';
+    }
+  } else {
+    // Original mode
+    const cutBtn = document.querySelector('#player-cut .play-btn');
+    cutBtn.classList.remove('playing');
+    cutBtn.innerHTML = '&#9654;';
+    
+    if (_skipScheduled) { clearTimeout(_skipScheduled); _skipScheduled = null; }
+    cutMode = false;
+    if (audio.paused) {
+      audio.play();
+      btn.classList.add('playing');
+      btn.innerHTML = '&#10074;&#10074;';
+    } else {
+      audio.pause();
+      btn.classList.remove('playing');
+      btn.innerHTML = '&#9654;';
+    }
+  }
+}
+
+let _skipScheduled = null;
+
+function skipIfNeeded() {
+  const audio = document.getElementById('audio-original');
+  if (!cutMode || audio.paused) return;
+  const t = audio.currentTime;
+  const rate = audio.playbackRate || 1;
+  const ranges = getSkipRanges();
+
+  for (const r of ranges) {
+    const s = r[0], e = r[1], la = r[2] || 0.30;
+    // Already inside or approaching a delete range (adaptive lookahead)
+    if (t >= s - la * rate && t < e) {
+      // Find next kept sentence's startTime for clean landing
+      // Only use nextKept if it's close to range end (< 0.5s), otherwise
+      // we're mid-sentence (fine edit) and should stay at range end
+      let seekTarget = e;
+      const nextKept = sentencesData.find(ns => !currentDeletedSet.has(ns.idx) && ns.startTime >= e - 0.1);
+      if (nextKept && nextKept.startTime <= e + 0.5) seekTarget = nextKept.startTime;
+
+      // For tight gaps (la < 0.15): pause-seek-play to prevent leakage
+      // For larger gaps: direct seek (no click artifact, no pause delay)
+      if (la < 0.15) {
+        audio.pause();
+        audio.currentTime = seekTarget;
+        audio.addEventListener('seeked', function onSeeked() {
+          audio.removeEventListener('seeked', onSeeked);
+          if (cutMode) audio.play();
+          scheduleNextSkip();
+        }, { once: true });
+      } else {
+        audio.currentTime = seekTarget;
+        scheduleNextSkip();
+      }
+      return;
+    }
+  }
+
+  // Not in a skip range - schedule the next one for precise timing
+  scheduleNextSkip();
+}
+
+function scheduleNextSkip() {
+  const audio = document.getElementById('audio-original');
+  if (!cutMode || audio.paused) { _skipScheduled = null; return; }
+  
+  if (_skipScheduled) clearTimeout(_skipScheduled);
+  
+  const t = audio.currentTime;
+  const rate = audio.playbackRate || 1;
+  const ranges = getSkipRanges();
+  
+  // Find the next skip range ahead of us
+  for (const r of ranges) {
+    const s = r[0], la = r[2] || 0.30;
+    if (s > t) {
+      // Schedule skip with adaptive lookahead before the range starts
+      const delay = Math.max(0, ((s - t) / rate - la) * 1000);
+      _skipScheduled = setTimeout(() => {
+        _skipScheduled = null;
+        skipIfNeeded();
+      }, delay);
+      return;
+    }
+  }
+  _skipScheduled = null;
+}
+
+function cycleSpeed(which) {
+  const audio = document.getElementById('audio-original');
+  const btn = document.querySelector('#player-' + which + ' .speed-btn');
+  currentSpeed[which] = (currentSpeed[which] + 1) % speeds.length;
+  audio.playbackRate = speeds[currentSpeed[which]];
+  btn.textContent = speeds[currentSpeed[which]] + 'x';
+}
+
+function seekAudio(event, which) {
+  const audio = document.getElementById('audio-original');
+  const bar = event.currentTarget;
+  const rect = bar.getBoundingClientRect();
+  const pct = (event.clientX - rect.left) / rect.width;
+  
+  if (which === 'cut') {
+    cutMode = true;
+    const vDur = getVirtualDuration();
+    const vTime = pct * vDur;
+    audio.currentTime = virtualToOriginal(vTime);
+  } else {
+    cutMode = false;
+    audio.currentTime = pct * audio.duration;
+  }
+}
+
+function seekToTime(seconds) {
+  const audio = document.getElementById('audio-original');
+  audio.currentTime = seconds;
+  if (audio.paused) {
+    togglePlay('original');
+  }
+}
+
+function formatTime(s) {
+  s = Math.floor(s);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return h + ':' + String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+  return m + ':' + String(sec).padStart(2,'0');
+}
+
+function updateProgress() {
+  const audio = document.getElementById('audio-original');
+  
+  if (audio && audio.duration) {
+    // Skip logic for cut mode
+    if (cutMode && !audio.paused) {
+      const _t = audio.currentTime;
+      skipIfNeeded();
+    }
+    
+    // Original player progress
+    const fillOrig = document.getElementById('progress-original');
+    const timeOrig = document.getElementById('time-original');
+    const pctOrig = (audio.currentTime / audio.duration) * 100;
+    fillOrig.style.width = pctOrig + '%';
+    timeOrig.textContent = formatTime(audio.currentTime) + ' / ' + formatTime(audio.duration);
+    
+    // Cut player progress (virtual time)
+    const fillCut = document.getElementById('progress-cut');
+    const timeCut = document.getElementById('time-cut');
+    const vDur = getVirtualDuration();
+    const vTime = originalToVirtual(audio.currentTime);
+    const pctCut = vDur > 0 ? (vTime / vDur) * 100 : 0;
+    fillCut.style.width = pctCut + '%';
+    timeCut.textContent = formatTime(vTime) + ' / ' + formatTime(vDur);
+  }
+  
+  requestAnimationFrame(updateProgress);
+}
+
+// ===== KEYBOARD SHORTCUTS =====
+document.addEventListener('keydown', function(e) {
+  // D key to toggle deletion on highlighted row
+  if (e.key === 'd' || e.key === 'D') {
+    if (e.target.tagName === 'INPUT') return; // Don't trigger in search box
+    if (highlightedIdx >= 0) {
+      toggleDeletion(highlightedIdx);
+    }
+  }
+
+  // Ctrl+Z to undo
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+    if (e.target.tagName === 'INPUT') return;
+    e.preventDefault();
+    undo();
+  }
+
+  // Arrow keys to navigate rows
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    if (e.target.tagName === 'INPUT') return;
+    e.preventDefault();
+    const visibleRows = sentencesData.filter(s => {
+      const row = document.getElementById('row-' + s.idx);
+      return row && !row.classList.contains('hidden');
+    });
+    if (visibleRows.length === 0) return;
+
+    let currentPos = visibleRows.findIndex(s => s.idx === highlightedIdx);
+    if (e.key === 'ArrowDown') {
+      currentPos = Math.min(currentPos + 1, visibleRows.length - 1);
+    } else {
+      currentPos = Math.max(currentPos - 1, 0);
+    }
+    if (currentPos < 0) currentPos = 0;
+    highlightRow(visibleRows[currentPos].idx);
+    const row = document.getElementById('row-' + visibleRows[currentPos].idx);
+    if (row) row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+});
+
+// ===== SCROLL TO TOP BUTTON =====
+window.addEventListener('scroll', function() {
+  const btn = document.getElementById('scroll-top');
+  btn.classList.toggle('visible', window.scrollY > 400);
+});
+
+// ===== INIT =====
+// Populate stat cards dynamically
+document.getElementById('stat-total').textContent = TOTAL_SENTENCES;
+document.getElementById('stat-ai-deleted').textContent = AI_DELETED_COUNT;
+document.getElementById('stat-ai-kept').textContent = TOTAL_SENTENCES - AI_DELETED_COUNT;
+document.getElementById('stat-fine-edits').textContent = sentencesData.filter(s => s.fineEdit).length;
+document.getElementById('stat-blocks').textContent = blocksData.length;
+document.getElementById('stat-final-delete').textContent = currentDeletedSet.size;
+
+buildSummaryTable();
+buildTranscript();
+requestAnimationFrame(updateProgress);
+
+// Pre-seek audio to first non-deleted sentence so cut-mode playback starts clean
+const _initAudio = document.getElementById('audio-original');
+_initAudio.addEventListener('loadedmetadata', function() {
+  const firstKept = sentencesData.find(s => !currentDeletedSet.has(s.idx));
+  if (firstKept) {
+    _initAudio.currentTime = firstKept.startTime;
+  }
+}, { once: true });
+
+// ===== MISSED CATCH FEEDBACK =====
+const missedCatches = [];
+let missedCatchCounter = 0;
+let _mcPendingText = '';
+let _mcPendingSentenceIdx = -1;
+
+const mcTypeLabels = {
+  in_sentence_repeat: '句内重复',
+  repeated_sentence: '重复句',
+  stutter: '卡顿词',
+  self_correction: '重说纠正',
+  consecutive_filler: '连续填充词',
+  residual_sentence: '残句',
+  silence: '长静音',
+  production_talk: '录制讨论',
+  chit_chat: '闲聊',
+  other: '其他'
+};
+
+function markSelectionDeletedAndPrompt() {
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) return;
+  const selectedText = sel.toString().trim();
+  if (!selectedText) return;
+
+  const anchor = sel.anchorNode;
+  const textEl = anchor.parentElement.closest('.s-text');
+  if (!textEl) return;
+  const row = textEl.closest('[id^="row-"]');
+  if (!row) return;
+  const sentenceIdx = parseInt(row.id.replace('row-', ''));
+
+  // 1) Do the deletion immediately (same as markSelectionDeleted)
+  const editId = ++manualEditCounter;
+  const edit = { id: editId, sentenceIdx: sentenceIdx, deleteText: selectedText };
+  manualEdits.push(edit);
+  undoStack.push({ type: 'manualEdit', editId: editId });
+  sel.removeAllRanges();
+  document.getElementById('selection-toolbar').classList.remove('visible');
+  invalidateSkipRanges();
+  rebuildRowWithManualEdits(sentenceIdx);
+  updateStats();
+
+  // 2) Remember pending info for feedback panel
+  _mcPendingText = selectedText;
+  _mcPendingSentenceIdx = sentenceIdx;
+
+  // 3) Show feedback panel near the deleted text
+  const panel = document.getElementById('missed-catch-panel');
+  document.getElementById('mc-preview-text').textContent = selectedText.length > 80 ? selectedText.slice(0, 80) + '...' : selectedText;
+  document.getElementById('mc-reason').value = '';
+
+  const rowRect = row.getBoundingClientRect();
+  panel.style.left = Math.min(rowRect.left + 40, window.innerWidth - 340) + 'px';
+  panel.style.top = (rowRect.bottom + 4) + 'px';
+  panel.classList.add('visible');
+
+  setTimeout(() => document.getElementById('mc-type').focus(), 100);
+}
+
+function hideMissedCatchPanel() {
+  document.getElementById('missed-catch-panel').classList.remove('visible');
+  _mcPendingText = '';
+  _mcPendingSentenceIdx = -1;
+}
+
+// Enter key in reason input confirms
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && document.getElementById('missed-catch-panel').classList.contains('visible')) {
+    e.preventDefault();
+    confirmMissedCatch();
+  }
+  if (e.key === 'Escape' && document.getElementById('missed-catch-panel').classList.contains('visible')) {
+    e.preventDefault();
+    hideMissedCatchPanel();
+  }
+});
+
+function confirmMissedCatch() {
+  if (!_mcPendingText || _mcPendingSentenceIdx < 0) return;
+
+  const mcType = document.getElementById('mc-type').value;
+  const reason = document.getElementById('mc-reason').value.trim();
+  const id = ++missedCatchCounter;
+
+  const sent = sentencesData.find(s => s.idx === _mcPendingSentenceIdx);
+  // Calculate timestamp from words
+  let tsStart = null, tsEnd = null;
+  if (sent && sent.words && sent.words.length > 0) {
+    const wordTexts = sent.words.map(w => w.t);
+    const fullText = wordTexts.join('');
+    const pos = fullText.indexOf(_mcPendingText);
+    if (pos >= 0) {
+      let charCount = 0, sw = null, ew = null;
+      for (let i = 0; i < wordTexts.length; i++) {
+        const wEnd = charCount + wordTexts[i].length;
+        if (sw === null && wEnd > pos) sw = i;
+        if (wEnd >= pos + _mcPendingText.length) { ew = i; break; }
+        charCount = wEnd;
+      }
+      if (sw !== null && ew !== null) {
+        tsStart = sent.words[sw].s;
+        tsEnd = sent.words[ew].e;
+      }
+    }
+  }
+
+  const mc = {
+    id: id,
+    sentenceIdx: _mcPendingSentenceIdx,
+    speaker: sent ? sent.speaker : '',
+    selectedText: _mcPendingText,
+    fullSentence: sent ? sent.text : '',
+    type: mcType,
+    typeLabel: mcTypeLabels[mcType] || mcType,
+    reason: reason || '',
+    timestamp: tsStart !== null ? { start: tsStart, end: tsEnd } : null
+  };
+  missedCatches.push(mc);
+
+  // Just hide panel, deletion was already done
+  document.getElementById('missed-catch-panel').classList.remove('visible');
+  // Re-render to show the missed-catch tag
+  rebuildRowWithManualEdits(_mcPendingSentenceIdx);
+  _mcPendingText = '';
+  _mcPendingSentenceIdx = -1;
+  updateStats();
+}
+
+function removeMissedCatch(id) {
+  const idx = missedCatches.findIndex(mc => mc.id === id);
+  if (idx >= 0) {
+    const sentIdx = missedCatches[idx].sentenceIdx;
+    missedCatches.splice(idx, 1);
+    rebuildRowWithManualEdits(sentIdx);
+    updateStats();
+  }
+}
+
+// Patch rebuildRowWithManualEdits to also render missed catches
+const _origRebuild = rebuildRowWithManualEdits;
+rebuildRowWithManualEdits = function(sentenceIdx) {
+  _origRebuild(sentenceIdx);
+  // Now overlay missed catches
+  const row = document.getElementById('row-' + sentenceIdx);
+  if (!row) return;
+  const textEl = row.querySelector('.s-text');
+  if (!textEl) return;
+
+  const sentMC = missedCatches.filter(mc => mc.sentenceIdx === sentenceIdx);
+  if (sentMC.length === 0) return;
+
+  let html = textEl.innerHTML;
+  // Apply missed catch highlights (on the raw text portions, not already-wrapped spans)
+  for (const mc of sentMC) {
+    const escaped = mc.selectedText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Only match text NOT already inside a tag
+    const re = new RegExp('(?<!["\'>])(' + escaped + ')(?![^<]*>)', '');
+    const match = html.match(re);
+    if (match) {
+      const tag = `<span class="missed-catch-tag" onclick="removeMissedCatch(${mc.id})" title="点击取消">${mc.typeLabel}</span>`;
+      const wrap = `<span class="missed-catch" title="${mc.typeLabel}: ${mc.reason || '无理由'}">${match[1]}</span>`;
+      html = html.replace(match[0], tag + wrap);
+    }
+  }
+  textEl.innerHTML = html;
+};
+
+function exportFeedback() {
+  if (missedCatches.length === 0) {
+    alert('暂无AI遗漏记录。选中文字标记删除时可以记录遗漏类型。');
+    return;
+  }
+
+  // Also collect user corrections (added/removed deletions)
+  const addedDeletions = Array.from(userAddedDeletions).sort((a,b) => a-b);
+  const removedDeletions = Array.from(userRemovedDeletions).sort((a,b) => a-b);
+
+  const byType = {};
+  missedCatches.forEach(mc => {
+    byType[mc.type] = (byType[mc.type] || 0) + 1;
+  });
+
+  const feedbackData = {
+    version: 'feedback_v1',
+    exported_at: new Date().toISOString(),
+    audio_source: document.title || '',
+    missed_catches: missedCatches.map(mc => ({
+      sentenceIdx: mc.sentenceIdx,
+      speaker: mc.speaker,
+      selectedText: mc.selectedText,
+      fullSentence: mc.fullSentence,
+      type: mc.type,
+      typeLabel: mc.typeLabel,
+      reason: mc.reason,
+      timestamp: mc.timestamp
+    })),
+    user_corrections: {
+      added_deletions: addedDeletions,
+      removed_deletions: removedDeletions
+    },
+    summary: {
+      total_missed: missedCatches.length,
+      by_type: byType
+    }
+  };
+
+  const blob = new Blob([JSON.stringify(feedbackData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'ai_feedback_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e3a5f;color:#e0e0e0;padding:24px;border-radius:12px;z-index:9999;max-width:500px;box-shadow:0 8px 32px rgba(0,0,0,0.5);font-size:14px;';
+  let typesSummary = Object.entries(byType).map(([t, c]) => `${mcTypeLabels[t] || t}: ${c}`).join('、');
+  toast.innerHTML = `
+    <div style="margin-bottom:12px;font-size:16px;font-weight:bold;">&#128270; 已导出 AI 反馈文件</div>
+    <div style="margin-bottom:8px;">${missedCatches.length} 个遗漏标记（${typesSummary}）</div>
+    <div style="margin-bottom:8px;">将文件交给 AI，运行自进化 skill 更新规则：</div>
+    <div style="background:#0d1117;padding:10px;border-radius:8px;font-family:monospace;font-size:13px;">/podcastcut:自进化</div>
+    <button onclick="this.parentElement.remove()" style="margin-top:12px;padding:6px 16px;background:#333;color:#fff;border:none;border-radius:6px;cursor:pointer;">关闭</button>
+  `;
+  document.body.appendChild(toast);
+}
+
+// Close missed catch panel on outside click
+document.addEventListener('mousedown', function(e) {
+  if (!e.target.closest('#missed-catch-panel') && document.getElementById('missed-catch-panel').classList.contains('visible')) {
+    hideMissedCatchPanel();
+  }
+});
+</script>
+
+<div id="selection-toolbar">
+  <span class="sel-text" id="sel-preview"></span>
+  <button onclick="markSelectionDeletedAndPrompt()">&#9986; 标记删除</button>
+</div>
+
+<div id="missed-catch-panel">
+  <div class="mc-title">&#128161; AI没识别到这个，帮忙记录一下？</div>
+  <div class="mc-preview" id="mc-preview-text"></div>
+  <select id="mc-type">
+    <option value="in_sentence_repeat">句内重复</option>
+    <option value="repeated_sentence">重复句</option>
+    <option value="stutter">卡顿词</option>
+    <option value="self_correction">重说纠正</option>
+    <option value="consecutive_filler">连续填充词</option>
+    <option value="residual_sentence">残句</option>
+    <option value="silence">长静音</option>
+    <option value="production_talk">录制讨论/协调</option>
+    <option value="chit_chat">闲聊</option>
+    <option value="other">其他</option>
+  </select>
+  <input type="text" id="mc-reason" placeholder="简述理由（选填，回车确认）">
+  <div class="mc-btns">
+    <button class="mc-btn mc-btn-cancel" onclick="hideMissedCatchPanel()">跳过</button>
+    <button class="mc-btn mc-btn-ok" onclick="confirmMissedCatch()">记录</button>
+  </div>
+</div>
+
+</body>
+</html>
