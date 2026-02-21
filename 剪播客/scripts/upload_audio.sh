@@ -24,8 +24,23 @@ echo "   文件: $AUDIO_FILE"
 echo "   大小: $FILE_SIZE"
 echo ""
 
-# 尝试1: 0x0.st (最简单，支持大文件，48小时保留)
-echo "🔄 [1/4] 尝试 0x0.st (48小时保留)..."
+# 尝试1: uguu.se (快速，48小时保留，最大100MB)
+echo "🔄 [1/5] 尝试 uguu.se (48小时保留)..."
+RESPONSE=$(curl -s --max-time 120 -F "files[]=@$AUDIO_FILE" https://uguu.se/upload.php 2>&1 || echo "")
+URL=$(echo "$RESPONSE" | grep -o '"url":"[^"]*"' | head -1 | cut -d'"' -f4 || echo "")
+if [[ "$URL" =~ ^https?:// ]]; then
+    echo "✅ 上传成功！"
+    echo "$URL"
+    echo "$URL" > audio_url.txt
+    echo ""
+    echo "   URL已保存到: audio_url.txt"
+    exit 0
+fi
+echo "   ❌ 失败"
+echo ""
+
+# 尝试2: 0x0.st (支持大文件，48小时保留)
+echo "🔄 [2/5] 尝试 0x0.st (48小时保留)..."
 RESPONSE=$(curl -s -F "file=@$AUDIO_FILE" https://0x0.st 2>&1 || echo "")
 if [[ "$RESPONSE" =~ ^https?:// ]]; then
     echo "✅ 上传成功！"
@@ -38,8 +53,8 @@ fi
 echo "   ❌ 失败"
 echo ""
 
-# 尝试2: file.io (一次性下载，永久保留直到被下载)
-echo "🔄 [2/4] 尝试 file.io (一次性下载)..."
+# 尝试3: file.io (一次性下载，永久保留直到被下载)
+echo "🔄 [3/5] 尝试 file.io (一次性下载)..."
 RESPONSE=$(curl -s -F "file=@$AUDIO_FILE" https://file.io 2>&1 || echo "")
 URL=$(echo "$RESPONSE" | grep -o '"link":"[^"]*"' | cut -d'"' -f4 || echo "")
 if [[ "$URL" =~ ^https?:// ]]; then
@@ -55,7 +70,7 @@ echo "   ❌ 失败"
 echo ""
 
 # 尝试3: tmpfiles.org (24小时保留)
-echo "🔄 [3/4] 尝试 tmpfiles.org (24小时保留)..."
+echo "🔄 [4/5] 尝试 tmpfiles.org (24小时保留)..."
 RESPONSE=$(curl -s -F "file=@$AUDIO_FILE" https://tmpfiles.org/api/v1/upload 2>&1 || echo "")
 URL=$(echo "$RESPONSE" | grep -o '"url":"[^"]*"' | cut -d'"' -f4 | sed 's/tmpfiles.org\//tmpfiles.org\/dl\//' || echo "")
 if [[ "$URL" =~ ^https?:// ]]; then
@@ -70,7 +85,7 @@ echo "   ❌ 失败"
 echo ""
 
 # 尝试4: catbox.moe (永久保留，最大200MB)
-echo "🔄 [4/4] 尝试 catbox.moe (永久保留)..."
+echo "🔄 [5/5] 尝试 catbox.moe (永久保留)..."
 RESPONSE=$(curl -s -F "reqtype=fileupload" -F "fileToUpload=@$AUDIO_FILE" https://catbox.moe/user/api.php 2>&1 || echo "")
 if [[ "$RESPONSE" =~ ^https?://.*catbox.moe.* ]]; then
     echo "✅ 上传成功！"

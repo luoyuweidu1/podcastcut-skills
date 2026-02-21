@@ -129,71 +129,88 @@ output/
 
 ### 步骤 -1: 用户识别 + 偏好确认 🆕v5
 
-**在开始剪辑前，识别用户并加载个性化偏好。**
+**⚠️ 这是整个流程的第一步。用户说"剪播客"时，必须先走这一步。**
+
+**核心原则：主动引导，不要等用户猜你需要什么。像表单一样一步步带着走。**
+
+#### 第一个问题：你是谁？
+
+收到剪播客请求后，**立刻**问用户：
+
+> "你是已有用户还是新用户？"
 
 ```bash
 cd /Volumes/T9/claude_skill/podcastcut/剪播客
 
-# 检查用户偏好（支持多用户）
-node scripts/check_preferences.js [userId]
-# 或指定用户: PODCASTCUT_USER=lixiang node scripts/check_preferences.js
+# 列出已有用户
+node scripts/user_manager.js list
 ```
 
-#### 用户识别
+- **已有用户** → 询问用户名 → 加载偏好 → 跳到「日常使用」
+- **新用户** → 询问用户名（英文/拼音）→ 创建用户 → 进入「Onboarding」
 
-1. 检查环境变量 `PODCASTCUT_USER`
-2. 如果未设置，询问用户："你的用户名是？"
-3. 如果用户不存在，创建新用户：`node scripts/user_manager.js create <userId>`
-4. 加载用户配置：`用户配置/<userId>/preferences.yaml`
+```bash
+# 检查用户是否存在
+node scripts/user_manager.js check <userId>
 
-#### 首次使用 (Onboarding)
+# 创建新用户（从 default/ 克隆配置）
+node scripts/user_manager.js create <userId>
+```
 
-新用户按以下顺序完成偏好设置：
+---
+
+#### Onboarding（新用户）
+
+**主动引导，按以下顺序逐步提问：**
 
 **0. 播客链接（可选，优先）**
-- "你有小宇宙或 Apple Podcasts 的链接吗？"
+- 主动问："你有小宇宙或 Apple Podcasts 的链接吗？"
 - 如有：运行 `node scripts/parse_podcast_link.js <url> <userId>`
 - AI 自动提取播客名、描述、主题 → 写入 `podcast_profile.yaml`
 - 后续受众/目的等问题可自动填充（用户确认即可）
+- 如没有（如播客未上线）：跳过，后续手动填
 
 **1. 剪辑样本学习（可选，推荐）**
-- "你有 1-2 期的剪辑前后音频吗？"
+- 主动问："你有以前剪辑过的音频样本吗？（剪辑前 + 剪辑后各一份）"
 - 如有：
-  1. 用阿里云转录两个版本
-  2. 运行 `python3 scripts/analyze_editing_samples.py --before-transcript ... --after-transcript ... --output learned_patterns.json`
-  3. 运行 `node scripts/generate_rule_overrides.js learned_patterns.json <userId>`
-  4. AI 呈现提取的偏好，用户确认后保存到 `editing_rules/`
-  5. **可跳过手动问答**（样本已提供足够信息）
+  1. 收集：原始音频路径 + 剪后音频路径 + 说话人数量
+  2. 用阿里云转录两个版本
+  3. 运行 `python3 scripts/analyze_editing_samples.py --before-transcript ... --after-transcript ... --output learned_patterns.json`
+  4. 运行 `node scripts/generate_rule_overrides.js learned_patterns.json <userId>`
+  5. AI 呈现提取的偏好，用户确认后保存到 `editing_rules/`
+  6. **可跳过手动问答**（样本已提供足够信息）
 
 **2. 播客定位 (首次必填)**
-- **受众**：你的播客主要面向谁？
-- **目的**：你为什么要做这个播客？
-- （如播客链接已提取信息，此处确认即可）
+- 主动问受众、目的
+- 如播客链接已提取信息，此处确认即可
 
 **3. 时长偏好**
-- **理想时长**：希望最终播客控制在多久？（如 90 分钟）
-- **激进度**：conservative（10-20% 删减）/ moderate（20-35%）/ aggressive（35-50%）
+- 主动问理想时长（如 90 分钟）
+- 主动问激进度：conservative（10-20%）/ moderate（20-35%）/ aggressive（35-50%）
 
 **4. 内容逻辑偏好**
-- 是否启用 AI 内容分析？
+- 主动问是否启用 AI 内容分析
 - 6 种删除类型各自开关：录前准备、技术调试、跑题闲聊、隐私信息、重复内容、制作讨论
 
 **5. 技术细节偏好**
-- 口癖检测和删除激进度（conservative / moderate / aggressive）
-- 重复句处理、静音阈值
+- 主动问口癖检测激进度、重复句处理、静音阈值
 
 **6. 说话人信息**
-- 说话人姓名（方便后续说话人分离）
+- 主动问常用说话人姓名
 
 **后期偏好延迟到首次使用后期 skill 时再询问。**
 
-#### 日常使用
+---
 
-如果已有偏好配置，Claude 会：
+#### 日常使用（已有用户）
+
+如果用户已存在，Claude 会：
 1. 读取用户 `preferences.yaml` + `editing_rules/`
-2. 询问本次的音频文件和说话人
-3. **时长检查（必须）**：拿到音频路径后立即 `ffprobe` 获取时长，与目标时长对比。如果原始时长明显超出目标（如 147min vs 90min），**当场告知用户**："原始 XXX 分钟，目标 YYY 分钟，需要删掉约 ZZZ 分钟。5a 阶段会做内容精选（裁掉部分话题段落），不仅仅是删除有问题的内容。确认？"
-4. 确认是否有特殊要求（如有，临时调整）
+2. 简要确认："已加载你的偏好配置。"
+3. **直接问**："你这次要剪什么播客？把音频文件给我，告诉我几个说话人。"
+4. 拿到音频路径后立即 `ffprobe` 获取时长，与目标时长对比
+5. 如果原始时长明显超出目标（如 147min vs 90min），**当场告知用户**："原始 XXX 分钟，目标 YYY 分钟，需要删掉约 ZZZ 分钟。5a 阶段会做内容精选（裁掉部分话题段落），不仅仅是删除有问题的内容。确认？"
+6. 确认是否有特殊要求（如有，临时调整）
 
 #### 偏好管理
 
