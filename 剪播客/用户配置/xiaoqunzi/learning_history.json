@@ -1,5 +1,30 @@
 {
   "version": "1.0",
-  "learning_events": [],
+  "learning_events": [
+    {
+      "type": "sample_learning",
+      "patterns_file": "/Volumes/T9/claude_skill/podcastcut/output/sample_learning_xiaoqunzi/learned_patterns.json",
+      "rules_generated": [
+        "filler_words",
+        "silence",
+        "content_analysis"
+      ],
+      "aggressiveness": "aggressive",
+      "reduction_percent": 22.3,
+      "date": "2026-02-21"
+    },
+    {
+      "type": "sample_learning",
+      "patterns_file": "/Volumes/T9/claude_skill/podcastcut/output/sample_learning_xiaoqunzi/learned_patterns.json",
+      "rules_generated": [
+        "filler_words",
+        "silence",
+        "content_analysis"
+      ],
+      "aggressiveness": "aggressive",
+      "reduction_percent": 22.3,
+      "date": "2026-02-21"
+    }
+  ],
   "preference_evolution": {}
 }

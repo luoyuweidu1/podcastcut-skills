@@ -1,0 +1,40 @@
+_source: sample_learning
+_generated_at: "2026-02-21"
+_confidence: 0.85
+high_deletion:
+  - word: 嗯嗯
+    deletion_rate: 0.6
+    sample_count: 5
+moderate_deletion:
+  - word: 所以
+    deletion_rate: 0.31
+    sample_count: 58
+  - word: 嗯
+    deletion_rate: 0.39
+    sample_count: 135
+  - word: 呃
+    deletion_rate: 0.36
+    sample_count: 39
+  - word: 额
+    deletion_rate: 0.5
+    sample_count: 2
+  - word: 啊
+    deletion_rate: 0.39
+    sample_count: 18
+preserve:
+  - word: 就是
+    deletion_rate: 0.23
+    sample_count: 141
+  - word: 然后
+    deletion_rate: 0.23
+    sample_count: 90
+  - word: 这个
+    deletion_rate: 0.22
+    sample_count: 100
+  - word: 那个
+    deletion_rate: 0.27
+    sample_count: 37
+  - word: 哦
+    deletion_rate: 0
+    sample_count: 2
+overall_aggressiveness: aggressive

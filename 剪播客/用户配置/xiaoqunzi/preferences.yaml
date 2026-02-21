@@ -1,9 +1,10 @@
-audience: 普通大众
-purpose: 深度访谈
+audience: 女性成长，情绪疗愈
+purpose: 深度访谈、个人成长分享
 duration:
-  target_minutes: 90
-  flexibility_percent: 15
-  aggressiveness: conservative
+  target_minutes: 0
+  flexibility_percent: 100
+  aggressiveness: aggressive
+  note: 不限制时长，主要删问题内容
 content_analysis:
   enabled: true
   detect_types:
@@ -17,14 +18,19 @@ technical:
   enabled: true
   filler_words:
     detection: true
-    aggressiveness: moderate
+    aggressiveness: aggressive
     common_fillers:
+      - 嗯
+      - 呃
+      - 啊
+      - 嗯嗯
+      - 额
+    preserve:
       - 就是
       - 然后
-      - 嗯
-      - 啊
-      - 对对对
-    preserve:
+      - 这个
+      - 那个
+      - 哦
       - 哈哈
       - 哇
   speech_errors:
@@ -38,7 +44,9 @@ technical:
     threshold_seconds: 3
     keep_interval: 0.5
 speakers:
-  hosts: []
+  hosts:
+    - 贝拉
+    - 菲菲
   guest_history: []
 workflow_automation:
   auto_qa_enabled: true

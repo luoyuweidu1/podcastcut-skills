@@ -1,0 +1,21 @@
+_source: sample_learning
+_generated_at: "2026-02-21"
+_confidence: 0.8
+overall_reduction_percent: 22.3
+aggressiveness: aggressive
+detected_types:
+  residual:
+    count: 28
+    duration_seconds: 22.4
+  other:
+    count: 28
+    duration_seconds: 140.7
+  content_block:
+    count: 97
+    duration_seconds: 536.7
+  stutter:
+    count: 19
+    duration_seconds: 100.1
+  filler_word:
+    count: 17
+    duration_seconds: 10.8
