@@ -32,6 +32,7 @@ mkdir -p ~/.claude/skills
 ln -s "$PODCASTCUT_DIR/安装"    ~/.claude/skills/podcastcut-安装
 ln -s "$PODCASTCUT_DIR/剪播客"  ~/.claude/skills/podcastcut-剪播客
 ln -s "$PODCASTCUT_DIR/后期"    ~/.claude/skills/podcastcut-后期
+ln -s "$PODCASTCUT_DIR/质检"    ~/.claude/skills/podcastcut-质检
 ln -s "$PODCASTCUT_DIR/自进化"  ~/.claude/skills/podcastcut-自进化
 ```
 
@@ -80,12 +81,21 @@ cp .env.example .env
     │   │  - 内容删减概览（可折叠表格）        │
     │   │  - 精剪播放器（实时跳过删除段）      │
     │   │  - 整句删除/恢复、精剪切换           │
-    │   │  - 手动选中删除、撤销                │
-    │   │  - 导出剪辑文件                      │
+    │   │  - 手动选中删除（鼠标或 Delete 键） │
+    │   │  - 说话人修正（点击名字）           │
+    │   │  - 撤销、自动保存到 localStorage    │
+    │   │  - 导出剪辑文件 / 导出 AI 反馈      │
     │   └──────────────────────────────────────┘
     │
     ├─ 用户审查 + 导出 delete_segments_edited.json
     └─ 一键剪辑 → 精剪版 MP3
+
+/podcastcut-质检（可选）
+    │
+    ├─ 自动检测剪切点
+    ├─ 信号分析（能量突变、静音异常、频谱跳变等）
+    ├─ AI 听感评估（可选，需 Gemini API Key）
+    └─ 输出质检报告，标记需复听的片段
 
 /podcastcut-后期（可选）
     │
@@ -103,6 +113,7 @@ cp .env.example .env
 | 安装 | `/podcastcut-安装` | 注册 skills、安装依赖、配置 API Key |
 | 剪播客 | `/podcastcut-剪播客` | 转录 + AI 分析 + 审查页面 + 剪辑（核心） |
 | 后期 | `/podcastcut-后期` | 片头预览、主题曲、时间戳、标题、简介 |
+| 质检 | `/podcastcut-质检` | 剪辑质量检测，标记需复听片段 |
 | 自进化 | `/podcastcut-自进化` | 记录反馈，更新方法论和规则 |
 
 ## 目录结构
@@ -138,7 +149,14 @@ podcastcut/
 │       ├── 9-残句检测.md
 │       └── 10-内容分析方法论.md   # 步骤5a的分析方法论
 ├── 后期/                  # 最终润色 skill
-│   └── SKILL.md
+│   ├── SKILL.md
+│   └── scripts/
+│       └── mix_highlights_with_music.py
+├── 质检/                  # 剪辑质检 skill
+│   ├── SKILL.md
+│   └── scripts/
+│       ├── signal_analysis.py     # Layer 1: 信号层分析
+│       └── requirements.txt
 ├── 自进化/                # 自更新 skill
 │   └── SKILL.md
 └── output/                # 输出目录（自动创建）

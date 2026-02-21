@@ -388,7 +388,7 @@ node "$SKILL_DIR/剪播客/scripts/generate_sentences.js" "$BASE_DIR/1_转录/su
 | 2      | 残句       | 9-残句检测     | 话说一半被打断，整句删                  |
 | 3      | 重复句     | 4-重复句检测   | 相邻句开头≥5字相同，删短的              |
 | 4      | 句内重复   | 6-句内重复检测 | A+填充+A 模式，删前面的A                |
-| 5      | 卡顿词     | 5-卡顿词       | "那个那个"、"就是就是"，删前面          |
+| 5      | 卡顿词     | 5-卡顿词       | "那个那个"、"就是就是"，删前面（排除叠词：妈妈/看看/哈哈等） |
 | 6      | 重说纠正   | 8-重说纠正     | 说错立刻纠正，删错的                    |
 | 7      | 连续填充词 | 7-连续填充词   | "嗯啊"、"呃啊"，全删                    |
 | 8      | 单个填充词 | 2-填充词检测   | 单个"嗯"/"啊"默认保留（播客保持对话感） |
@@ -520,11 +520,12 @@ actual_words = words.filter(w => !w.isGap && !w.isSpeakerLabel)
 | ------------- | --------------------------- | -------------------------------------------------------- |
 | 整句删除/恢复 | 点击勾选框                  | 切换句子删除状态                                         |
 | AI 精剪切换   | 点击划线文字或橙色标签      | 切换词级精剪                                             |
-| 手动半句删除  | 鼠标选中文字 → 点"标记删除" | 浮动工具栏                                               |
+| 手动半句删除  | 鼠标选中文字 → 点"标记删除" | 浮动工具栏；也可按 Delete/Backspace 键                   |
+| 修正说话人    | 点击说话人名字              | 弹出下拉选择已有说话人或输入新名字                       |
 | 点击跳转音频  | 点击任意句子行              | 两个播放器都跳转                                         |
 | 撤销          | Ctrl+Z                      | 所有操作可撤销                                           |
-| 导出修改      | 点击"导出修改"              | JSON 保存编辑状态（备份/恢复用）                         |
 | 导出剪辑文件  | 点击"导出剪辑文件"(绿色)    | `delete_segments_edited.json`，可直接用于 `cut_audio.py` |
+| 导出AI反馈    | 点击"导出AI反馈"(蓝色)      | 在统计区域下方，用于反馈 AI 标记准确度                   |
 
 **5. 音频文件**：
 - **必须使用 `audio_seekable.mp3`**（Step 1 已自动生成 CBR 64k + Xing header）
@@ -564,7 +565,6 @@ open "$BASE_DIR/review_enhanced.html"
 打开审查页面，审核 AI 建议，进行手动编辑，导出剪辑文件。
 
 ```bash
-# 打开审查页面
 open "$BASE_DIR/review_enhanced.html"
 ```
 
@@ -575,8 +575,15 @@ open "$BASE_DIR/review_enhanced.html"
    - 勾选/取消勾选：标记或恢复删除
    - 点击精剪标签：启用/禁用词级精剪
    - 选中文字 → "标记删除"：手动半句删除
-4. 点击绿色"导出剪辑文件"→ 下载 `delete_segments_edited.json`
-5. 将文件复制到 `2_分析` 目录
+4. 编辑会**自动保存到浏览器 localStorage**，刷新页面不丢失
+5. 点击绿色"导出剪辑文件"→ 下载 `delete_segments_edited.json`
+6. 将文件复制到 `2_分析` 目录
+
+**自动保存**：
+- 每次编辑后 500ms 自动保存到 localStorage（按页面标题区分不同播客）
+- 刷新页面自动恢复：删除标记、精剪开关、手动编辑、AI 遗漏反馈
+- 30 天后自动清理旧数据
+- 保存成功时右上角显示"✓ 已自动保存"
 
 **导出文件**：
 - "导出剪辑文件"（绿色）→ `delete_segments_edited.json` — 包含所有手动修改的删除时间段，直接用于剪辑
@@ -599,8 +606,11 @@ cd "$BASE_DIR/2_分析"
 python3 "$SKILL_DIR/剪播客/scripts/cut_audio.py" \
   "$BASE_DIR/3_成品/${AUDIO_NAME}_精剪版_v1.mp3" \
   "$BASE_DIR/1_转录/audio.mp3" \
-  delete_segments_edited.json
+  delete_segments_edited.json \
+  --speakers-json "$BASE_DIR/1_转录/subtitles_words.json"
 ```
+
+> `--speakers-json` 默认始终传入。脚本自动检测音量差异，< 0.5dB 时跳过补偿，无副作用。
 
 **输出**：
 - `3_成品/播客名_精剪版_v1.mp3`
@@ -608,6 +618,9 @@ python3 "$SKILL_DIR/剪播客/scripts/cut_audio.py" \
 
 **剪辑特点**：
 - ✅ WAV 中间格式，采样级精确（无 MP3 帧边界偏移）
+- ✅ 自适应淡入淡出：每个切点自动加 fade，消除断句感
+  - 时长 = `clamp(片段时长 × 8%, 0.03s, 0.3s)`，首尾段不加
+- ✅ 说话人音量对齐（`--speakers-json`）：检测各说话人平均响度，自动补偿差异（最大 +6dB）
 - ✅ 连续删除句自动分组，无碎片
 - ✅ 重编码确保精确 seek
 - ✅ 显示节省时间统计
@@ -623,9 +636,8 @@ python3 "$SKILL_DIR/剪播客/scripts/cut_audio.py" \
 步骤5: 内容分析（段落级） → semantic_deep_analysis.json ⭐
 步骤5b: 精剪分析（词/句级） → fine_analysis.json ⭐
 步骤6: 生成审查界面 → review_enhanced.html ⭐ (含词级时间戳+动态播放器)
-步骤7: 启动服务器 → http://localhost:8849（或直接 open html）
-步骤7: 审查+编辑+导出 → delete_segments_edited.json ⭐
-步骤8: 剪辑 → 播客名_精剪版_v1.mp3 🎉 (WAV采样级精确)
+步骤7: 审查+编辑+导出 → delete_segments_edited.json ⭐（自动保存，刷新不丢）
+步骤8: 剪辑 → 播客名_精剪版_v1.mp3 🎉 (WAV采样级精确+自适应淡入淡出+说话人音量对齐)
 ```
 
 **用户交互点**：

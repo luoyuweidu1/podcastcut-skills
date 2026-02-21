@@ -269,7 +269,7 @@ template = template.replace('__BLOCKS_DATA__', JSON.stringify(blocksDataArr));
 template = template.replace('__AI_DELETED_COUNT__', String(deletedCount));
 template = template.replace('__TOTAL_SENTENCES__', String(totalSentences));
 template = template.replace('__SPEAKER_STYLES__', speakerStyles);
-template = template.replace('__SPEAKER_CLASS_FUNC__', speakerClassExpr);
+template = template.replaceAll('__SPEAKER_CLASS_FUNC__', speakerClassExpr);
 template = template.replace(/__AUDIO_SRC__/g, audioSrc);
 template = template.replace(/__TITLE__/g, title);
 

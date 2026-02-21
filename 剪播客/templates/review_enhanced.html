@@ -437,6 +437,40 @@ body {
 .filter-btn:hover { border-color: var(--gray-400); background: var(--gray-50); }
 .filter-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
 .filter-btn.active-red { background: #dc2626; color: white; border-color: #dc2626; }
+.info-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  border: 1px solid #cbd5e1;
+  color: #94a3b8;
+  font-size: 10px;
+  font-style: italic;
+  font-family: serif;
+  cursor: help;
+  flex-shrink: 0;
+}
+.info-tip .info-text {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 6px;
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: 12px;
+  font-style: normal;
+  font-family: inherit;
+  padding: 8px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 9999;
+}
+.info-tip:hover .info-text { display: block; }
 
 .filter-separator {
   width: 1px; height: 20px;
@@ -475,21 +509,39 @@ body {
   border-color: var(--blue) !important;
 }
 
+/* Selection popup (appears after mouse-drag selecting rows) */
+.selection-popup {
+  position: fixed;
+  z-index: 1001;
+  background: #1e293b;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  font-size: 13px;
+  pointer-events: auto;
+  white-space: nowrap;
+}
+.selection-popup .sel-count { font-weight: 600; }
+.selection-popup button {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.selection-popup .sel-delete { background: #dc2626; color: white; }
+.selection-popup .sel-delete:hover { background: #b91c1c; }
+.selection-popup .sel-restore { background: #16a34a; color: white; }
+.selection-popup .sel-restore:hover { background: #15803d; }
+
 /* Checkbox column */
 .s-check {
-  width: 28px;
-  flex-shrink: 0;
-  padding-top: 2px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-}
-
-.s-check input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: #dc2626;
+  display: none;
 }
 
 /* Block summary bar */
@@ -540,6 +592,42 @@ body {
   font-weight: 600;
   padding-top: 2px;
   white-space: nowrap;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.15s;
+}
+.s-speaker:hover {
+  background: rgba(255,255,255,0.15);
+}
+.speaker-edit-dropdown {
+  position: absolute;
+  z-index: 1000;
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  padding: 4px 0;
+  min-width: 120px;
+}
+.speaker-edit-dropdown div {
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #e2e8f0;
+}
+.speaker-edit-dropdown div:hover {
+  background: #334155;
+}
+.speaker-edit-dropdown input {
+  margin: 4px 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  background: #0f172a;
+  border: 1px solid #475569;
+  border-radius: 4px;
+  color: #e2e8f0;
+  width: calc(100% - 16px);
+  box-sizing: border-box;
 }
 
 __SPEAKER_STYLES__
@@ -815,7 +903,7 @@ __SPEAKER_STYLES__
   .s-speaker { width: 44px; font-size: 11px; }
   .s-time { width: 50px; }
   .s-idx { width: 32px; }
-  .s-check { width: 24px; }
+  .s-check { display: none; }
 }
 </style>
 </head>
@@ -846,8 +934,14 @@ __SPEAKER_STYLES__
       </div>
       <button class="speed-btn" onclick="cycleSpeed('cut')">1x</button>
     </div>
-    <button class="export-btn" onclick="exportDeleteSegments()" style="background:#2d7d46;">&#9986; 导出剪辑文件</button>
-    <button class="export-btn" onclick="exportFeedback()" style="background:#2563eb;">&#128270; 导出AI反馈</button>
+    <div style="display:inline-flex;align-items:center;gap:4px;">
+      <button class="export-btn" onclick="exportDeleteSegments()" style="background:#2d7d46;">&#9986; 导出剪辑文件</button>
+      <span class="info-tip">i<span class="info-text">审查完成后点击导出，发给制作人即可剪辑</span></span>
+    </div>
+    <div style="display:inline-flex;align-items:center;gap:4px;">
+      <label class="export-btn" style="background:#6b7280;cursor:pointer;margin:0;">&#128194; 导入编辑 <input type="file" accept=".json" onchange="importEditState(this)" style="display:none;"></label>
+      <span class="info-tip">i<span class="info-text">收到别人的 JSON？导入即可查看对方的编辑</span></span>
+    </div>
   </div>
 </div>
 
@@ -914,8 +1008,26 @@ __SPEAKER_STYLES__
     <button class="filter-btn" data-type="privacy" onclick="setTypeFilter('privacy')">隐私保护</button>
     <div class="filter-separator"></div>
     <input class="search-input" type="text" placeholder="搜索文本..." oninput="searchText(this.value)">
-    <span style="font-size:11px;color:var(--gray-400)">快捷键: <span class="kbd">D</span> 切换删除 <span class="kbd">Ctrl+Z</span> 撤销</span>
+    <span style="font-size:11px;color:var(--gray-400)">快捷键: <span class="kbd">D</span> 切换删除 <span class="kbd">Ctrl+Z</span> 撤销 | 鼠标拖选多句可批量操作</span>
+    <div style="display:inline-flex;align-items:center;gap:4px;margin-left:8px;">
+      <button class="export-btn" onclick="exportFeedback()" style="background:#2563eb;font-size:11px;padding:4px 10px;">&#128270; 导出AI反馈</button>
+      <span class="info-tip">i<span class="info-text">导出对 AI 标记的反馈，用于改进准确度</span></span>
+    </div>
   </div>
+</div>
+
+<!-- Speaker Panel -->
+<div style="background:white;border-bottom:1px solid var(--gray-200);padding:8px 24px;">
+  <div id="speaker-panel" style="max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <span class="filter-label">说话人（点击改名）:</span>
+  </div>
+</div>
+
+<!-- Selection Popup (appears on mouse-drag select) -->
+<div class="selection-popup" id="selection-popup" style="display:none;">
+  <span class="sel-count" id="sel-count">已选 0 句</span>
+  <button class="sel-delete" onclick="selectionBatchDelete()">删除</button>
+  <button class="sel-restore" onclick="selectionBatchRestore()">恢复</button>
 </div>
 
 <!-- Transcript -->
@@ -1008,9 +1120,6 @@ function buildTranscript() {
 
     html += `<div class="${rowClass}" id="row-${s.idx}" data-idx="${s.idx}" onclick="highlightRow(${s.idx})">`;
 
-    // Checkbox
-    html += `<div class="s-check"><input type="checkbox" ${isDeleted ? 'checked' : ''} onclick="event.stopPropagation(); toggleDeletion(${s.idx})" title="标记删除"></div>`;
-
     // Index
     html += `<div class="s-idx">${s.idx}</div>`;
 
@@ -1077,6 +1186,158 @@ function escapeHtml(str) {
 }
 
 // ===== TOGGLE DELETION =====
+
+// ===== MOUSE-DRAG BATCH SELECTION =====
+let _selectionRowIndices = [];
+
+function getSelectedRowIndices() {
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) return [];
+
+  const range = sel.getRangeAt(0);
+  const transcript = document.getElementById('transcript');
+  if (!transcript) return [];
+
+  // Find all sentence rows that intersect with the selection
+  const indices = [];
+  const rows = transcript.querySelectorAll('.sentence-row');
+  for (const row of rows) {
+    if (row.classList.contains('hidden')) continue;
+    if (range.intersectsNode(row)) {
+      const idx = parseInt(row.dataset.idx);
+      if (!isNaN(idx)) indices.push(idx);
+    }
+  }
+  return indices;
+}
+
+function showSelectionPopup() {
+  const indices = getSelectedRowIndices();
+  _selectionRowIndices = indices;
+  const popup = document.getElementById('selection-popup');
+  if (indices.length < 2) {
+    popup.style.display = 'none';
+    return;
+  }
+
+  document.getElementById('sel-count').textContent = '已选 ' + indices.length + ' 句';
+
+  // Position near the end of selection
+  const sel = window.getSelection();
+  if (sel.rangeCount > 0) {
+    const rng = sel.getRangeAt(0);
+    const rect = rng.getBoundingClientRect();
+    let top = rect.bottom + 8;
+    let left = rect.left + (rect.width / 2) - 100;
+    // Keep within viewport
+    if (top + 50 > window.innerHeight) top = rect.top - 50;
+    if (left < 8) left = 8;
+    if (left + 220 > window.innerWidth) left = window.innerWidth - 228;
+    popup.style.top = top + 'px';
+    popup.style.left = left + 'px';
+  }
+  popup.style.display = 'flex';
+}
+
+function hideSelectionPopup() {
+  const popup = document.getElementById('selection-popup');
+  if (popup) popup.style.display = 'none';
+  _selectionRowIndices = [];
+}
+
+function selectionBatchDelete() {
+  if (_selectionRowIndices.length === 0) return;
+  const deletedIndices = [];
+  const batchUndo = [];
+  _selectionRowIndices.forEach(sIdx => {
+    if (!currentDeletedSet.has(sIdx)) {
+      batchUndo.push({ type: 'deletion', idx: sIdx, wasDeleted: false });
+      currentDeletedSet.add(sIdx);
+      if (!aiDeletedSet.has(sIdx)) { userAddedDeletions.add(sIdx); }
+      userRemovedDeletions.delete(sIdx);
+      updateRowVisual(sIdx);
+      deletedIndices.push(sIdx);
+    }
+  });
+  if (batchUndo.length > 0) {
+    undoStack.push({ type: 'batch', items: batchUndo });
+    _showSaveIndicator('✓ 批量删除 ' + batchUndo.length + ' 句');
+  }
+  updateStats();
+  window.getSelection().removeAllRanges();
+  hideSelectionPopup();
+
+  // Show feedback panel for batch deletion
+  if (deletedIndices.length > 0) {
+    const firstIdx = deletedIndices[0];
+    const lastIdx = deletedIndices[deletedIndices.length - 1];
+    const firstSent = sentencesData.find(s => s.idx === firstIdx);
+    const lastSent = sentencesData.find(s => s.idx === lastIdx);
+    const previewText = deletedIndices.length === 1
+      ? (firstSent ? firstSent.text : '')
+      : (firstSent ? firstSent.text.slice(0, 30) : '') + '… → …' + (lastSent ? lastSent.text.slice(-30) : '');
+    const displayText = previewText.length > 80 ? previewText.slice(0, 80) + '...' : previewText;
+
+    _mcPendingText = deletedIndices.map(idx => {
+      const s = sentencesData.find(x => x.idx === idx);
+      return s ? s.text : '';
+    }).join(' ');
+    _mcPendingSentenceIdx = firstIdx;
+    _mcPendingBatchIndices = deletedIndices.slice();
+
+    document.getElementById('mc-preview-text').textContent = displayText;
+    document.getElementById('mc-reason').value = '';
+    const panel = document.getElementById('missed-catch-panel');
+    const firstRow = document.getElementById('row-' + firstIdx);
+    if (firstRow) {
+      const rowRect = firstRow.getBoundingClientRect();
+      panel.style.left = Math.min(rowRect.left + 40, window.innerWidth - 340) + 'px';
+      panel.style.top = (rowRect.bottom + 4) + 'px';
+    }
+    panel.classList.add('visible');
+    setTimeout(() => document.getElementById('mc-type').focus(), 100);
+  }
+}
+
+function selectionBatchRestore() {
+  if (_selectionRowIndices.length === 0) return;
+  const batchUndo = [];
+  _selectionRowIndices.forEach(sIdx => {
+    if (currentDeletedSet.has(sIdx)) {
+      batchUndo.push({ type: 'deletion', idx: sIdx, wasDeleted: true });
+      currentDeletedSet.delete(sIdx);
+      if (aiDeletedSet.has(sIdx)) { userRemovedDeletions.add(sIdx); }
+      userAddedDeletions.delete(sIdx);
+      updateRowVisual(sIdx);
+    }
+  });
+  if (batchUndo.length > 0) {
+    undoStack.push({ type: 'batch', items: batchUndo });
+    _showSaveIndicator('✓ 批量恢复 ' + batchUndo.length + ' 句');
+  }
+  updateStats();
+  window.getSelection().removeAllRanges();
+  hideSelectionPopup();
+}
+
+// Listen for mouseup on transcript to detect selection
+document.addEventListener('mouseup', function(e) {
+  // Don't trigger if clicking inside the popup itself
+  const popup = document.getElementById('selection-popup');
+  if (popup && popup.contains(e.target)) return;
+
+  // Small delay to let selection finalize
+  setTimeout(showSelectionPopup, 50);
+});
+
+// Hide popup when clicking elsewhere (not on popup)
+document.addEventListener('mousedown', function(e) {
+  const popup = document.getElementById('selection-popup');
+  if (popup && popup.style.display !== 'none' && !popup.contains(e.target)) {
+    hideSelectionPopup();
+  }
+});
+
 function toggleDeletion(idx) {
   // Save undo state
   undoStack.push({
@@ -1121,10 +1382,6 @@ function updateRowVisual(idx) {
 
   row.classList.toggle('deleted', isDeleted);
   row.classList.toggle('user-modified', isUserModified);
-
-  // Update checkbox
-  const cb = row.querySelector('input[type="checkbox"]');
-  if (cb) cb.checked = isDeleted;
 
   // Update text styling
   const textEl = row.querySelector('.s-text');
@@ -1204,6 +1461,166 @@ function updateStats() {
   document.getElementById('stat-user-remove').textContent = '-' + removeCount;
   document.getElementById('stat-final-delete').textContent = finalDelete;
   updateSummaryFooter();
+  autoSave();
+}
+
+// ===== AUTO-SAVE (localStorage) =====
+const _SAVE_KEY = 'podcastcut_review_' + btoa(unescape(encodeURIComponent(document.title))).slice(0, 40);
+let _saveTimer = null;
+let _hasUnsavedEdits = false;
+
+function autoSave() {
+  // Debounce: save 500ms after last edit
+  _hasUnsavedEdits = true;
+  if (_saveTimer) clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(_doSave, 500);
+}
+
+function _doSave() {
+  try {
+    const state = {
+      v: 2,
+      ts: Date.now(),
+      userAdded: Array.from(userAddedDeletions),
+      userRemoved: Array.from(userRemovedDeletions),
+      fineEditsDisabled: Array.from(fineEditsDisabled),
+      manualEdits: manualEdits.map(e => ({
+        id: e.id, sentenceIdx: e.sentenceIdx,
+        deleteText: e.deleteText, disabled: e.disabled
+      })),
+      manualEditCounter: manualEditCounter,
+      missedCatches: missedCatches.slice(),
+      speakerModifications: Object.keys(speakerModifications).length > 0 ? Object.assign({}, speakerModifications) : undefined
+    };
+    localStorage.setItem(_SAVE_KEY, JSON.stringify(state));
+    console.log('[save] saved', JSON.stringify(state).length, 'bytes, userAdded:', state.userAdded.length, 'userRemoved:', state.userRemoved.length);
+    _hasUnsavedEdits = false;
+    _showSaveIndicator();
+  } catch (e) {
+    console.warn('Auto-save failed:', e);
+  }
+}
+
+function _showSaveIndicator() {
+  let badge = document.getElementById('save-badge');
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.id = 'save-badge';
+    badge.style.cssText = 'font-size:11px;color:#16a34a;margin-left:8px;opacity:0;transition:opacity 0.3s;';
+    // Insert after export buttons in audio bar
+    const exportBtn = document.querySelector('.export-btn');
+    if (exportBtn) exportBtn.parentElement.appendChild(badge);
+  }
+  badge.textContent = '\u2713 已自动保存';
+  badge.style.opacity = '1';
+  setTimeout(() => { badge.style.opacity = '0'; }, 2000);
+}
+
+function restoreState() {
+  try {
+    const raw = localStorage.getItem(_SAVE_KEY);
+    console.log('[restore] key=', _SAVE_KEY, 'raw=', raw ? raw.length + ' bytes' : 'null');
+    if (!raw) return false;
+    const state = JSON.parse(raw);
+    if (!state || state.v !== 2) return false;
+
+    // Check if state is stale (> 30 days)
+    if (Date.now() - state.ts > 30 * 86400000) {
+      localStorage.removeItem(_SAVE_KEY);
+      return false;
+    }
+
+    let changed = false;
+
+    // Restore sentence deletions
+    if (state.userAdded && state.userAdded.length > 0) {
+      state.userAdded.forEach(idx => {
+        if (!aiDeletedSet.has(idx)) {
+          currentDeletedSet.add(idx);
+          userAddedDeletions.add(idx);
+          changed = true;
+        }
+      });
+    }
+    if (state.userRemoved && state.userRemoved.length > 0) {
+      state.userRemoved.forEach(idx => {
+        if (aiDeletedSet.has(idx)) {
+          currentDeletedSet.delete(idx);
+          userRemovedDeletions.add(idx);
+          changed = true;
+        }
+      });
+    }
+
+    // Restore fine edit toggles
+    if (state.fineEditsDisabled && state.fineEditsDisabled.length > 0) {
+      state.fineEditsDisabled.forEach(feIdx => {
+        if (fineEditsOriginal.has(feIdx)) {
+          fineEditsDisabled.add(feIdx);
+          changed = true;
+        }
+      });
+    }
+
+    // Restore manual edits
+    if (state.manualEdits && state.manualEdits.length > 0) {
+      state.manualEdits.forEach(me => {
+        manualEdits.push({
+          id: me.id,
+          sentenceIdx: me.sentenceIdx,
+          deleteText: me.deleteText,
+          disabled: me.disabled || false
+        });
+      });
+      manualEditCounter = state.manualEditCounter || manualEdits.length;
+      changed = true;
+    }
+
+    // Restore missed catches
+    if (state.missedCatches && state.missedCatches.length > 0) {
+      state.missedCatches.forEach(mc => missedCatches.push(mc));
+      missedCatchCounter = missedCatches.length;
+    }
+
+    // Restore speaker modifications
+    if (state.speakerModifications) {
+      Object.keys(state.speakerModifications).forEach(idxStr => {
+        const idx = parseInt(idxStr);
+        const newSpeaker = state.speakerModifications[idxStr];
+        const sent = sentencesData.find(s => s.idx === idx);
+        if (sent) {
+          sent.speaker = newSpeaker;
+          speakerModifications[idx] = newSpeaker;
+          changed = true;
+        }
+      });
+    }
+
+    if (changed) {
+      // Rebuild all affected rows
+      sentencesData.forEach(s => {
+        updateRowVisual(s.idx);
+        rebuildRowWithManualEdits(s.idx);
+      });
+      buildSummaryTable();
+      invalidateSkipRanges();
+      updateStats();
+
+      // Show restore notification
+      const age = Math.round((Date.now() - state.ts) / 60000);
+      const ageText = age < 1 ? '刚刚' : age < 60 ? age + '分钟前' : Math.round(age/60) + '小时前';
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;top:80px;right:20px;background:#1a3a1a;color:#a3e635;padding:12px 20px;border-radius:8px;z-index:9999;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,0.3);transition:opacity 0.5s;';
+      toast.textContent = '\u2713 已恢复上次编辑（' + ageText + '保存）';
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 3000);
+    }
+
+    return changed;
+  } catch (e) {
+    console.warn('Restore failed:', e);
+    return false;
+  }
 }
 
 // ===== SUMMARY TABLE =====
@@ -1536,6 +1953,26 @@ function exportModifications() {
 
 // Export delete_segments.json for cut_audio.py
 // Uses clean ranges (no player-specific lookahead/nudge adjustments)
+function importEditState(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      // Support combined format (has .editState) or legacy edit-only format (has .v)
+      const state = data.editState || (data.v === 2 ? data : null);
+      if (!state || state.v !== 2) { alert('无效的编辑文件。请导入"导出剪辑文件"生成的 JSON。'); return; }
+      localStorage.setItem(_SAVE_KEY, JSON.stringify(state));
+      location.reload();
+    } catch (err) {
+      alert('导入失败: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
 function exportDeleteSegments() {
   const ranges = [];
 
@@ -1640,7 +2077,22 @@ function exportDeleteSegments() {
   const totalDeleted = segments.reduce((sum, s) => sum + (s.end - s.start), 0);
   const totalMin = Math.round(totalDeleted / 60);
 
-  const blob = new Blob([JSON.stringify(segments, null, 2)], { type: 'application/json' });
+  // Combined export: segments for cut_audio.py + editState for HTML restore
+  const exportData = {
+    segments: segments,
+    editState: {
+      v: 2, ts: Date.now(),
+      userAdded: Array.from(userAddedDeletions),
+      userRemoved: Array.from(userRemovedDeletions),
+      fineEditsDisabled: Array.from(fineEditsDisabled),
+      manualEdits: manualEdits.map(e => ({id: e.id, sentenceIdx: e.sentenceIdx, deleteText: e.deleteText, disabled: e.disabled})),
+      manualEditCounter: manualEditCounter,
+      missedCatches: missedCatches.slice(),
+      speakerModifications: Object.keys(speakerModifications).length > 0 ? Object.assign({}, speakerModifications) : undefined
+    }
+  };
+
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -1734,6 +2186,16 @@ function applyFilters() {
 
 // ===== HIGHLIGHT ROW =====
 function highlightRow(idx) {
+  // Don't fire if user is selecting text (drag selection)
+  const sel = window.getSelection();
+  if (sel && !sel.isCollapsed) return;
+
+  // If row is deleted, click to restore it
+  if (currentDeletedSet.has(idx)) {
+    toggleDeletion(idx);
+    return;
+  }
+
   // Remove previous highlight
   if (highlightedIdx >= 0) {
     const prev = document.getElementById('row-' + highlightedIdx);
@@ -1756,6 +2218,14 @@ function highlightRow(idx) {
 // manualEdits: array of {sentenceIdx, deleteText, id}
 const manualEdits = [];
 let manualEditCounter = 0;
+// speakerModifications: {sentenceIdx: newSpeaker}
+const speakerModifications = {};
+// missedCatches: user-reported AI misses
+const missedCatches = [];
+let missedCatchCounter = 0;
+let _mcPendingText = '';
+let _mcPendingSentenceIdx = -1;
+let _mcPendingBatchIndices = null;
 
 // Listen for text selection
 document.addEventListener('mouseup', function(e) {
@@ -2361,6 +2831,8 @@ document.getElementById('stat-final-delete').textContent = currentDeletedSet.siz
 
 buildSummaryTable();
 buildTranscript();
+restoreState();
+buildSpeakerPanel();
 requestAnimationFrame(updateProgress);
 
 // Pre-seek audio to first non-deleted sentence so cut-mode playback starts clean
@@ -2373,10 +2845,6 @@ _initAudio.addEventListener('loadedmetadata', function() {
 }, { once: true });
 
 // ===== MISSED CATCH FEEDBACK =====
-const missedCatches = [];
-let missedCatchCounter = 0;
-let _mcPendingText = '';
-let _mcPendingSentenceIdx = -1;
 
 const mcTypeLabels = {
   in_sentence_repeat: '句内重复',
@@ -2418,6 +2886,7 @@ function markSelectionDeletedAndPrompt() {
   // 2) Remember pending info for feedback panel
   _mcPendingText = selectedText;
   _mcPendingSentenceIdx = sentenceIdx;
+  _mcPendingBatchIndices = null;
 
   // 3) Show feedback panel near the deleted text
   const panel = document.getElementById('missed-catch-panel');
@@ -2436,6 +2905,7 @@ function hideMissedCatchPanel() {
   document.getElementById('missed-catch-panel').classList.remove('visible');
   _mcPendingText = '';
   _mcPendingSentenceIdx = -1;
+  _mcPendingBatchIndices = null;
 }
 
 // Enter key in reason input confirms
@@ -2458,9 +2928,16 @@ function confirmMissedCatch() {
   const id = ++missedCatchCounter;
 
   const sent = sentencesData.find(s => s.idx === _mcPendingSentenceIdx);
-  // Calculate timestamp from words
   let tsStart = null, tsEnd = null;
-  if (sent && sent.words && sent.words.length > 0) {
+
+  if (_mcPendingBatchIndices && _mcPendingBatchIndices.length > 1) {
+    // Batch deletion: timestamp from first to last sentence
+    const firstSent = sentencesData.find(s => s.idx === _mcPendingBatchIndices[0]);
+    const lastSent = sentencesData.find(s => s.idx === _mcPendingBatchIndices[_mcPendingBatchIndices.length - 1]);
+    if (firstSent) tsStart = firstSent.startTime;
+    if (lastSent) tsEnd = lastSent.endTime;
+  } else if (sent && sent.words && sent.words.length > 0) {
+    // Single sentence: calculate from words
     const wordTexts = sent.words.map(w => w.t);
     const fullText = wordTexts.join('');
     const pos = fullText.indexOf(_mcPendingText);
@@ -2482,6 +2959,7 @@ function confirmMissedCatch() {
   const mc = {
     id: id,
     sentenceIdx: _mcPendingSentenceIdx,
+    batchIndices: _mcPendingBatchIndices || null,
     speaker: sent ? sent.speaker : '',
     selectedText: _mcPendingText,
     fullSentence: sent ? sent.text : '',
@@ -2498,6 +2976,7 @@ function confirmMissedCatch() {
   rebuildRowWithManualEdits(_mcPendingSentenceIdx);
   _mcPendingText = '';
   _mcPendingSentenceIdx = -1;
+  _mcPendingBatchIndices = null;
   updateStats();
 }
 
@@ -2606,6 +3085,192 @@ document.addEventListener('mousedown', function(e) {
     hideMissedCatchPanel();
   }
 });
+
+// Warn before closing if there are unsaved changes (belt-and-suspenders with auto-save)
+window.addEventListener('beforeunload', function(e) {
+  if (_hasUnsavedEdits) {
+    _doSave(); // Force save before unload
+  }
+});
+
+// ===== IMPROVEMENT 1: Delete/Backspace key to delete selected text =====
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+  // Don't interfere with input/textarea/select elements
+  const tag = e.target.tagName.toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) return;
+
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed || sel.toString().trim().length === 0) return;
+
+  // If multi-row selection exists, batch delete those rows
+  const selectedRows = getSelectedRowIndices();
+  if (selectedRows.length >= 2) {
+    e.preventDefault();
+    _selectionRowIndices = selectedRows;
+    selectionBatchDelete();
+    return;
+  }
+
+  // Check if selection is within a sentence text element (word-level edit)
+  const anchor = sel.anchorNode;
+  if (!anchor) return;
+  const textEl = anchor.parentElement.closest('.s-text');
+  if (!textEl) return;
+
+  e.preventDefault();
+  markSelectionDeletedAndPrompt();
+});
+
+// ===== IMPROVEMENT 2: Speaker panel + click to rename =====
+function buildSpeakerPanel() {
+  const panel = document.getElementById('speaker-panel');
+  if (!panel) return;
+  // Keep the label, clear the rest
+  while (panel.children.length > 1) panel.removeChild(panel.lastChild);
+
+  const speakers = getAllSpeakers();
+  speakers.forEach((sp, i) => {
+    const count = sentencesData.filter(x => x.speaker === sp).length;
+    const chip = document.createElement('button');
+    chip.className = 'filter-btn';
+    chip.style.cssText = 'display:inline-flex;align-items:center;gap:4px;cursor:pointer;';
+    chip.innerHTML = sp + ' <span style="opacity:0.5;font-size:11px;">' + count + '句 &#9998;</span>';
+    chip.title = '点击修改「' + sp + '」的名字';
+    chip.addEventListener('click', function(e) {
+      e.stopPropagation();
+      promptRenameSpeaker(sp);
+    });
+    panel.appendChild(chip);
+  });
+}
+
+function promptRenameSpeaker(oldName) {
+  closeSpeakerDropdown();
+  const newName = prompt('将「' + oldName + '」改为：');
+  if (!newName || !newName.trim() || newName.trim() === oldName) return;
+  // Use a fake sentenceIdx — applySpeakerChange does bulk replace by oldName
+  const first = sentencesData.find(s => s.speaker === oldName);
+  if (first) applySpeakerChange(first.idx, newName.trim());
+  buildSpeakerPanel(); // refresh panel
+}
+
+function getAllSpeakers() {
+  const speakers = new Set();
+  sentencesData.forEach(s => {
+    speakers.add(speakerModifications[s.idx] !== undefined ? speakerModifications[s.idx] : s.speaker);
+  });
+  return Array.from(speakers).filter(Boolean);
+}
+
+function showSpeakerDropdown(speakerEl, sentenceIdx) {
+  // Remove any existing dropdown
+  closeSpeakerDropdown();
+
+  const speakers = getAllSpeakers();
+  const currentSpeaker = speakerModifications[sentenceIdx] !== undefined
+    ? speakerModifications[sentenceIdx]
+    : sentencesData.find(s => s.idx === sentenceIdx).speaker;
+
+  const dropdown = document.createElement('div');
+  dropdown.className = 'speaker-edit-dropdown';
+  dropdown.id = 'speaker-dropdown';
+
+  // Add known speakers as options
+  speakers.forEach(sp => {
+    const opt = document.createElement('div');
+    opt.textContent = sp;
+    if (sp === currentSpeaker) opt.style.fontWeight = 'bold';
+    opt.addEventListener('click', function(e) {
+      e.stopPropagation();
+      applySpeakerChange(sentenceIdx, sp);
+      closeSpeakerDropdown();
+    });
+    dropdown.appendChild(opt);
+  });
+
+  // Add custom input
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = '输入新名字...';
+  input.addEventListener('keydown', function(e) {
+    e.stopPropagation();
+    if (e.key === 'Enter' && this.value.trim()) {
+      applySpeakerChange(sentenceIdx, this.value.trim());
+      closeSpeakerDropdown();
+    } else if (e.key === 'Escape') {
+      closeSpeakerDropdown();
+    }
+  });
+  input.addEventListener('click', function(e) { e.stopPropagation(); });
+  dropdown.appendChild(input);
+
+  // Position dropdown below the speaker element
+  const rect = speakerEl.getBoundingClientRect();
+  dropdown.style.position = 'fixed';
+  dropdown.style.left = rect.left + 'px';
+  dropdown.style.top = (rect.bottom + 2) + 'px';
+
+  document.body.appendChild(dropdown);
+  setTimeout(() => input.focus(), 50);
+}
+
+function closeSpeakerDropdown() {
+  const existing = document.getElementById('speaker-dropdown');
+  if (existing) existing.remove();
+}
+
+function refreshSpeakerLabels() {
+  sentencesData.forEach(s => {
+    const row = document.getElementById('row-' + s.idx);
+    if (!row) return;
+    const spEl = row.querySelector('.s-speaker');
+    if (!spEl) return;
+    spEl.textContent = s.speaker;
+    const spClass = __SPEAKER_CLASS_FUNC__;
+    spEl.className = 's-speaker ' + spClass;
+  });
+}
+
+function applySpeakerChange(sentenceIdx, newSpeaker) {
+  const clicked = sentencesData.find(x => x.idx === sentenceIdx);
+  if (!clicked) return;
+  const oldSpeaker = clicked.speaker;
+  if (oldSpeaker === newSpeaker) return;
+
+  // Bulk replace: change ALL sentences with the same old speaker name
+  let count = 0;
+  sentencesData.forEach(s => {
+    if (s.speaker === oldSpeaker) {
+      s.speaker = newSpeaker;
+      speakerModifications[s.idx] = newSpeaker;
+      count++;
+    }
+  });
+  refreshSpeakerLabels();
+  _showSaveIndicator('✓ 已将 ' + oldSpeaker + ' → ' + newSpeaker + '（' + count + ' 句）');
+  autoSave();
+  buildSpeakerPanel();
+}
+
+// Delegate click on speaker elements
+document.addEventListener('click', function(e) {
+  const spEl = e.target.closest('.s-speaker');
+  if (spEl) {
+    e.stopPropagation();
+    const row = spEl.closest('[id^="row-"]');
+    if (!row) return;
+    const sentenceIdx = parseInt(row.id.replace('row-', ''));
+    showSpeakerDropdown(spEl, sentenceIdx);
+    return;
+  }
+  // Close dropdown if clicking outside
+  if (!e.target.closest('.speaker-edit-dropdown')) {
+    closeSpeakerDropdown();
+  }
+});
+
+
 </script>
 
 <div id="selection-toolbar">

@@ -37,6 +37,7 @@ PODCASTCUT_DIR="/path/to/podcastcut"
 ln -s "$PODCASTCUT_DIR/安装"    ~/.claude/skills/podcastcut-安装
 ln -s "$PODCASTCUT_DIR/剪播客"  ~/.claude/skills/podcastcut-剪播客
 ln -s "$PODCASTCUT_DIR/后期"    ~/.claude/skills/podcastcut-后期
+ln -s "$PODCASTCUT_DIR/质检"    ~/.claude/skills/podcastcut-质检
 ln -s "$PODCASTCUT_DIR/自进化"  ~/.claude/skills/podcastcut-自进化
 ```
 
@@ -51,16 +52,23 @@ ln -s "$PODCASTCUT_DIR/自进化"  ~/.claude/skills/podcastcut-自进化
 | Node.js | 运行脚本 | `brew install node` |
 | FFmpeg | 音频处理、CBR 重编码 | `brew install ffmpeg` |
 | Python 3 | 音频剪辑 (`cut_audio.py`) | macOS 自带，或 `brew install python3` |
+| DeepFilterNet | 音频降噪（后期可选） | `pip install deepfilternet` |
+| librosa | 音频信号分析（质检） | `pip install librosa soundfile` |
 | curl | API 调用 | 系统自带 |
 
 ```bash
 # macOS
 brew install node ffmpeg
 
+# Python 依赖
+pip install deepfilternet    # 音频降噪（可选，后期 skill 使用）
+pip install librosa soundfile  # 音频信号分析（质检 skill 使用）
+
 # 验证
 node -v
 ffmpeg -version
 python3 --version
+deepFilter --version
 ```
 
 ## 步骤 2: 配置 API Key
@@ -91,6 +99,7 @@ DASHSCOPE_API_KEY=sk-your-api-key-here
 node -v                              # Node.js
 ffmpeg -version                      # FFmpeg
 python3 --version                    # Python 3
+deepFilter --version                 # DeepFilterNet（可选）
 cat "$PODCASTCUT_DIR/.env" | grep DASHSCOPE  # API Key
 ls -la ~/.claude/skills/ | grep podcastcut   # Skills 注册
 ```

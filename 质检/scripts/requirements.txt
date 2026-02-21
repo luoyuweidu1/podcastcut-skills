@@ -1,0 +1,4 @@
+librosa>=0.10.0
+numpy>=1.24.0
+soundfile>=0.12.0
+google-genai>=1.0.0    # 可选，Layer 2 (AI 听感评估) 需要
