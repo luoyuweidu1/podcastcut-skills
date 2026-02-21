@@ -1,0 +1,51 @@
+audience: 普通大众
+purpose: 深度访谈
+duration:
+  target_minutes: 90
+  flexibility_percent: 15
+  aggressiveness: conservative
+content_analysis:
+  enabled: true
+  detect_types:
+    pre_show: true
+    tech_debug: true
+    chit_chat: true
+    privacy: true
+    repeated_content: true
+    production_talk: true
+technical:
+  enabled: true
+  filler_words:
+    detection: true
+    aggressiveness: moderate
+    common_fillers:
+      - 就是
+      - 然后
+      - 嗯
+      - 啊
+      - 对对对
+    preserve:
+      - 哈哈
+      - 哇
+  speech_errors:
+    detection: true
+    handling: auto_delete
+  repeated_sentences:
+    detection: true
+    handling: keep_first
+  silence:
+    remove_long: true
+    threshold_seconds: 3
+    keep_interval: 0.5
+speakers:
+  hosts: []
+  guest_history: []
+workflow_automation:
+  auto_qa_enabled: true
+  auto_post_production: false
+  prompt_for_feedback: true
+meta:
+  created_at: "2026-02-21"
+  last_updated: "2026-02-21"
+  usage_count: 0
+  version: "2.0"
