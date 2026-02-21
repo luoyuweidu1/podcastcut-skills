@@ -1,0 +1,74 @@
+# 播客剪辑用户偏好 — 意图层
+# 存储高层参数（时长、激进度、开关），具体执行参数由 editing_rules/ 管理
+# 修改此文件后，editing_rules/ 会相应更新（除非已有样本学习/反馈微调的数据）
+
+# --- 基本信息 ---
+audience: "普通大众"          # 播客面向的听众群体
+purpose: "深度访谈"           # 播客的目的（深度访谈/知识分享/故事讲述/产品推广）
+
+# --- 时长偏好 ---
+duration:
+  target_minutes: 90          # 理想时长（分钟）
+  flexibility_percent: 15     # 允许浮动百分比（±15% → 75-105 分钟）
+  aggressiveness: conservative # conservative（10-20%）/ moderate（20-35%）/ aggressive（35-50%）
+
+# --- 内容逻辑偏好 ---
+content_analysis:
+  enabled: true
+  # 6 种删除类型的开关
+  detect_types:
+    pre_show: true             # 录前准备（设备测试、协调分工）
+    tech_debug: true           # 技术调试（耳机断连、麦克风闷）
+    chit_chat: true            # 跑题闲聊（与主题无关的对话）
+    privacy: true              # 隐私信息（说话人要求删除的内容）
+    repeated_content: true     # 重复内容（同一故事讲两遍）
+    production_talk: true      # 制作讨论（讨论剪辑策略）
+
+# --- 技术优化偏好 ---
+technical:
+  enabled: true
+  filler_words:
+    detection: true
+    aggressiveness: moderate   # conservative / moderate / aggressive
+    common_fillers:
+      - "就是"
+      - "然后"
+      - "嗯"
+      - "啊"
+      - "对对对"
+    preserve:                  # 始终保留的语气词
+      - "哈哈"
+      - "哇"
+  speech_errors:
+    detection: true
+    handling: auto_delete      # auto_delete / mark / keep
+  repeated_sentences:
+    detection: true
+    handling: keep_first       # keep_first / keep_best / mark
+  silence:
+    remove_long: true
+    threshold_seconds: 3.0     # 超过此时长视为长静音
+    keep_interval: 0.5         # 删除后保留的间隔（秒）
+
+# --- 说话人信息 ---
+speakers:
+  hosts: []
+    # - name: "主播名"
+    #   traits: "语速快、口头禅'就是说'"
+  guest_history: []
+    # - name: "嘉宾名"
+    #   episode: "第5期"
+    #   date: "2026-02-08"
+
+# --- 工作流自动化 ---
+workflow_automation:
+  auto_qa_enabled: true        # 剪辑完成后自动跑质检
+  auto_post_production: false  # 后期处理：false=每次询问，true=自动执行
+  prompt_for_feedback: true    # 提醒用户导出反馈
+
+# --- 元数据 ---
+meta:
+  created_at: "2026-02-21"
+  last_updated: "2026-02-21"
+  usage_count: 0
+  version: "2.0"               # 1.0 = 旧 markdown 格式，2.0 = YAML 格式
