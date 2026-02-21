@@ -14,9 +14,9 @@ pos: 阿里云转录 + AI深度理解 + 增强审核 + 自动剪辑
 3. CHANGELOG.md 更新日志
 -->
 
-# 剪播客 v4
+# 剪播客 v5
 
-> 阿里云FunASR API转录 + Claude深度语义分析 + 增强网页审核 + 自动剪辑
+> 阿里云FunASR API转录 + Claude深度语义分析 + 增强网页审核 + 自动剪辑 + 个性化偏好学习
 
 ## 快速使用
 
@@ -67,9 +67,11 @@ output/
 ## 流程
 
 ```
--1. 确认用户偏好 🆕
-    → 首次：完整onboarding（受众、目的、时长、偏好）
-    → 日常：读取默认偏好 + 确认本次需求
+-1. 用户识别 + 偏好确认 🆕v5
+    → 识别用户（环境变量 / 询问）
+    → 首次：Onboarding（播客链接 / 样本学习 / 手动问答）
+    → 日常：读取用户偏好 + 确认本次需求
+    → 加载用户级 editing_rules（基础规则 + 用户覆盖）
     ↓
 0. 创建输出目录
     ↓
@@ -77,7 +79,7 @@ output/
     ↓
 2. 上传获取公网 URL (uguu.se)
     ↓
-3. 🆕 转录 + 说话人映射 (subtitles_words.json)
+3. 转录 + 说话人映射 (subtitles_words.json)
     - 调用阿里云FunASR API（3分钟）
     - 识别说话人身份（前20句）
     - 创建speaker_mapping.json
@@ -85,110 +87,132 @@ output/
     ↓
 4. 句子分割 (sentences.txt)
     ↓
-5. 内容分析（段落级）
+5a. 内容分析（段落级）🔄v5 使用用户级规则
     - 通读全文，划分话题段落
-    - 识别6种删除类型（录前/调试/闲聊/隐私/重复/制作）
-    - 根据时长目标判断是否需要补充删减
+    - 按用户 preferences 的 detect_types 开关识别删除类型
+    - 参考用户 editing_rules/content_analysis.yaml 的激进度
     - 输出: semantic_deep_analysis.json
     ↓
-5b. 精剪分析（词/句级）
+5b. 精剪分析（词/句级）🔄v5 使用用户级规则
     - 检测：静音、残句、重复句、卡顿词、重说纠正、填充词
-    - 按用户习惯 1-9 号规则处理
+    - 按 用户习惯/ 基础规则 + editing_rules/ 用户覆盖
     - 输出: fine_analysis.json
     ↓
 6. 生成增强审查界面 (review_enhanced.html)
-    - 嵌入词级时间戳（actual_words 索引）
-    - 动态精剪播放器（实时跳过，无需预剪文件）
-    - 交互编辑：整句切换、精剪切换、手动选中删除
-    - 点击句子跳转音频、导出 JSON
     ↓
-7. 启动审核服务器 (http://localhost:8849)
+7. 用户审查 + 编辑 + 导出
     ↓
-8. 生成删除建议 + 合并精剪
-    - 8a. 语义分析 → selected_default.json
-    - 8b. 连续句分组 → delete_segments.json（大块完整）
-    - 8c. 合并5b精剪 → delete_segments.json（5a+5b）
+7b. 反馈学习 🆕v5
+    - 如用户导出了 AI 反馈（ai_feedback_*.json）
+    - 运行 analyze_feedback.js → 生成调整建议
+    - 确认后 apply_feedback_to_rules.js → 更新 editing_rules
+    ↓
+8. 合并删除建议 + 精剪
     ↓
 9. 一键剪辑生成精剪版
-    - Python脚本提取片段
-    - FFmpeg concat合并
-    - 输出: 3_成品/播客名_精剪版_v1.mp3
     ↓
-【用户试听 → 调整 → 重新剪辑】
+9b. 自动质检 🆕v5（可选）
+    - 如 preferences.workflow_automation.auto_qa_enabled
+    - 自动跑 /podcastcut-质检
     ↓
-【询问：是否保存本次偏好为新默认？】
+10. 后期处理 🆕v5（可选）
+    - 首次：确认后期偏好 → 存入 post_production.yaml
+    - 后续：读取偏好 → 执行 /podcastcut-后期
+    ↓
+11. 最终交付
+    - 汇总输出 + 保存 episode_history
+    - 提醒导出反馈
 ```
 
 ## 执行步骤
 
 
-### 步骤 -1: 确认用户偏好 🆕
+### 步骤 -1: 用户识别 + 偏好确认 🆕v5
 
-**在开始剪辑前，先了解你的需求和偏好。**
+**在开始剪辑前，识别用户并加载个性化偏好。**
 
 ```bash
 cd /Volumes/T9/claude_skill/podcastcut/剪播客
 
-# 检查是否已有偏好配置
-node scripts/check_preferences.js
+# 检查用户偏好（支持多用户）
+node scripts/check_preferences.js [userId]
+# 或指定用户: PODCASTCUT_USER=lixiang node scripts/check_preferences.js
 ```
+
+#### 用户识别
+
+1. 检查环境变量 `PODCASTCUT_USER`
+2. 如果未设置，询问用户："你的用户名是？"
+3. 如果用户不存在，创建新用户：`node scripts/user_manager.js create <userId>`
+4. 加载用户配置：`用户配置/<userId>/preferences.yaml`
 
 #### 首次使用 (Onboarding)
 
-如果是首次使用，Claude会询问以下问题：
+新用户按以下顺序完成偏好设置：
 
-**1. 播客定位 (首次必填)**
-- 📢 **受众**：你的播客主要面向谁？
-  - 例如：技术从业者、创业者、普通听众、学生
-- 🎯 **目的**：你为什么要做这个播客？
-  - 例如：知识分享、访谈记录、故事讲述、产品推广
+**0. 播客链接（可选，优先）**
+- "你有小宇宙或 Apple Podcasts 的链接吗？"
+- 如有：运行 `node scripts/parse_podcast_link.js <url> <userId>`
+- AI 自动提取播客名、描述、主题 → 写入 `podcast_profile.yaml`
+- 后续受众/目的等问题可自动填充（用户确认即可）
 
-**2. 主题曲设置 (首次可选)**
-- 🎵 **主题曲文件**：是否有主题曲mp3？
-  - 如有，提供文件路径
-  - 选择添加位置：开头/结尾/开头和结尾
+**1. 剪辑样本学习（可选，推荐）**
+- "你有 1-2 期的剪辑前后音频吗？"
+- 如有：
+  1. 用阿里云转录两个版本
+  2. 运行 `python3 scripts/analyze_editing_samples.py --before-transcript ... --after-transcript ... --output learned_patterns.json`
+  3. 运行 `node scripts/generate_rule_overrides.js learned_patterns.json <userId>`
+  4. AI 呈现提取的偏好，用户确认后保存到 `editing_rules/`
+  5. **可跳过手动问答**（样本已提供足够信息）
+
+**2. 播客定位 (首次必填)**
+- **受众**：你的播客主要面向谁？
+- **目的**：你为什么要做这个播客？
+- （如播客链接已提取信息，此处确认即可）
 
 **3. 时长偏好**
-- ⏱️ **理想时长**：希望最终播客控制在多久？
-  - 例如：60分钟、90分钟、2小时
+- **理想时长**：希望最终播客控制在多久？（如 90 分钟）
+- **激进度**：conservative（10-20% 删减）/ moderate（20-35%）/ aggressive（35-50%）
 
 **4. 内容逻辑偏好**
-- 🤖 **是否需要AI内容分析？**
-  - AI会自动识别：技术调试、寒暄闲聊、无关话题、隐私信息、重复内容
-  - 根据你的时长要求，给出每部分的删减建议
+- 是否启用 AI 内容分析？
+- 6 种删除类型各自开关：录前准备、技术调试、跑题闲聊、隐私信息、重复内容、制作讨论
 
 **5. 技术细节偏好**
-- 🔧 **是否需要AI技术优化？**
-  - 口癖检测和删除
-  - 重复句处理
-  - 语气词删除激进度
+- 口癖检测和删除激进度（conservative / moderate / aggressive）
+- 重复句处理、静音阈值
 
 **6. 说话人信息**
-- 👥 **说话人姓名**：方便后续说话人分离
-  - 例如：主播A、主播B、嘉宾C
+- 说话人姓名（方便后续说话人分离）
+
+**后期偏好延迟到首次使用后期 skill 时再询问。**
 
 #### 日常使用
 
-如果已有偏好配置，Claude会：
-1. ✅ 读取你的默认偏好
-2. ✅ 询问本次的音频文件和说话人
-3. ✅ **时长检查（必须）**：拿到音频路径后立即 `ffprobe` 获取时长，与目标时长对比。如果原始时长明显超出目标（如 147min vs 90min），**当场告知用户**："原始 XXX 分钟，目标 YYY 分钟，需要删掉约 ZZZ 分钟。5a 阶段会做内容精选（裁掉部分话题段落），不仅仅是删除有问题的内容。确认？" 这个决定影响整个后续分析策略，**不能等到后面才发现删不够**。
-4. ✅ 确认是否有特殊要求（如有，临时调整）
-5. ✅ 询问是否保存本次设置为新默认
+如果已有偏好配置，Claude 会：
+1. 读取用户 `preferences.yaml` + `editing_rules/`
+2. 询问本次的音频文件和说话人
+3. **时长检查（必须）**：拿到音频路径后立即 `ffprobe` 获取时长，与目标时长对比。如果原始时长明显超出目标（如 147min vs 90min），**当场告知用户**："原始 XXX 分钟，目标 YYY 分钟，需要删掉约 ZZZ 分钟。5a 阶段会做内容精选（裁掉部分话题段落），不仅仅是删除有问题的内容。确认？"
+4. 确认是否有特殊要求（如有，临时调整）
 
-#### 更新偏好
+#### 偏好管理
 
-随时可以更新偏好：
 ```bash
-# 方法1：直接编辑文件
-open 用户偏好.md
+# 用户管理
+node scripts/user_manager.js list              # 列出所有用户
+node scripts/user_manager.js create <userId>    # 创建新用户
+node scripts/user_manager.js prefs <userId>     # 查看用户偏好
+node scripts/user_manager.js rules <userId>     # 查看 editing rules
 
-# 方法2：告诉Claude
+# 直接编辑
+open 用户配置/<userId>/preferences.yaml          # 编辑意图层偏好
+
+# 或告诉 Claude
 # "更新我的默认时长为90分钟"
 # "我现在偏好激进删减"
 ```
 
-**偏好文件位置**：`/Volumes/T9/claude_skill/podcastcut/剪播客/用户偏好.md`
+**偏好文件位置**：`/Volumes/T9/claude_skill/podcastcut/剪播客/用户配置/<userId>/`
 
 ---
 
@@ -308,17 +332,30 @@ node "$SKILL_DIR/剪播客/scripts/generate_sentences.js" "$BASE_DIR/1_转录/su
 
 ---
 
-### 步骤 5a: Claude深度语义分析
+### 步骤 5a: Claude深度语义分析 🔄v5
 
 > 详细方法论见 `用户习惯/10-内容分析方法论.md`
 
 采用**两级分析**：先段落级扫描标记大块删除区间，再对边界逐句微调。
 
+**🆕v5 用户级规则加载**：
+
+分析前先加载用户偏好和规则覆盖：
+```javascript
+const UserManager = require('./scripts/user_manager');
+const prefs = UserManager.loadPreferences(userId);
+const rules = UserManager.loadEditingRules(userId);
+// rules.user_overrides['content_analysis'] — 用户级激进度覆盖（如有）
+```
+- 按 `prefs.content_analysis.detect_types` 的开关决定启用哪些删除类型
+- 按 `prefs.duration.aggressiveness` 或 `rules.user_overrides.content_analysis.aggressiveness` 决定激进度
+- **优先级**：editing_rules 覆盖 > preferences 意图 > 基础规则默认值
+
 **流程**：
 1. 通读 `sentences.txt` 全文，划分话题段落
-2. 识别 6 种确定性删除块（见下方类型表）
+2. 根据用户 `detect_types` 开关，识别启用的删除类型（见下方类型表）
 3. 计算各块时长，对比目标时长缺口
-4. 如仍需删减，识别信息密度低的段落
+4. 如仍需删减，按用户激进度识别信息密度低的段落
 5. 微调每个删除块的边界切点
 6. 生成 `semantic_deep_analysis.json`
 
@@ -372,11 +409,24 @@ node "$SKILL_DIR/剪播客/scripts/generate_sentences.js" "$BASE_DIR/1_转录/su
 
 ---
 
-### 步骤 5b: 精剪分析（词/句级）
+### 步骤 5b: 精剪分析（词/句级）🔄v5
 
-> 详细规则见 `用户习惯/` 目录下的 1-9 号文件
+> 基础规则见 `用户习惯/` 目录下的 1-9 号文件（全局共享）
+> 用户覆盖见 `用户配置/<userId>/editing_rules/`（个性化参数）
 
 步骤 5 删大块（内容级），步骤 5b 删口癖和语病（词/句级）。两步的结果合并后送入审查界面。
+
+**🆕v5 规则合并机制**：
+
+```
+最终规则 = 基础规则（用户习惯/）+ 用户覆盖（editing_rules/）
+```
+- **基础规则**（`用户习惯/1-9.md`）：所有用户共享的检测方法论和默认阈值
+- **用户覆盖**（`editing_rules/*.yaml`）：来自样本学习或反馈闭环的个性化参数
+  - `filler_words.yaml` — 每个填充词的删除率（如"嗯" 85%、"啊" 55%）
+  - `silence.yaml` — 自定义静音阈值（如 2.5s）
+  - `stutter.yaml` — 卡顿检测额外模式
+- 如果用户覆盖存在同名参数，优先使用用户覆盖的值
 
 **分析对象**：步骤 5 中标记为 `keep` 的句子（已删的不再分析）
 
@@ -596,6 +646,53 @@ open "$BASE_DIR/review_enhanced.html"
 
 ---
 
+### 步骤 7b: 反馈学习 🆕v5
+
+**用户审查修正 → 自动分析 → 更新 editing_rules**
+
+审查页已有"导出 AI 反馈"按钮（蓝色），导出 `ai_feedback_*.json`，包含：
+- `missed_catches` — AI 遗漏（用户手动标记的删除）
+- `user_corrections.added_deletions` — 用户新增的删除
+- `user_corrections.removed_deletions` — 用户撤销 AI 删除的
+
+**触发条件**：检测到 `2_分析/` 目录下有 `ai_feedback_*.json` 文件
+
+**流程**：
+```bash
+cd "$BASE_DIR/2_分析"
+
+# 1. 分析反馈
+node "$SKILL_DIR/剪播客/scripts/analyze_feedback.js" \
+  ai_feedback_*.json \
+  feedback_analysis.json \
+  fine_analysis.json
+
+# 2. 呈现调整建议给用户确认
+cat feedback_analysis.json
+# → 显示建议（如：降低"嗯"删除激进度、提高静音阈值等）
+
+# 3. 用户确认后，应用到 editing_rules
+node "$SKILL_DIR/剪播客/scripts/apply_feedback_to_rules.js" \
+  feedback_analysis.json \
+  <userId>
+```
+
+**反馈 → 规则映射**：
+
+| 反馈类型 | 更新目标 | 示例 |
+|----------|----------|------|
+| 用户恢复填充词删除 | `editing_rules/filler_words.yaml` | 降低激进度 |
+| 用户恢复静音删除 | `editing_rules/silence.yaml` | 提高阈值 |
+| 用户恢复内容块删除 | `editing_rules/content_analysis.yaml` | 降低激进度 |
+| AI 遗漏卡顿词 | `editing_rules/stutter.yaml` | 新增模式 |
+
+**学习规则**：
+- 置信度 ≥ 0.5 才生成调整建议
+- 所有调整必须经用户确认后写入
+- 记录到 `learning_history.json`
+
+---
+
 ### 步骤 8: 一键剪辑生成精剪版
 
 使用 FFmpeg 剪辑音频。先解码为 WAV 确保采样级精确切割。
@@ -628,22 +725,107 @@ python3 "$SKILL_DIR/剪播客/scripts/cut_audio.py" \
 ---
 
 ```
-步骤0: 创建目录
-步骤1: 准备音频
-步骤2: 上传URL
-步骤3: 转录+说话人映射 → subtitles_words.json ⭐
-步骤4: 句子分割 → sentences.txt
-步骤5: 内容分析（段落级） → semantic_deep_analysis.json ⭐
-步骤5b: 精剪分析（词/句级） → fine_analysis.json ⭐
-步骤6: 生成审查界面 → review_enhanced.html ⭐ (含词级时间戳+动态播放器)
-步骤7: 审查+编辑+导出 → delete_segments_edited.json ⭐（自动保存，刷新不丢）
-步骤8: 剪辑 → 播客名_精剪版_v1.mp3 🎉 (WAV采样级精确+自适应淡入淡出+说话人音量对齐)
+步骤-1: 用户识别 + 偏好确认 🆕v5
+步骤0:  创建目录
+步骤1:  准备音频
+步骤2:  上传URL
+步骤3:  转录+说话人映射 → subtitles_words.json ⭐
+步骤4:  句子分割 → sentences.txt
+步骤5a: 内容分析（段落级）→ semantic_deep_analysis.json ⭐ (用户级规则)
+步骤5b: 精剪分析（词/句级）→ fine_analysis.json ⭐ (基础规则+用户覆盖)
+步骤6:  生成审查界面 → review_enhanced.html ⭐
+步骤7:  审查+编辑+导出 → delete_segments_edited.json ⭐
+步骤7b: 反馈学习 🆕v5 → 更新 editing_rules/
+步骤8:  剪辑 → 播客名_精剪版_v1.mp3 🎉
+步骤9b: 自动质检 🆕v5（可选）→ QA 报告
+步骤10: 后期处理 🆕v5（可选）→ 片头/时间戳/标题
+步骤11: 最终交付 🆕v5 → episode_history + 汇总
 ```
 
 **用户交互点**：
+- 步骤-1：首次使用 Onboarding / 日常确认偏好
 - 步骤3后：确认说话人映射
 - 步骤7：在浏览器中审核 AI 建议、手动编辑、导出剪辑文件
+- 步骤7b：确认反馈学习的规则调整建议
 - 步骤8后：试听精剪版，如需调整回到步骤7
+
+---
+
+### 步骤 9b: 自动质检 🆕v5（可选）
+
+**条件**：`preferences.yaml` 中 `workflow_automation.auto_qa_enabled: true`
+
+剪辑完成后自动触发质检 skill，检查剪切点的音频质量问题。
+
+```bash
+# 自动触发 /podcastcut-质检
+# 输入：精剪版音频 + delete_segments_edited.json
+# 输出：QA 报告（能量突变、静音异常、频谱跳变）
+```
+
+**流程**：
+1. 读取 `preferences.yaml` 检查 `auto_qa_enabled`
+2. 如启用，自动调用 `/podcastcut-质检` skill
+3. 如有问题标记，呈现给用户
+4. 用户决定是否回到步骤 7 调整
+
+---
+
+### 步骤 10: 后期处理 🆕v5（可选）
+
+**条件**：`preferences.yaml` 中 `workflow_automation.auto_post_production` 控制是否自动触发
+
+**首次使用后期**：
+1. 询问后期偏好（片头音乐、时间戳格式、标题风格等）
+2. 保存到 `用户配置/<userId>/post_production.yaml`
+3. 执行 `/podcastcut-后期` skill
+
+**后续使用**：
+1. 读取 `post_production.yaml`
+2. 确认本次是否有调整
+3. 执行 `/podcastcut-后期` skill
+
+```bash
+# 读取后期偏好
+node -e "
+  const um = require('$SKILL_DIR/剪播客/scripts/user_manager');
+  const pp = um.loadPostProduction('$PODCASTCUT_USER');
+  console.log(JSON.stringify(pp, null, 2));
+"
+
+# 触发后期 skill
+# → 高亮片段预览、片头背景音乐、时间戳章节、标题建议、播客简介
+```
+
+---
+
+### 步骤 11: 最终交付 🆕v5
+
+**汇总所有输出 + 记录到 episode_history**
+
+**流程**：
+1. 汇总本次处理的所有产出物：
+   - 精剪版音频（步骤 8）
+   - QA 报告（步骤 9b，如有）
+   - 后期产物（步骤 10，如有）
+2. 记录到 `episode_history.json`：
+   ```bash
+   node -e "
+     const um = require('$SKILL_DIR/剪播客/scripts/user_manager');
+     um.appendEpisode('$PODCASTCUT_USER', {
+       audio_file: '原始文件名',
+       original_duration_min: 128,
+       final_duration_min: 92,
+       delete_ratio: '28%',
+       content_blocks_deleted: 13,
+       fine_edits: 47,
+       qa_issues: 0,
+       post_production: true
+     });
+   "
+   ```
+3. 如 `preferences.yaml` 中 `workflow_automation.prompt_for_feedback: true`：
+   - 提醒用户："如果你在审查时有修正 AI 的建议，记得在审查页导出 AI 反馈（蓝色按钮），下次剪辑时系统会自动学习。"
 
 ---
 
@@ -833,6 +1015,14 @@ done
 ---
 
 ## 版本历史
+
+### v5.0 (2026-02-21)
+- 🧑‍💼 Per-user 偏好系统：用户配置文件夹 + YAML 格式
+- 🎓 新用户 Onboarding：播客链接解析 + 剪辑样本学习 + 扩展偏好问答
+- 🔄 两层规则架构：preferences.yaml（意图层）→ editing_rules/（执行层）
+- 📊 反馈闭环：审查修正自动分析 → editing_rules 更新
+- 🤖 自动质检 + 后期触发 + episode_history 记录
+- 📂 用户管理模块：user_manager.js（CRUD + 偏好读写）
 
 ### v4.1 (2026-02-12)
 - 🎯 动态播放器跳过精度优化：自适应 lookahead + 紧密间隙前移 + pause-seek-play
