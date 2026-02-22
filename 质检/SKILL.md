@@ -254,8 +254,8 @@ python3 "$SKILL_DIR/质检/scripts/ai_listen.py" \
 
 ```bash
 python3 "$SKILL_DIR/质检/scripts/report_generator.py" \
-  --signal-report "$WORK_DIR/qa_signal_report.json" \
-  --ai-report "$WORK_DIR/qa_ai_report.json" \
+  --signal "$WORK_DIR/qa_signal_report.json" \
+  --ai "$WORK_DIR/qa_ai_report.json" \
   --output "$WORK_DIR/qa_report.json" \
   --summary "$WORK_DIR/qa_summary.md"
 ```
@@ -344,6 +344,28 @@ qa_summary.md                 # 综合报告（Markdown 摘要）
 
 ---
 
+## 经验与陷阱
+
+### 陷阱 1：播客场景下 energy_jump 全是假阳性
+
+**现象**：信号分析在 56 分钟播客上检出 1725 个 issues（score 1.0/10），其中绝大多数是 energy_jump。
+
+**原因**：播客中自然的说话人切换、语气变化都会产生巨大的能量比（10x-105x 都是正常的）。AI 复查确认 top 10 极端 energy_jump（105x, 78x, 72x…）**全部是假阳性**。
+
+**解决**：播客模式下完全忽略 energy_jump，只保留 spectral_jump（频谱跳变）和 unnatural_silence（不自然静音）。过滤后从 800 个 → 1 个，复听从 394 → 9 个。
+
+### 陷阱 2：Gemini 模型名需要用最新版
+
+**现象**：`gemini-2.0-flash` 返回 404 错误。
+
+**解决**：使用 `gemini-2.5-flash`。模型更新频繁，如果遇到 404，用 `client.models.list()` 查看可用模型。
+
+### 陷阱 3：API Key 从 .env 自动加载
+
+`ai_listen.py` 会自动从项目根目录的 `.env` 文件读取 `GEMINI_API_KEY`，无需手动 export。
+
+---
+
 ## 依赖
 
 ```txt
@@ -359,6 +381,22 @@ google-genai>=1.0.0    # 可选，Layer 2 需要
 pip install librosa numpy soundfile
 pip install google-genai          # 可选，启用 AI 听感评估
 ```
+
+---
+
+## 实际运行数据（2026-02-22）
+
+| 指标 | 数值 |
+|------|------|
+| 音频 | podcast_final.mp3 (56:32) |
+| Layer 1 原始 issues | 1725 |
+| 播客模式过滤后 | 1 (spectral_jump) |
+| Layer 2 AI 评分 | 7.3/10 |
+| AI 复查误报率 | 100%（10/10 全部假阳性） |
+| 综合评分 | 8.3/10 |
+| 需复听片段 | 9 个（约 45 秒） |
+| Gemini 模型 | gemini-2.5-flash |
+| API 调用 | 16 次（6 全局 + 10 可疑复查） |
 
 ---
 
