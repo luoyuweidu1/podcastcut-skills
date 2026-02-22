@@ -717,6 +717,46 @@ __SPEAKER_STYLES__
   text-decoration: line-through;
 }
 
+.silence-pause {
+  display: inline;
+  font-size: 12px;
+  color: #9ca3af;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  text-decoration: line-through;
+  text-decoration-color: var(--orange);
+  text-decoration-thickness: 1.5px;
+  transition: all 0.15s;
+}
+.silence-pause:hover {
+  color: var(--orange);
+}
+.silence-pause.disabled {
+  text-decoration: none;
+  color: #d1d5db;
+}
+
+.silence-bar {
+  display: inline;
+  color: var(--orange);
+  text-decoration: line-through;
+  text-decoration-color: var(--orange);
+  background: #fff7ed;
+  padding: 0 3px;
+  border-radius: 2px;
+  font-size: 0.8em;
+  cursor: pointer;
+  transition: all 0.15s;
+  opacity: 0.85;
+}
+.silence-bar:hover { opacity: 1; background: #fed7aa; }
+.silence-bar.disabled {
+  color: var(--gray-400);
+  text-decoration: none;
+  background: var(--gray-100);
+  opacity: 0.5;
+}
+
 .fine-delete {
   text-decoration: line-through;
   background: #fff7ed;
@@ -1137,25 +1177,45 @@ function buildTranscript() {
       const feClass = feDisabled ? 'fine-tag disabled' : 'fine-tag';
       const delClass = feDisabled ? 'fine-delete disabled' : 'fine-delete';
 
-      textHtml += `<span class="${feClass}" data-fine-idx="${fe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="${escapeHtml(fe.reason)}">${escapeHtml(fe.type)}</span>`;
-
-      // Show text with deletion marked (clickable to toggle)
-      if (fe.deleteText) {
-        const escapedText = escapeHtml(s.text);
-        const escapedDel = escapeHtml(fe.deleteText);
-        const pos = escapedText.indexOf(escapedDel);
-        if (pos >= 0) {
-          textHtml += escapedText.substring(0, pos);
-          textHtml += `<span class="${delClass}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="点击切换保留/删除">${escapedDel}</span>`;
-          textHtml += escapedText.substring(pos + escapedDel.length);
-        } else {
-          textHtml += escapedText;
-        }
-      } else {
+      if (fe.type === 'silence') {
+        const dur = (fe.de || 0) - (fe.ds || 0);
+        const deleteDur = Math.max(0, dur - 0.8);
+        const pauseClass = feDisabled ? 'silence-pause disabled' : 'silence-pause';
+        textHtml += `<span class="${pauseClass}" data-fine-idx="${fe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="静音${dur.toFixed(1)}s → 保留0.8s，删${deleteDur.toFixed(1)}s — 点击切换">-${deleteDur.toFixed(1)}s</span> `;
         textHtml += escapeHtml(s.text);
+      } else {
+        textHtml += `<span class="${feClass}" data-fine-idx="${fe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="${escapeHtml(fe.reason)}">${escapeHtml(fe.type)}</span>`;
+
+        // Show text with deletion marked (clickable to toggle)
+        // 优先用 charOffset（精确），回退到 indexOf（可能误匹配同字）
+        if (fe.deleteText) {
+          const escapedText = escapeHtml(s.text);
+          const escapedDel = escapeHtml(fe.deleteText);
+          const pos = (fe.charOffset !== undefined) ? fe.charOffset : escapedText.indexOf(escapedDel);
+          if (pos >= 0 && pos + escapedDel.length <= escapedText.length) {
+            textHtml += escapedText.substring(0, pos);
+            textHtml += `<span class="${delClass}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="点击切换保留/删除">${escapedDel}</span>`;
+            textHtml += escapedText.substring(pos + escapedDel.length);
+          } else {
+            textHtml += escapedText;
+          }
+        } else {
+          textHtml += escapeHtml(s.text);
+        }
       }
     } else {
       textHtml += escapeHtml(s.text);
+    }
+
+    // Render extraSilences bars after the text
+    if (s.extraSilences && s.extraSilences.length > 0) {
+      s.extraSilences.forEach(es => {
+        const esDisabled = fineEditsDisabled.has(es.idx);
+        const esDur = (es.de || 0) - (es.ds || 0);
+        const esDeleteDur = Math.max(0, esDur - 0.8);
+        const esPauseClass = esDisabled ? 'silence-pause disabled' : 'silence-pause';
+        textHtml += ` <span class="${esPauseClass}" data-fine-idx="${es.idx}" onclick="event.stopPropagation(); toggleFineEdit(${es.idx})" title="静音${esDur.toFixed(1)}s → 保留0.8s，删${esDeleteDur.toFixed(1)}s — 点击切换">[...${esDur.toFixed(1)}s]</span>`;
+      });
     }
 
     const textClass = isDeleted ? 's-text deleted-text' : 's-text';
@@ -1396,6 +1456,10 @@ function updateRowVisual(idx) {
 
 // ===== TOGGLE FINE EDIT =====
 function toggleFineEdit(feIdx) {
+  // Don't toggle if user is drag-selecting text (not a simple click)
+  const sel = window.getSelection();
+  if (sel && !sel.isCollapsed && sel.toString().trim().length > 0) return;
+
   undoStack.push({
     type: 'fineEdit',
     feIdx: feIdx,
@@ -1410,8 +1474,12 @@ function toggleFineEdit(feIdx) {
 
   invalidateSkipRanges();
   // Rebuild just the affected row
-  // Find the sentence with this fine edit
-  const s = sentencesData.find(s => s.fineEdit && s.fineEdit.idx === feIdx);
+  // Find the sentence with this fine edit (check primary, extraSilences, extraFineEdits)
+  const s = sentencesData.find(s =>
+    (s.fineEdit && s.fineEdit.idx === feIdx) ||
+    (s.extraSilences && s.extraSilences.some(es => es.idx === feIdx)) ||
+    (s.extraFineEdits && s.extraFineEdits.some(ef => ef.idx === feIdx))
+  );
   if (s) {
     rebuildRowText(s);
   }
@@ -1431,21 +1499,41 @@ function rebuildRowText(s) {
   const feClass = feDisabled ? 'fine-tag disabled' : 'fine-tag';
   const delClass = feDisabled ? 'fine-delete disabled' : 'fine-delete';
 
-  textHtml += `<span class="${feClass}" data-fine-idx="${fe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="${escapeHtml(fe.reason)}">${escapeHtml(fe.type)}</span>`;
-
-  if (fe.deleteText) {
-    const escapedText = escapeHtml(s.text);
-    const escapedDel = escapeHtml(fe.deleteText);
-    const pos = escapedText.indexOf(escapedDel);
-    if (pos >= 0) {
-      textHtml += escapedText.substring(0, pos);
-      textHtml += `<span class="${delClass}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="点击切换保留/删除">${escapedDel}</span>`;
-      textHtml += escapedText.substring(pos + escapedDel.length);
-    } else {
-      textHtml += escapedText;
-    }
-  } else {
+  if (fe.type === 'silence') {
+    const dur = (fe.de || 0) - (fe.ds || 0);
+    const deleteDur = Math.max(0, dur - 0.8);
+    const pauseClass = feDisabled ? 'silence-pause disabled' : 'silence-pause';
+    textHtml += `<span class="${pauseClass}" data-fine-idx="${fe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="静音${dur.toFixed(1)}s → 保留0.8s，删${deleteDur.toFixed(1)}s — 点击切换">-${deleteDur.toFixed(1)}s</span> `;
     textHtml += escapeHtml(s.text);
+  } else {
+    textHtml += `<span class="${feClass}" data-fine-idx="${fe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="${escapeHtml(fe.reason)}">${escapeHtml(fe.type)}</span>`;
+
+    if (fe.deleteText) {
+      const escapedText = escapeHtml(s.text);
+      const escapedDel = escapeHtml(fe.deleteText);
+      const pos = (fe.charOffset !== undefined) ? fe.charOffset : escapedText.indexOf(escapedDel);
+      if (pos >= 0 && pos + escapedDel.length <= escapedText.length) {
+        textHtml += escapedText.substring(0, pos);
+        textHtml += `<span class="${delClass}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="点击切换保留/删除">${escapedDel}</span>`;
+        textHtml += escapedText.substring(pos + escapedDel.length);
+      } else {
+        textHtml += escapedText;
+      }
+    } else {
+      textHtml += escapeHtml(s.text);
+    }
+  }
+
+  // Render extraSilences bars
+  if (s.extraSilences && s.extraSilences.length > 0) {
+    s.extraSilences.forEach(es => {
+      const esDisabled = fineEditsDisabled.has(es.idx);
+      const esDur = (es.de || 0) - (es.ds || 0);
+      const esDeleteDur = Math.max(0, esDur - 0.8);
+      const esBarClass = esDisabled ? 'silence-bar disabled' : 'silence-bar';
+      const esBarText = esDeleteDur > 0 ? `····${esDeleteDur.toFixed(1)}s····` : `····${esDur.toFixed(1)}s····`;
+      textHtml += ` <span class="${esBarClass}" data-fine-idx="${es.idx}" onclick="event.stopPropagation(); toggleFineEdit(${es.idx})" title="静音${esDur.toFixed(1)}s → 保留0.8s，删${esDeleteDur.toFixed(1)}s — 点击切换">${esBarText}</span>`;
+    });
   }
 
   textEl.innerHTML = textHtml;
@@ -1983,11 +2071,29 @@ function exportDeleteSegments() {
       return;
     }
 
-    // Fine edits (word-level)
+    // Fine edits (word-level or whole-sentence)
     if (s.fineEdit && !fineEditsDisabled.has(s.fineEdit.idx)) {
       const fe = s.fineEdit;
-      if (fe.ds !== undefined && fe.de !== undefined) {
+      if (fe.wholeSentence) {
+        ranges.push([s.startTime, s.endTime]);
+      } else if (fe.ds !== undefined && fe.de !== undefined) {
         ranges.push([fe.ds, fe.de]);
+      }
+    }
+
+    // Extra fine edits + silences
+    if (s.extraFineEdits) {
+      for (const efe of s.extraFineEdits) {
+        if (!fineEditsDisabled.has(efe.idx) && efe.ds !== undefined && efe.de !== undefined) {
+          ranges.push([efe.ds, efe.de]);
+        }
+      }
+    }
+    if (s.extraSilences) {
+      for (const es of s.extraSilences) {
+        if (!fineEditsDisabled.has(es.idx) && es.ds !== undefined && es.de !== undefined) {
+          ranges.push([es.ds, es.de]);
+        }
       }
     }
 
@@ -2248,17 +2354,23 @@ document.addEventListener('mouseup', function(e) {
   const focusTextEl = focus.parentElement.closest('.s-text');
   if (textEl !== focusTextEl) { toolbar.classList.remove('visible'); return; }
   
-  // Don't show toolbar if selecting within already-deleted text
-  if (anchor.parentElement.closest('.fine-delete') || anchor.parentElement.closest('.manual-delete')) {
+  // Allow selection across fine-delete spans (user may want to select entire sentence).
+  // Only block if selection is entirely within a manual-delete span (already handled).
+  const anchorInManual = anchor.parentElement.closest('.manual-delete');
+  const focusInManual = focus.parentElement.closest('.manual-delete');
+  if (anchorInManual && focusInManual && anchorInManual === focusInManual) {
     toolbar.classList.remove('visible');
     return;
   }
   
-  const selectedText = sel.toString().trim();
-  if (selectedText.length === 0) { toolbar.classList.remove('visible'); return; }
-  
-  // Show toolbar near selection
+  // Get selected text, stripping UI-only labels (tag names like "stutter", "手动")
   const range = sel.getRangeAt(0);
+  const frag = range.cloneContents();
+  frag.querySelectorAll('.fine-tag, .manual-tag, .silence-pause').forEach(el => el.remove());
+  const selectedText = (frag.textContent || '').trim();
+  if (selectedText.length === 0) { toolbar.classList.remove('visible'); return; }
+
+  // Show toolbar near selection
   const rect = range.getBoundingClientRect();
   toolbar.style.left = Math.min(rect.left, window.innerWidth - 220) + 'px';
   toolbar.style.top = (rect.top - 40) + 'px';
@@ -2282,19 +2394,25 @@ document.addEventListener('mousedown', function(e) {
 function markSelectionDeleted() {
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed) return;
-  
-  const selectedText = sel.toString().trim();
+
+  // Extract selected text, excluding fine-tag/silence-pause labels
+  // (these are UI elements, not part of the sentence text)
+  const range = sel.getRangeAt(0);
+  const fragment = range.cloneContents();
+  // Remove tag labels that aren't part of actual sentence text
+  fragment.querySelectorAll('.fine-tag, .manual-tag, .silence-pause').forEach(el => el.remove());
+  const selectedText = (fragment.textContent || '').trim();
   if (!selectedText) return;
-  
+
   // Find which sentence this is in
   const anchor = sel.anchorNode;
   const textEl = anchor.parentElement.closest('.s-text');
   if (!textEl) return;
-  
+
   const row = textEl.closest('[id^="row-"]');
   if (!row) return;
   const sentenceIdx = parseInt(row.id.replace('row-', ''));
-  
+
   // Create manual edit
   const editId = ++manualEditCounter;
   const edit = { id: editId, sentenceIdx: sentenceIdx, deleteText: selectedText };
@@ -2339,9 +2457,9 @@ function rebuildRowWithManualEdits(sentenceIdx) {
   // Collect all active deletions (fine edits + manual edits) as ranges
   const deletions = [];
   
-  // AI fine edit
+  // AI fine edit (use charOffset for precision, fallback to indexOf)
   if (s.fineEdit && s.fineEdit.deleteText && !fineEditsDisabled.has(s.fineEdit.idx)) {
-    const pos = fullText.indexOf(s.fineEdit.deleteText);
+    const pos = (s.fineEdit.charOffset !== undefined) ? s.fineEdit.charOffset : fullText.indexOf(s.fineEdit.deleteText);
     if (pos >= 0) {
       deletions.push({
         start: pos,
@@ -2357,17 +2475,8 @@ function rebuildRowWithManualEdits(sentenceIdx) {
   // Manual edits for this sentence
   const sentManual = manualEdits.filter(e => e.sentenceIdx === sentenceIdx);
   for (const me of sentManual) {
-    // Find the deleteText in fullText, skipping positions already covered
-    let searchFrom = 0;
-    let pos = -1;
-    while (true) {
-      pos = fullText.indexOf(me.deleteText, searchFrom);
-      if (pos < 0) break;
-      // Check if this position overlaps with existing deletions
-      const overlaps = deletions.some(d => pos < d.end && pos + me.deleteText.length > d.start);
-      if (!overlaps) break;
-      searchFrom = pos + 1;
-    }
+    // Find the deleteText in fullText (allow overlap with fine edits)
+    const pos = fullText.indexOf(me.deleteText);
     if (pos >= 0) {
       deletions.push({
         start: pos,
@@ -2378,40 +2487,82 @@ function rebuildRowWithManualEdits(sentenceIdx) {
       });
     }
   }
-  
-  // Sort deletions by position
+
+  // Sort deletions by position, then flatten overlaps into non-overlapping segments.
+  // When a manual edit overlaps a fine edit, split into segments:
+  //   [fine-only] [overlap → manual wins] [manual-only]
   deletions.sort((a, b) => a.start - b.start);
-  
+  const segments = [];
+  for (const d of deletions) {
+    if (segments.length === 0) { segments.push({...d}); continue; }
+    const last = segments[segments.length - 1];
+    if (d.start >= last.end) {
+      // No overlap
+      segments.push({...d});
+    } else {
+      // Overlap: split into non-overlapping parts
+      // Part before overlap belongs to 'last', overlap region uses higher-priority type
+      const overlapStart = d.start;
+      const overlapEnd = Math.min(last.end, d.end);
+      // Manual type takes priority over fine
+      const winnerType = (d.type === 'manual' || last.type === 'manual') ? 'manual' : last.type;
+      const winnerId = d.type === 'manual' ? d.editId : (last.type === 'manual' ? last.editId : d.feIdx || last.feIdx);
+      const winnerDisabled = d.type === 'manual' ? d.disabled : (last.type === 'manual' ? last.disabled : false);
+
+      if (overlapStart > last.start) {
+        // Trim 'last' to before overlap
+        const before = {...last, end: overlapStart};
+        // Replace last with trimmed version + overlap segment
+        segments[segments.length - 1] = before;
+        segments.push({ start: overlapStart, end: overlapEnd, type: winnerType, editId: winnerId, feIdx: winnerId, disabled: winnerDisabled });
+      } else {
+        // Overlap starts at same position — just change type of existing segment
+        segments[segments.length - 1] = { ...last, end: overlapEnd, type: winnerType, editId: winnerId, feIdx: winnerId, disabled: winnerDisabled };
+      }
+      // Remainder after overlap
+      if (d.end > last.end) {
+        segments.push({ start: last.end, end: d.end, type: d.type, editId: d.editId, feIdx: d.feIdx, disabled: d.disabled });
+      } else if (last.end > overlapEnd) {
+        segments.push({ start: overlapEnd, end: last.end, type: last.type, editId: last.editId, feIdx: last.feIdx, disabled: last.disabled });
+      }
+    }
+  }
+
   // Build HTML
-  const escaped = escapeHtml(fullText);
   let html = '';
-  
+
   // Add fine edit tag if present
   if (s.fineEdit) {
     const feDisabled = fineEditsDisabled.has(s.fineEdit.idx);
-    const feClass = feDisabled ? 'fine-tag disabled' : 'fine-tag';
-    html += '<span class="' + feClass + '" data-fine-idx="' + s.fineEdit.idx + '" onclick="event.stopPropagation(); toggleFineEdit(' + s.fineEdit.idx + ')" title="' + escapeHtml(s.fineEdit.reason || '') + '">' + escapeHtml(s.fineEdit.type) + '</span>';
+    if (s.fineEdit.type === 'silence') {
+      const dur = (s.fineEdit.de || 0) - (s.fineEdit.ds || 0);
+      const deleteDur = Math.max(0, dur - 0.8);
+      const pauseClass = feDisabled ? 'silence-pause disabled' : 'silence-pause';
+      html += '<span class="' + pauseClass + '" data-fine-idx="' + s.fineEdit.idx + '" onclick="event.stopPropagation(); toggleFineEdit(' + s.fineEdit.idx + ')" title="静音' + dur.toFixed(1) + 's → 保留0.8s，删' + deleteDur.toFixed(1) + 's — 点击切换">-' + deleteDur.toFixed(1) + 's</span> ';
+    } else {
+      const feClass = feDisabled ? 'fine-tag disabled' : 'fine-tag';
+      html += '<span class="' + feClass + '" data-fine-idx="' + s.fineEdit.idx + '" onclick="event.stopPropagation(); toggleFineEdit(' + s.fineEdit.idx + ')" title="' + escapeHtml(s.fineEdit.reason || '') + '">' + escapeHtml(s.fineEdit.type) + '</span>';
+    }
   }
-  
+
   // Add manual edit tags
   for (const me of sentManual) {
     const tagClass = me.disabled ? 'manual-tag disabled' : 'manual-tag';
     html += '<span class="' + tagClass + '" onclick="event.stopPropagation(); toggleManualEdit(' + me.id + ')" title="手动标记删除">手动</span>';
   }
-  
-  // Render text with deletion spans
+
+  // Render text with deletion segments (guaranteed non-overlapping)
   let lastEnd = 0;
-  for (const d of deletions) {
-    const escStart = escapeHtml(fullText.substring(lastEnd, d.start));
+  for (const d of segments) {
+    if (d.start < lastEnd) continue; // safety: skip if somehow still overlapping
+    html += escapeHtml(fullText.substring(lastEnd, d.start));
     const escDel = escapeHtml(fullText.substring(d.start, d.end));
-    html += escStart;
-    
+
     if (d.type === 'fine') {
-      const delClass = 'fine-delete';
-      html += '<span class="' + delClass + '" onclick="event.stopPropagation(); toggleFineEdit(' + d.feIdx + ')" title="点击切换保留/删除">' + escDel + '</span>';
+      html += '<span class="fine-delete" onclick="event.stopPropagation(); toggleFineEdit(' + d.feIdx + ')" title="点击切换保留/删除">' + escDel + '</span>';
     } else if (d.type === 'manual') {
       if (d.disabled) {
-        html += escDel; // Just plain text when disabled
+        html += escDel;
       } else {
         html += '<span class="manual-delete" onclick="event.stopPropagation(); toggleManualEdit(' + d.editId + ')" title="手动删除 - 点击恢复">' + escDel + '</span>';
       }
@@ -2437,24 +2588,54 @@ function invalidateSkipRanges() { _skipRangesDirty = true; }
 // Compute delete time ranges from current edit state
 function getSkipRanges() {
   if (!_skipRangesDirty && _skipRangesCache) return _skipRangesCache;
-  
+
   const ranges = [];
-  
+
   sentencesData.forEach(s => {
     // Sentence-level deletions
     if (currentDeletedSet.has(s.idx)) {
       ranges.push([s.startTime, s.endTime]);
       return; // Whole sentence deleted, skip fine/manual edits
     }
-    
-    // Fine edits (word-level)
+
+    // Fine edits (word-level or whole-sentence)
     if (s.fineEdit && !fineEditsDisabled.has(s.fineEdit.idx)) {
       const fe = s.fineEdit;
-      if (fe.ds !== undefined && fe.de !== undefined) {
+      if (fe.wholeSentence) {
+        ranges.push([s.startTime, s.endTime]);
+      } else if (fe.type === 'silence' && fe.ds !== undefined && fe.de !== undefined) {
+        // Silence: keep 0.8s natural pause, only delete excess
+        const silKeep = 0.8;
+        if (fe.de - fe.ds > silKeep) {
+          ranges.push([fe.ds + silKeep, fe.de]);
+        }
+      } else if (fe.ds !== undefined && fe.de !== undefined) {
         ranges.push([fe.ds, fe.de]);
       }
     }
-    
+
+    // Extra fine edits (multiple stutters in same sentence)
+    if (s.extraFineEdits) {
+      for (const efe of s.extraFineEdits) {
+        if (!fineEditsDisabled.has(efe.idx) && efe.ds !== undefined && efe.de !== undefined) {
+          ranges.push([efe.ds, efe.de]);
+        }
+      }
+    }
+
+    // Extra silences (silence edits when primary edit is a text edit)
+    if (s.extraSilences) {
+      for (const es of s.extraSilences) {
+        if (!fineEditsDisabled.has(es.idx) && es.ds !== undefined && es.de !== undefined) {
+          // Silence: keep 0.8s, only delete excess
+          const silKeep = 0.8;
+          if (es.de - es.ds > silKeep) {
+            ranges.push([es.ds + silKeep, es.de]);
+          }
+        }
+      }
+    }
+
     // Manual edits (word-level)
     const sentManual = manualEdits.filter(e => e.sentenceIdx === s.idx && !e.disabled);
     for (const me of sentManual) {
@@ -2510,11 +2691,10 @@ function getSkipRanges() {
       }
     }
     const gap = s - closestPrevEnd;
-    // For tight gaps: extend range start back 200ms for safety buffer
-    // Accounts for JS timer jitter (~100ms) + audio buffer delay (~20ms)
-    // Clips previous word's vowel tail — imperceptible in conversation
-    if (gap < 0.20 && merged[i][0] > 0.20) {
-      merged[i][0] = Math.max(0, merged[i][0] - 0.20);
+    // For tight gaps: extend range start back 50ms for safety buffer
+    // Only accounts for JS timer jitter; avoids clipping previous word's tail
+    if (gap < 0.10 && merged[i][0] > 0.05) {
+      merged[i][0] = Math.max(0, merged[i][0] - 0.05);
     }
     const adjustedGap = merged[i][0] - closestPrevEnd;
     merged[i][2] = Math.min(0.30, Math.max(0.05, adjustedGap));
@@ -2654,20 +2834,23 @@ function skipIfNeeded() {
       const nextKept = sentencesData.find(ns => !currentDeletedSet.has(ns.idx) && ns.startTime >= e - 0.1);
       if (nextKept && nextKept.startTime <= e + 0.5) seekTarget = nextKept.startTime;
 
-      // For tight gaps (la < 0.15): pause-seek-play to prevent leakage
-      // For larger gaps: direct seek (no click artifact, no pause delay)
-      if (la < 0.15) {
-        audio.pause();
-        audio.currentTime = seekTarget;
-        audio.addEventListener('seeked', function onSeeked() {
-          audio.removeEventListener('seeked', onSeeked);
-          if (cutMode) audio.play();
-          scheduleNextSkip();
-        }, { once: true });
-      } else {
-        audio.currentTime = seekTarget;
+      // Clean skip: mute → seek → restore
+      // No pause — pausing risks seeked event not firing and audio staying stuck.
+      // Mute is sufficient to prevent audible glitch during seek.
+      const savedVol = audio.volume;
+      audio.volume = 0;
+      audio.currentTime = seekTarget;
+      // Restore volume after seek, with timeout fallback
+      let resumed = false;
+      const resume = () => {
+        if (resumed) return;
+        resumed = true;
+        audio.volume = savedVol;
+        if (cutMode && audio.paused) audio.play();
         scheduleNextSkip();
-      }
+      };
+      audio.addEventListener('seeked', resume, { once: true });
+      setTimeout(resume, 200); // fallback if seeked event is lost
       return;
     }
   }
