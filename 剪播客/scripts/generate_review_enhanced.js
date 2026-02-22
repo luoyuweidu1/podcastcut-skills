@@ -72,12 +72,15 @@ console.log(`   总词条: ${allWords.length}, 实际词: ${actualWords.length},
 
 // ===== 构建删除集合 =====
 const deletedSet = new Set();
+const suggestedDeleteSet = new Set();  // 建议删除（质量优化）
 const blockMap = {};  // sentenceIdx → block info
 
 if (analysis.sentences) {
   analysis.sentences.forEach(s => {
     if (s.action === 'delete') {
       deletedSet.add(s.sentenceIdx);
+    } else if (s.action === 'suggest_delete') {
+      suggestedDeleteSet.add(s.sentenceIdx);
     }
   });
 }
@@ -143,12 +146,16 @@ for (let i = 0; i < sentences.length; i++) {
     endTime: 0,  // filled below
     timeStr,
     words: wordsArr,
-    isAiDeleted: deletedSet.has(idx)
+    isAiDeleted: deletedSet.has(idx) || suggestedDeleteSet.has(idx),
+    isSuggestedDelete: suggestedDeleteSet.has(idx)
   };
 
   // 删除类型
-  if (deletedSet.has(idx) && blockMap[idx]) {
+  if ((deletedSet.has(idx) || suggestedDeleteSet.has(idx)) && blockMap[idx]) {
     entry.deleteType = blockMap[idx].type;
+    if (blockMap[idx].confidence === 'suggested') {
+      entry.isSuggestedDelete = true;
+    }
   }
 
   // 精剪编辑（支持每句多个编辑）
@@ -251,9 +258,10 @@ for (let i = 0; i < sentencesData.length; i++) {
 
 // ===== 统计 =====
 const totalSentences = sentencesData.length;
-const deletedCount = sentencesData.filter(s => s.isAiDeleted).length;
+const deletedCount = sentencesData.filter(s => s.isAiDeleted && !s.isSuggestedDelete).length;
+const suggestedCount = sentencesData.filter(s => s.isSuggestedDelete).length;
 const fineEditCount = sentencesData.filter(s => s.fineEdit).length;
-console.log(`   句子: ${totalSentences}, 删除: ${deletedCount}, 精剪: ${fineEditCount}`);
+console.log(`   句子: ${totalSentences}, 确定删除: ${deletedCount}, 建议删除: ${suggestedCount}, 精剪: ${fineEditCount}`);
 
 // ===== 构建 blocksData =====
 const blocksDataArr = [];
@@ -263,7 +271,8 @@ if (analysis.blocks) {
       id: block.id,
       range: block.range,
       type: block.type,
-      reason: block.reason || ''
+      reason: block.reason || '',
+      confidence: block.confidence || 'confirmed'
     };
     // 计算时长
     const startSent = sentencesData.find(s => s.idx === block.range[0]);
@@ -299,7 +308,8 @@ let template = fs.readFileSync(templateFile, 'utf8');
 const dataJson = JSON.stringify(sentencesData);
 template = template.replace('__SENTENCES_DATA__', dataJson);
 template = template.replace('__BLOCKS_DATA__', JSON.stringify(blocksDataArr));
-template = template.replace('__AI_DELETED_COUNT__', String(deletedCount));
+template = template.replace('__AI_DELETED_COUNT__', String(deletedCount + suggestedCount));
+template = template.replace('__AI_SUGGESTED_COUNT__', String(suggestedCount));
 template = template.replace('__TOTAL_SENTENCES__', String(totalSentences));
 template = template.replace('__SPEAKER_STYLES__', speakerStyles);
 template = template.replaceAll('__SPEAKER_CLASS_FUNC__', speakerClassExpr);
@@ -310,5 +320,5 @@ fs.writeFileSync(outputFile, template);
 const sizeKB = Math.round(fs.statSync(outputFile).size / 1024);
 
 console.log(`✅ 已生成: ${outputFile} (${sizeKB}KB)`);
-console.log(`   句子: ${totalSentences}, AI删除: ${deletedCount}, 精剪: ${fineEditCount}`);
+console.log(`   句子: ${totalSentences}, AI确定删除: ${deletedCount}, AI建议删除: ${suggestedCount}, 精剪: ${fineEditCount}`);
 console.log(`   词级时间戳: ${sentencesData.reduce((sum, s) => sum + s.words.length, 0)} 个`);

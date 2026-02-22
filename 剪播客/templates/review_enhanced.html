@@ -502,6 +502,8 @@ body {
 .sentence-row.highlight { background: #fef9c3 !important; }
 .sentence-row.deleted { background: #fef2f2; }
 .sentence-row.deleted:hover { background: #fee2e2; }
+.sentence-row.suggested-delete { background: #fffbeb; border: 2px dashed #fbbf24 !important; }
+.sentence-row.suggested-delete:hover { background: #fef3c7; }
 .sentence-row.hidden { display: none; }
 
 /* User-modified highlight */
@@ -558,8 +560,10 @@ body {
 }
 
 .block-bar.hidden { display: none; }
+.block-bar.suggested-block { background: #fffbeb; border-color: #fbbf24; border-style: dashed; }
 .block-bar-icon { font-size: 16px; }
 .block-bar-id { font-weight: 700; color: #dc2626; }
+.suggested-block .block-bar-id { color: #d97706; }
 
 .block-bar-type {
   display: inline-block;
@@ -995,6 +999,7 @@ __SPEAKER_STYLES__
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-value" id="stat-total">--</div><div class="stat-label">总句数</div></div>
       <div class="stat-card"><div class="stat-value" style="color:#dc2626" id="stat-ai-deleted">--</div><div class="stat-label">AI删除</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#f59e0b" id="stat-ai-suggested">--</div><div class="stat-label">建议删除</div></div>
       <div class="stat-card"><div class="stat-value" style="color:#16a34a" id="stat-ai-kept">--</div><div class="stat-label">AI保留</div></div>
       <div class="stat-card"><div class="stat-value" style="color:var(--orange)" id="stat-fine-edits">--</div><div class="stat-label">精剪编辑</div></div>
       <div class="stat-card"><div class="stat-value" id="stat-blocks">--</div><div class="stat-label">删除段落</div></div>
@@ -1046,6 +1051,11 @@ __SPEAKER_STYLES__
     <button class="filter-btn" data-type="repeated_content" onclick="setTypeFilter('repeated_content')">重复内容</button>
     <button class="filter-btn" data-type="production_talk" onclick="setTypeFilter('production_talk')">制作讨论</button>
     <button class="filter-btn" data-type="privacy" onclick="setTypeFilter('privacy')">隐私保护</button>
+    <span style="font-size:11px;color:var(--gray-400);margin:0 4px">|</span>
+    <button class="filter-btn" data-type="redundant_viewpoint" onclick="setTypeFilter('redundant_viewpoint')">重复观点</button>
+    <button class="filter-btn" data-type="over_detail" onclick="setTypeFilter('over_detail')">过度展开</button>
+    <button class="filter-btn" data-type="low_density" onclick="setTypeFilter('low_density')">低密度</button>
+    <button class="filter-btn" data-type="weak_relevance" onclick="setTypeFilter('weak_relevance')">弱相关</button>
     <div class="filter-separator"></div>
     <input class="search-input" type="text" placeholder="搜索文本..." oninput="searchText(this.value)">
     <span style="font-size:11px;color:var(--gray-400)">快捷键: <span class="kbd">D</span> 切换删除 <span class="kbd">Ctrl+Z</span> 撤销 | 鼠标拖选多句可批量操作</span>
@@ -1090,10 +1100,11 @@ const sentencesData = __SENTENCES_DATA__;
 
 const blocksData = __BLOCKS_DATA__;
 
-const typeLabels = {"pre_show": "录前准备", "tech_debug": "技术调试", "chit_chat": "跑题闲聊", "repeated_content": "重复内容", "production_talk": "制作讨论", "privacy": "隐私保护"};
-const typeColors = {"pre_show": "#6b7280", "tech_debug": "#0891b2", "chit_chat": "#d97706", "repeated_content": "#7c3aed", "production_talk": "#2563eb", "privacy": "#dc2626"};
+const typeLabels = {"pre_show": "录前准备", "tech_debug": "技术调试", "chit_chat": "跑题闲聊", "repeated_content": "重复内容", "production_talk": "制作讨论", "privacy": "隐私保护", "redundant_viewpoint": "重复观点", "over_detail": "过度展开", "low_density": "低密度", "weak_relevance": "弱相关"};
+const typeColors = {"pre_show": "#6b7280", "tech_debug": "#0891b2", "chit_chat": "#d97706", "repeated_content": "#7c3aed", "production_talk": "#2563eb", "privacy": "#dc2626", "redundant_viewpoint": "#f59e0b", "over_detail": "#f97316", "low_density": "#a3a3a3", "weak_relevance": "#78716c"};
 
 const AI_DELETED_COUNT = __AI_DELETED_COUNT__;
+const AI_SUGGESTED_COUNT = __AI_SUGGESTED_COUNT__;
 const TOTAL_SENTENCES = __TOTAL_SENTENCES__;
 
 // ===== STATE =====
@@ -1103,9 +1114,11 @@ let searchQuery = '';
 let highlightedIdx = -1;
 
 // Track user modifications
-// aiDeletedSet: the original set of AI-deleted sentence indices
+// aiDeletedSet: the original set of AI-deleted sentence indices (includes both confirmed and suggested)
 const aiDeletedSet = new Set(sentencesData.filter(s => s.isAiDeleted).map(s => s.idx));
-// currentDeletedSet: current state of deletions (starts as copy of AI)
+// suggestedDeleteSet: sentences that are suggested deletions (quality optimization, not confirmed)
+const suggestedDeleteSet = new Set(sentencesData.filter(s => s.isSuggestedDelete).map(s => s.idx));
+// currentDeletedSet: current state of deletions (starts as copy of AI — suggested are also deleted by default)
 const currentDeletedSet = new Set(aiDeletedSet);
 // Track which sentences user has manually changed
 const userAddedDeletions = new Set();   // user added these to deletion
@@ -1139,8 +1152,10 @@ function buildTranscript() {
     if (block) {
       const color = typeColors[block.type] || '#6b7280';
       const label = typeLabels[block.type] || block.type;
-      html += `<div class="block-bar" id="block-${block.id}" data-block-id="${block.id}" data-type="${block.type}">`;
-      html += `<span class="block-bar-icon">&#9888;</span>`;
+      const isSuggestedBlock = block.confidence === 'suggested';
+      const blockBarClass = isSuggestedBlock ? 'block-bar suggested-block' : 'block-bar';
+      html += `<div class="${blockBarClass}" id="block-${block.id}" data-block-id="${block.id}" data-type="${block.type}">`;
+      html += `<span class="block-bar-icon">${isSuggestedBlock ? '&#128161;' : '&#9888;'}</span>`;
       html += `<span class="block-bar-id">#${block.id}</span>`;
       html += `<span class="block-bar-type" style="background:${color}">${label}</span>`;
       html += `<span class="block-bar-reason">${escapeHtml(block.reason)}</span>`;
@@ -1154,6 +1169,7 @@ function buildTranscript() {
 
     let rowClass = 'sentence-row';
     if (isDeleted) rowClass += ' deleted';
+    if (isDeleted && suggestedDeleteSet.has(s.idx) && !userAddedDeletions.has(s.idx)) rowClass += ' suggested-delete';
     if (isUserModified) rowClass += ' user-modified';
 
     const spClass = __SPEAKER_CLASS_FUNC__;
@@ -1223,7 +1239,9 @@ function buildTranscript() {
 
     // Badges
     html += `<div class="s-badges">`;
-    if (isAiDel) {
+    if (isAiDel && suggestedDeleteSet.has(s.idx)) {
+      html += `<span class="ai-badge" style="background:#f59e0b">建议</span>`;
+    } else if (isAiDel) {
       html += `<span class="ai-badge">AI</span>`;
     }
     if (isDeleted && s.deleteType) {
@@ -1768,7 +1786,8 @@ function buildSummaryTable() {
     html += '<td class="st-check"><input type="checkbox" ' + (checked ? 'checked' : '') + ' onchange="toggleBlockDeletion(' + block.id + ', this.checked)"></td>';
     html += '<td class="st-id">' + block.id + '</td>';
     html += '<td class="st-topic">' + escapeHtml(topic) + '</td>';
-    html += '<td class="st-type"><span class="summary-type-tag" style="background:' + color + '">' + typeLabel + '</span></td>';
+    const suggestedTag = block.confidence === 'suggested' ? ' <span style="font-size:10px;color:#d97706;font-weight:600">建议</span>' : '';
+    html += '<td class="st-type"><span class="summary-type-tag" style="background:' + color + '">' + typeLabel + '</span>' + suggestedTag + '</td>';
     html += '<td class="st-pos" onclick="seekToTime(' + info.startTime + ')">' + fmtDur(info.startTime) + '</td>';
     html += '<td class="st-dur">' + fmtDur(info.duration) + '</td>';
     html += '<td class="st-reason">' + escapeHtml(detail) + '</td>';
@@ -2691,9 +2710,14 @@ function getSkipRanges() {
       }
     }
     const gap = s - closestPrevEnd;
-    // For tight gaps: extend range start back 50ms for safety buffer
-    // Only accounts for JS timer jitter; avoids clipping previous word's tail
-    if (gap < 0.10 && merged[i][0] > 0.05) {
+    // For tight gaps: extend range start back for safety buffer
+    // JS timer jitter is ~50-80ms; for zero-gap fine edits (stutter at word
+    // boundary), we need more aggressive buffering to prevent onset leaking.
+    if (gap < 0.02 && merged[i][0] > 0.10) {
+      // Zero gap (word boundary): pull back 100ms — the previous word's
+      // tail consonant is usually done by then
+      merged[i][0] = Math.max(0, merged[i][0] - 0.10);
+    } else if (gap < 0.10 && merged[i][0] > 0.05) {
       merged[i][0] = Math.max(0, merged[i][0] - 0.05);
     }
     const adjustedGap = merged[i][0] - closestPrevEnd;
@@ -2834,23 +2858,24 @@ function skipIfNeeded() {
       const nextKept = sentencesData.find(ns => !currentDeletedSet.has(ns.idx) && ns.startTime >= e - 0.1);
       if (nextKept && nextKept.startTime <= e + 0.5) seekTarget = nextKept.startTime;
 
-      // Clean skip: mute → seek → restore
-      // No pause — pausing risks seeked event not firing and audio staying stuck.
-      // Mute is sufficient to prevent audible glitch during seek.
+      // Clean skip: mute → seek → fast restore
+      // Keep audio playing (no pause) to avoid seeked event issues.
       const savedVol = audio.volume;
       audio.volume = 0;
       audio.currentTime = seekTarget;
-      // Restore volume after seek, with timeout fallback
+      // Restore volume after seek, with aggressive fallback
       let resumed = false;
       const resume = () => {
         if (resumed) return;
         resumed = true;
-        audio.volume = savedVol;
+        // Quick fade-in (20ms) to avoid click artifact
+        audio.volume = savedVol * 0.3;
+        setTimeout(() => { audio.volume = savedVol; }, 20);
         if (cutMode && audio.paused) audio.play();
         scheduleNextSkip();
       };
       audio.addEventListener('seeked', resume, { once: true });
-      setTimeout(resume, 200); // fallback if seeked event is lost
+      setTimeout(resume, 80); // aggressive fallback (was 200ms)
       return;
     }
   }
@@ -3006,7 +3031,8 @@ window.addEventListener('scroll', function() {
 // ===== INIT =====
 // Populate stat cards dynamically
 document.getElementById('stat-total').textContent = TOTAL_SENTENCES;
-document.getElementById('stat-ai-deleted').textContent = AI_DELETED_COUNT;
+document.getElementById('stat-ai-deleted').textContent = AI_DELETED_COUNT - AI_SUGGESTED_COUNT;
+document.getElementById('stat-ai-suggested').textContent = AI_SUGGESTED_COUNT;
 document.getElementById('stat-ai-kept').textContent = TOTAL_SENTENCES - AI_DELETED_COUNT;
 document.getElementById('stat-fine-edits').textContent = sentencesData.filter(s => s.fineEdit).length;
 document.getElementById('stat-blocks').textContent = blocksData.length;

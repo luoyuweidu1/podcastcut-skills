@@ -372,9 +372,10 @@ const rules = UserManager.loadEditingRules(userId);
 1. 通读 `sentences.txt` 全文，划分话题段落
 2. 根据用户 `detect_types` 开关，识别启用的删除类型（见下方类型表）
 3. 计算各块时长，对比目标时长缺口
-4. 如仍需删减，按用户激进度识别信息密度低的段落
-5. 微调每个删除块的边界切点
-6. 生成 `semantic_deep_analysis.json`
+4. 如仍需删减，按用户激进度识别信息密度低的段落（标记为 `delete`）
+5. **质量优化扫描（始终执行，即使无时长缺口）**：按 `10-内容分析方法论.md` 的"质量优化分析"章节，扫描啰嗦重复/过度展开/信息密度低/弱相关细节，标记为 `suggest_delete`
+6. 微调每个删除块的边界切点
+7. 生成 `semantic_deep_analysis.json`
 
 **6种删除类型**：
 
@@ -455,7 +456,7 @@ const rules = UserManager.loadEditingRules(userId);
 | 2      | 残句       | 9-残句检测     | 话说一半被打断，整句删                  |
 | 3      | 重复句     | 4-重复句检测   | 相邻句开头≥5字相同，删短的              |
 | 4      | 句内重复   | 6-句内重复检测 | A+填充+A 模式，删前面的A                |
-| 5      | 卡顿词     | 5-卡顿词       | "那个那个"、"就是就是"，删前面（排除叠词：妈妈/看看/哈哈等） |
+| 5      | 卡顿词     | 5-卡顿词       | "那个那个"等重复词，删前面（排除叠词+播客自然重复+高频口语词组） |
 | 6      | 重说纠正   | 8-重说纠正     | 说错立刻纠正，删错的                    |
 | 7      | 连续填充词 | 7-连续填充词   | "嗯啊"、"呃啊"，全删                    |
 | 8      | 单个填充词 | 2-填充词检测   | 单个"嗯"/"啊"默认保留（播客保持对话感） |
@@ -1136,48 +1137,48 @@ const gap = rangeStart - closestPrevWordEnd;
 range[2] = Math.min(0.30, Math.max(0.05, gap));
 ```
 
-**6b. 紧密间隙 range 前移 200ms**
+**6b. 紧密间隙 range 前移（分层缓冲）**
 
-当精剪删除紧挨保留词（gap < 200ms）时，skip range 起点向前扩展 200ms：
+精剪删除紧挨保留词时，skip range 起点向前扩展，防止删除内容起音泄漏：
 
 ```javascript
-if (gap < 0.20 && merged[i][0] > 0.20) {
-  merged[i][0] = Math.max(0, merged[i][0] - 0.20);
+if (gap < 0.02) {
+  // 零间隙（词边界）：前移 100ms — 防止声母/起音泄漏
+  merged[i][0] = Math.max(0, merged[i][0] - 0.10);
+} else if (gap < 0.10) {
+  // 窄间隙：前移 50ms
+  merged[i][0] = Math.max(0, merged[i][0] - 0.05);
 }
 ```
 
-- 牺牲前一个词尾部 ~200ms 元音尾巴（对话中听不出）
-- 给 JS 定时器留出 200ms+ 余量
-- 即使 setTimeout 延迟 150ms，pause 仍在删除内容播放前生效
+**真实案例**：句 143 "方面的" 结束于 992.59，"困扰"(删) 开始于 992.59（gap=0）。
+前移后 range 从 `[992.59, ...]` 变为 `[992.49, ...]`，防止"困"的起音泄漏。
 
-**真实案例**：句 33 "话题" 结束于 176.09，"放到"(删) 开始于 176.09（gap=0）。
-前移后 range 从 `[176.09, ...]` 变为 `[175.89, ...]`，多出 200ms 余量。
+**6c. mute → seek → fast-restore**
 
-**6c. 条件性 pause → seek → play**
-
-根据间隙大小选择不同跳过策略，避免不必要的 click 音：
+统一使用 mute 方式跳过（不 pause，避免 seeked 事件不触发）：
 
 ```javascript
-if (la < 0.15) {
-  // 紧密间隙：pause 切断输出，防止残音泄漏
-  audio.pause();
-  audio.currentTime = seekTarget;
-  audio.addEventListener('seeked', () => {
-    if (cutMode) audio.play();
-    scheduleNextSkip();
-  }, { once: true });
-} else {
-  // 较大间隙：直接 seek，避免 pause 造成的 click 音
-  audio.currentTime = seekTarget;
+audio.volume = 0;
+audio.currentTime = seekTarget;
+const resume = () => {
+  audio.volume = savedVol * 0.3;         // 先 30% 音量
+  setTimeout(() => { audio.volume = savedVol; }, 20); // 20ms 后恢复
   scheduleNextSkip();
-}
+};
+audio.addEventListener('seeked', resume, { once: true });
+setTimeout(resume, 80); // 激进 fallback（80ms，原 200ms）
 ```
+
+- 快速 fade-in（20ms）避免 click 音
+- 80ms fallback 减少句子级跳过的感知停顿（原 200ms 太长）
 
 尝试过的失败方案：
-- ❌ `audio.muted = true` — 有音频缓冲延迟，几 ms 已解码音频继续输出，听到"f"残音
-- ❌ Web Audio API `GainNode` — 本地 `file://` 协议有 CORS 限制，`createMediaElementSource` 导致完全无声
+- ❌ `audio.muted = true` — 有音频缓冲延迟，几 ms 已解码音频继续输出
+- ❌ Web Audio API `GainNode` — 本地 `file://` 协议有 CORS 限制
 - ❌ `seekTarget = e + 0.05` — 跳过保留词首字 50ms（如"放到"的"放"声母被切）
-- ❌ seek 后延迟 30ms 再取消 mute — 造成可感知的"顿一下"
+- ❌ pause → seek → play — pause 有时导致 seeked 事件不触发，音频卡住
+- ❌ fallback 200ms — 句子级跳过时停顿感明显
 - ✅ 条件策略 — 紧密间隙用 pause（防泄漏），宽间隙直接 seek（无 click）
 
 **6d. seekTarget 精确落点**
