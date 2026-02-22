@@ -91,14 +91,14 @@ if (analysis.blocks) {
 }
 
 // ===== 构建精剪编辑映射 =====
-const fineEditMap = {};  // sentenceIdx → edit
+const fineEditMap = {};  // sentenceIdx → [edit, edit, ...]  (支持每句多个编辑)
 if (fineAnalysis) {
   fineAnalysis.edits.forEach((edit, idx) => {
     edit._idx = idx;
-    // 如果同一句有多个编辑，保留第一个（优先级最高的）
     if (!fineEditMap[edit.sentenceIdx]) {
-      fineEditMap[edit.sentenceIdx] = edit;
+      fineEditMap[edit.sentenceIdx] = [];
     }
+    fineEditMap[edit.sentenceIdx].push(edit);
   });
 }
 
@@ -151,9 +151,11 @@ for (let i = 0; i < sentences.length; i++) {
     entry.deleteType = blockMap[idx].type;
   }
 
-  // 精剪编辑
-  const fe = fineEditMap[idx];
-  if (fe) {
+  // 精剪编辑（支持每句多个编辑）
+  const feList = fineEditMap[idx] || [];
+
+  // 辅助函数：构建单个 fineEdit entry
+  function buildFeEntry(fe) {
     const feEntry = {
       idx: fe._idx,
       type: fe.type,
@@ -162,45 +164,76 @@ for (let i = 0; i < sentences.length; i++) {
       reason: fe.reason || ''
     };
 
-    // 预计算精剪删除的时间范围
-    if (fe.deleteText && wordsArr.length > 0) {
-      if (fe.deleteText.startsWith('[静音')) {
-        // 静音：找句内最大间隙
-        let maxGap = 0, gapS = null, gapE = null;
-        for (let wi = 1; wi < wordsArr.length; wi++) {
-          const gap = wordsArr[wi].s - wordsArr[wi - 1].e;
-          if (gap > maxGap) {
-            maxGap = gap;
-            gapS = wordsArr[wi - 1].e;
-            gapE = wordsArr[wi].s;
-          }
+    if (fe.type === 'single_filler' || fe.type === 'residual_sentence') {
+      feEntry.wholeSentence = true;
+    }
+
+    // 优先使用 fine_analysis 自带的 ds/de（精确）
+    if (fe.ds !== undefined && fe.de !== undefined) {
+      feEntry.ds = Math.round(fe.ds * 100) / 100;
+      feEntry.de = Math.round(fe.de * 100) / 100;
+    } else if (fe.deleteText && wordsArr.length > 0) {
+      // Fallback: 文本匹配
+      const wordTexts = wordsArr.map(w => w.t);
+      const fullText = wordTexts.join('');
+      const pos = fullText.indexOf(fe.deleteText);
+      if (pos >= 0) {
+        let charCount = 0, delStartWord = null, delEndWord = null;
+        for (let wi = 0; wi < wordTexts.length; wi++) {
+          const wEnd = charCount + wordTexts[wi].length;
+          if (delStartWord === null && wEnd > pos) delStartWord = wi;
+          if (wEnd >= pos + fe.deleteText.length) { delEndWord = wi; break; }
+          charCount = wEnd;
         }
-        if (gapS !== null && maxGap > 1.0) {
-          feEntry.ds = Math.round(gapS * 100) / 100;
-          feEntry.de = Math.round(gapE * 100) / 100;
-        }
-      } else {
-        // 文本匹配
-        const wordTexts = wordsArr.map(w => w.t);
-        const fullText = wordTexts.join('');
-        const pos = fullText.indexOf(fe.deleteText);
-        if (pos >= 0) {
-          let charCount = 0, delStartWord = null, delEndWord = null;
-          for (let wi = 0; wi < wordTexts.length; wi++) {
-            const wEnd = charCount + wordTexts[wi].length;
-            if (delStartWord === null && wEnd > pos) delStartWord = wi;
-            if (wEnd >= pos + fe.deleteText.length) { delEndWord = wi; break; }
-            charCount = wEnd;
-          }
-          if (delStartWord !== null && delEndWord !== null) {
-            feEntry.ds = wordsArr[delStartWord].s;
-            feEntry.de = wordsArr[delEndWord].e;
-          }
+        if (delStartWord !== null && delEndWord !== null) {
+          feEntry.ds = wordsArr[delStartWord].s;
+          feEntry.de = wordsArr[delEndWord].e;
         }
       }
     }
 
-    entry.fineEdit = feEntry;
+    // 静音编辑：从 allWords 的 gap 元素读取精确时间
+    if (fe.type === 'silence' && feEntry.ds === undefined && fe.wordRange) {
+      const gap = allWords[fe.wordRange[0]];
+      if (gap) {
+        feEntry.ds = Math.round(gap.start * 100) / 100;
+        feEntry.de = Math.round(gap.end * 100) / 100;
+      }
+    }
+
+    // 用 wordRange 精确计算 charOffset
+    if (fe.wordRange && fe.deleteText) {
+      const relStart = fe.wordRange[0] - startWordIdx;
+      if (relStart >= 0 && relStart < wordsArr.length) {
+        let charOff = 0;
+        for (let wi = 0; wi < relStart && wi < wordsArr.length; wi++) {
+          charOff += wordsArr[wi].t.length;
+        }
+        feEntry.charOffset = charOff;
+      }
+    }
+
+    return feEntry;
+  }
+
+  if (feList.length > 0) {
+    // 分离：文本编辑（stutter/filler/etc）和静音编辑
+    const textEdits = feList.filter(fe => fe.type !== 'silence');
+    const silenceEdits = feList.filter(fe => fe.type === 'silence');
+
+    // fineEdit = 主要的文本编辑（前端渲染用），如果没有则用第一个静音
+    const primaryFe = textEdits.length > 0 ? textEdits[0] : silenceEdits[0];
+    entry.fineEdit = buildFeEntry(primaryFe);
+
+    // 额外的静音编辑（如果主编辑不是静音，额外的静音也要加到跳过列表里）
+    if (textEdits.length > 0 && silenceEdits.length > 0) {
+      entry.extraSilences = silenceEdits.map(buildFeEntry);
+    }
+
+    // 额外的文本编辑（如果同一句有多个 stutter）
+    if (textEdits.length > 1) {
+      entry.extraFineEdits = textEdits.slice(1).map(buildFeEntry);
+    }
   }
 
   sentencesData.push(entry);
