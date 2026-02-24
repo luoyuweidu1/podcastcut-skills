@@ -1,0 +1,8 @@
+_source: user_feedback
+_generated_at: "2026-02-22"
+_confidence: 0.8
+_note: "用户反馈 0.8s 以上静音应被检测，比默认 2s 阈值更激进"
+
+# 覆盖基础规则 3-静音段处理.md 的默认阈值
+threshold_seconds: 0.8
+# 原始样本学习无静音数据，此值来自用户在审查页的直接反馈

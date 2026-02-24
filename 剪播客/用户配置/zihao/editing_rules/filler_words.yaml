@@ -1,0 +1,55 @@
+_source: sample_learning
+_generated_at: "2026-02-22"
+_confidence: 0.85
+high_deletion:
+  - word: 呃
+    deletion_rate: 0.62
+    sample_count: 50
+  - word: 对对
+    deletion_rate: 0.76
+    sample_count: 29
+  - word: 对对对
+    deletion_rate: 0.7
+    sample_count: 20
+  - word: 哈哈
+    deletion_rate: 0.71
+    sample_count: 7
+  - word: 啊啊
+    deletion_rate: 1
+    sample_count: 1
+moderate_deletion:
+  - word: 这个
+    deletion_rate: 0.51
+    sample_count: 78
+  - word: 嗯
+    deletion_rate: 0.58
+    sample_count: 146
+  - word: 所以
+    deletion_rate: 0.54
+    sample_count: 50
+  - word: 那个
+    deletion_rate: 0.44
+    sample_count: 73
+  - word: 啊
+    deletion_rate: 0.53
+    sample_count: 116
+  - word: 然后
+    deletion_rate: 0.51
+    sample_count: 190
+  - word: 哦
+    deletion_rate: 0.5
+    sample_count: 22
+  - word: 就是
+    deletion_rate: 0.52
+    sample_count: 400
+  - word: 嗯嗯嗯
+    deletion_rate: 0.5
+    sample_count: 2
+  - word: 嗯嗯
+    deletion_rate: 0.5
+    sample_count: 2
+  - word: 哈哈哈
+    deletion_rate: 0.5
+    sample_count: 2
+preserve: []
+overall_aggressiveness: aggressive

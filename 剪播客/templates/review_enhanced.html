@@ -724,12 +724,12 @@ __SPEAKER_STYLES__
 .silence-pause {
   display: inline;
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--orange);
   letter-spacing: 0.5px;
   cursor: pointer;
   text-decoration: line-through;
-  text-decoration-color: var(--orange);
-  text-decoration-thickness: 1.5px;
+  text-decoration-color: #dc2626;
+  text-decoration-thickness: 2px;
   transition: all 0.15s;
 }
 .silence-pause:hover {
@@ -738,6 +738,30 @@ __SPEAKER_STYLES__
 .silence-pause.disabled {
   text-decoration: none;
   color: #d1d5db;
+}
+
+.incoming-silence {
+  display: inline-block;
+  font-size: 11px;
+  color: #b45309;
+  background: #fef3c7;
+  border: 1px dashed #f59e0b;
+  border-radius: 3px;
+  padding: 0 4px;
+  margin-right: 4px;
+  cursor: pointer;
+  line-height: 1.4;
+  vertical-align: baseline;
+  transition: all 0.15s;
+}
+.incoming-silence:hover {
+  background: #fde68a;
+  color: #92400e;
+}
+.incoming-silence.disabled {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #9ca3af;
 }
 
 .silence-bar {
@@ -823,6 +847,7 @@ __SPEAKER_STYLES__
   margin-right: 4px;
   cursor: pointer;
   user-select: none;
+  pointer-events: none;
 }
 
 .manual-tag.disabled {
@@ -864,6 +889,61 @@ __SPEAKER_STYLES__
 #selection-toolbar button:hover {
   background: #fde68a;
 }
+
+#selection-toolbar button.comment-btn {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+#selection-toolbar button.comment-btn:hover {
+  background: #dbeafe;
+}
+
+/* Comment annotation */
+.comment-highlight {
+  text-decoration: underline dashed #3b82f6;
+  text-underline-offset: 3px;
+  cursor: help;
+  position: relative;
+}
+
+.comment-tag {
+  font-size: 9px;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 3px;
+  padding: 0 3px;
+  margin-left: 2px;
+  pointer-events: none;
+  vertical-align: super;
+}
+
+/* Comment/Restore panel (reuses missed-catch panel style) */
+.feedback-panel {
+  display: none;
+  position: fixed;
+  z-index: 1001;
+  background: white;
+  border: 1px solid var(--gray-300);
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  font-size: 13px;
+  width: 320px;
+}
+.feedback-panel.visible { display: block; }
+.feedback-panel .mc-title { font-weight: 700; font-size: 14px; margin-bottom: 10px; color: var(--gray-800); }
+.feedback-panel .mc-preview { background: #eff6ff; padding: 6px 10px; border-radius: 6px; font-size: 12px; color: #1e40af; margin-bottom: 10px; max-height: 60px; overflow: hidden; word-break: break-all; }
+.feedback-panel select { width: 100%; padding: 6px 8px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 13px; margin-bottom: 8px; }
+.feedback-panel input[type="text"] { width: 100%; padding: 6px 8px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 13px; margin-bottom: 10px; }
+.feedback-panel .mc-btns { display: flex; gap: 8px; justify-content: flex-end; }
+.feedback-panel .mc-btn { padding: 5px 14px; border-radius: 6px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; }
+.feedback-panel .mc-btn-ok { background: #2563eb; color: white; }
+.feedback-panel .mc-btn-ok:hover { background: #1d4ed8; }
+.feedback-panel .mc-btn-cancel { background: var(--gray-100); color: var(--gray-600); }
+.feedback-panel .mc-btn-cancel:hover { background: var(--gray-200); }
 
 #selection-toolbar .sel-text {
   color: var(--gray-500);
@@ -1187,6 +1267,7 @@ function buildTranscript() {
 
     // Text with fine edit markers
     let textHtml = '';
+
     if (s.fineEdit) {
       const fe = s.fineEdit;
       const feDisabled = fineEditsDisabled.has(fe.idx);
@@ -1197,8 +1278,8 @@ function buildTranscript() {
         const dur = (fe.de || 0) - (fe.ds || 0);
         const deleteDur = Math.max(0, dur - 0.8);
         const pauseClass = feDisabled ? 'silence-pause disabled' : 'silence-pause';
-        textHtml += `<span class="${pauseClass}" data-fine-idx="${fe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="静音${dur.toFixed(1)}s → 保留0.8s，删${deleteDur.toFixed(1)}s — 点击切换">-${deleteDur.toFixed(1)}s</span> `;
         textHtml += escapeHtml(s.text);
+        textHtml += ` <span class="${pauseClass}" data-fine-idx="${fe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="静音${dur.toFixed(1)}s → 保留0.8s，删${deleteDur.toFixed(1)}s — 点击切换">-${deleteDur.toFixed(1)}s</span>`;
       } else {
         textHtml += `<span class="${feClass}" data-fine-idx="${fe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="${escapeHtml(fe.reason)}">${escapeHtml(fe.type)}</span>`;
 
@@ -1426,6 +1507,7 @@ function toggleDeletion(idx) {
 
   const isCurrentlyDeleted = currentDeletedSet.has(idx);
   const isAiDel = aiDeletedSet.has(idx);
+  const isRestoring = isCurrentlyDeleted; // un-deleting = restoring
 
   if (isCurrentlyDeleted) {
     // Un-delete
@@ -1449,6 +1531,16 @@ function toggleDeletion(idx) {
 
   updateRowVisual(idx);
   updateStats();
+
+  // Show restore feedback panel when restoring
+  if (isRestoring) {
+    const sent = sentencesData.find(s => s.idx === idx);
+    showRestorePanel({
+      editType: 'sentence',
+      sentenceIdx: idx,
+      text: sent ? sent.text : '句子 ' + idx
+    });
+  }
 }
 
 function updateRowVisual(idx) {
@@ -1478,21 +1570,20 @@ function toggleFineEdit(feIdx) {
   const sel = window.getSelection();
   if (sel && !sel.isCollapsed && sel.toString().trim().length > 0) return;
 
+  const wasDisabled = fineEditsDisabled.has(feIdx);
   undoStack.push({
     type: 'fineEdit',
     feIdx: feIdx,
-    wasDisabled: fineEditsDisabled.has(feIdx)
+    wasDisabled: wasDisabled
   });
 
-  if (fineEditsDisabled.has(feIdx)) {
+  if (wasDisabled) {
     fineEditsDisabled.delete(feIdx);
   } else {
     fineEditsDisabled.add(feIdx);
   }
 
   invalidateSkipRanges();
-  // Rebuild just the affected row
-  // Find the sentence with this fine edit (check primary, extraSilences, extraFineEdits)
   const s = sentencesData.find(s =>
     (s.fineEdit && s.fineEdit.idx === feIdx) ||
     (s.extraSilences && s.extraSilences.some(es => es.idx === feIdx)) ||
@@ -1502,6 +1593,27 @@ function toggleFineEdit(feIdx) {
     rebuildRowText(s);
   }
   updateStats();
+  autoSave();
+
+  // Show restore feedback when disabling a fine edit (= restoring deleted content)
+  if (!wasDisabled && s) {
+    // Find the fine edit to get its delete text
+    let feText = '';
+    if (s.fineEdit && s.fineEdit.idx === feIdx) feText = s.fineEdit.deleteText || s.fineEdit.type;
+    else if (s.extraFineEdits) {
+      const ef = s.extraFineEdits.find(ef => ef.idx === feIdx);
+      if (ef) feText = ef.deleteText || ef.type;
+    }
+    if (s.extraSilences) {
+      const es = s.extraSilences.find(es => es.idx === feIdx);
+      if (es) feText = '静音 ' + ((es.end - es.start) || 0).toFixed(1) + 's';
+    }
+    showRestorePanel({
+      editType: 'fine',
+      sentenceIdx: s.idx,
+      text: feText || '精剪编辑 #' + feIdx
+    });
+  }
 }
 
 function rebuildRowText(s) {
@@ -1521,8 +1633,8 @@ function rebuildRowText(s) {
     const dur = (fe.de || 0) - (fe.ds || 0);
     const deleteDur = Math.max(0, dur - 0.8);
     const pauseClass = feDisabled ? 'silence-pause disabled' : 'silence-pause';
-    textHtml += `<span class="${pauseClass}" data-fine-idx="${fe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="静音${dur.toFixed(1)}s → 保留0.8s，删${deleteDur.toFixed(1)}s — 点击切换">-${deleteDur.toFixed(1)}s</span> `;
     textHtml += escapeHtml(s.text);
+    textHtml += ` <span class="${pauseClass}" data-fine-idx="${fe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="静音${dur.toFixed(1)}s → 保留0.8s，删${deleteDur.toFixed(1)}s — 点击切换">-${deleteDur.toFixed(1)}s</span>`;
   } else {
     textHtml += `<span class="${feClass}" data-fine-idx="${fe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="${escapeHtml(fe.reason)}">${escapeHtml(fe.type)}</span>`;
 
@@ -1572,6 +1684,7 @@ function updateStats() {
 
 // ===== AUTO-SAVE (localStorage) =====
 const _SAVE_KEY = 'podcastcut_review_' + btoa(unescape(encodeURIComponent(document.title))).slice(0, 40);
+const _GEN_TS = __GEN_TIMESTAMP__; // template generation timestamp, injected by generate script
 let _saveTimer = null;
 let _hasUnsavedEdits = false;
 
@@ -1585,17 +1698,22 @@ function autoSave() {
 function _doSave() {
   try {
     const state = {
-      v: 2,
+      v: 3,
       ts: Date.now(),
       userAdded: Array.from(userAddedDeletions),
       userRemoved: Array.from(userRemovedDeletions),
       fineEditsDisabled: Array.from(fineEditsDisabled),
       manualEdits: manualEdits.map(e => ({
         id: e.id, sentenceIdx: e.sentenceIdx,
-        deleteText: e.deleteText, disabled: e.disabled
+        deleteText: e.deleteText, disabled: e.disabled,
+        charOffset: e.charOffset
       })),
       manualEditCounter: manualEditCounter,
       missedCatches: missedCatches.slice(),
+      comments: comments.slice(),
+      commentCounter: commentCounter,
+      restoreFeedback: restoreFeedback.slice(),
+      restoreFeedbackCounter: restoreFeedbackCounter,
       speakerModifications: Object.keys(speakerModifications).length > 0 ? Object.assign({}, speakerModifications) : undefined
     };
     localStorage.setItem(_SAVE_KEY, JSON.stringify(state));
@@ -1628,7 +1746,7 @@ function restoreState() {
     console.log('[restore] key=', _SAVE_KEY, 'raw=', raw ? raw.length + ' bytes' : 'null');
     if (!raw) return false;
     const state = JSON.parse(raw);
-    if (!state || state.v !== 2) return false;
+    if (!state || (state.v !== 2 && state.v !== 3)) return false;
 
     // Check if state is stale (> 30 days)
     if (Date.now() - state.ts > 30 * 86400000) {
@@ -1658,8 +1776,9 @@ function restoreState() {
       });
     }
 
-    // Restore fine edit toggles
-    if (state.fineEditsDisabled && state.fineEditsDisabled.length > 0) {
+    // Restore fine edit toggles (only from saves AFTER this HTML was generated;
+    // old saves may have stale disabled entries from previous buggy UI)
+    if (state.fineEditsDisabled && state.fineEditsDisabled.length > 0 && state.ts >= _GEN_TS) {
       state.fineEditsDisabled.forEach(feIdx => {
         if (fineEditsOriginal.has(feIdx)) {
           fineEditsDisabled.add(feIdx);
@@ -1700,6 +1819,19 @@ function restoreState() {
           changed = true;
         }
       });
+    }
+
+    // Restore comments (v3+)
+    if (state.comments && state.comments.length > 0) {
+      state.comments.forEach(c => comments.push(c));
+      commentCounter = state.commentCounter || comments.length;
+      changed = true;
+    }
+
+    // Restore restore feedback (v3+)
+    if (state.restoreFeedback && state.restoreFeedback.length > 0) {
+      state.restoreFeedback.forEach(rf => restoreFeedback.push(rf));
+      restoreFeedbackCounter = state.restoreFeedbackCounter || restoreFeedback.length;
     }
 
     if (changed) {
@@ -2122,7 +2254,12 @@ function exportDeleteSegments() {
       if (!s.words || s.words.length === 0) continue;
       const wordTexts = s.words.map(w => w.t);
       const fullText = wordTexts.join('');
-      const pos = fullText.indexOf(me.deleteText);
+      let pos = -1;
+      if (me.charOffset !== undefined && fullText.substring(me.charOffset, me.charOffset + me.deleteText.length) === me.deleteText) {
+        pos = me.charOffset;
+      } else {
+        pos = fullText.indexOf(me.deleteText);
+      }
       if (pos < 0) continue;
 
       let charCount = 0, startW = null, endW = null;
@@ -2351,6 +2488,12 @@ let missedCatchCounter = 0;
 let _mcPendingText = '';
 let _mcPendingSentenceIdx = -1;
 let _mcPendingBatchIndices = null;
+// comments: user annotations (not deletions)
+const comments = [];
+let commentCounter = 0;
+// restoreFeedback: reasons for restoring deletions
+const restoreFeedback = [];
+let restoreFeedbackCounter = 0;
 
 // Listen for text selection
 document.addEventListener('mouseup', function(e) {
@@ -2385,7 +2528,7 @@ document.addEventListener('mouseup', function(e) {
   // Get selected text, stripping UI-only labels (tag names like "stutter", "手动")
   const range = sel.getRangeAt(0);
   const frag = range.cloneContents();
-  frag.querySelectorAll('.fine-tag, .manual-tag, .silence-pause').forEach(el => el.remove());
+  frag.querySelectorAll('.fine-tag, .manual-tag, .silence-pause, .incoming-silence').forEach(el => el.remove());
   const selectedText = (frag.textContent || '').trim();
   if (selectedText.length === 0) { toolbar.classList.remove('visible'); return; }
 
@@ -2419,7 +2562,7 @@ function markSelectionDeleted() {
   const range = sel.getRangeAt(0);
   const fragment = range.cloneContents();
   // Remove tag labels that aren't part of actual sentence text
-  fragment.querySelectorAll('.fine-tag, .manual-tag, .silence-pause').forEach(el => el.remove());
+  fragment.querySelectorAll('.fine-tag, .manual-tag, .silence-pause, .incoming-silence').forEach(el => el.remove());
   const selectedText = (fragment.textContent || '').trim();
   if (!selectedText) return;
 
@@ -2453,13 +2596,23 @@ function markSelectionDeleted() {
 function toggleManualEdit(editId) {
   const edit = manualEdits.find(e => e.id === editId);
   if (!edit) return;
-  
-  undoStack.push({ type: 'manualEditToggle', editId: editId, wasDisabled: !!edit.disabled });
-  
+
+  const wasDisabled = !!edit.disabled;
+  undoStack.push({ type: 'manualEditToggle', editId: editId, wasDisabled: wasDisabled });
+
   edit.disabled = !edit.disabled;
   invalidateSkipRanges();
   rebuildRowWithManualEdits(edit.sentenceIdx);
   updateStats();
+
+  // Show restore feedback when disabling a manual edit (= restoring)
+  if (!wasDisabled) {
+    showRestorePanel({
+      editType: 'manual',
+      sentenceIdx: edit.sentenceIdx,
+      text: edit.deleteText || ''
+    });
+  }
 }
 
 function rebuildRowWithManualEdits(sentenceIdx) {
@@ -2494,8 +2647,13 @@ function rebuildRowWithManualEdits(sentenceIdx) {
   // Manual edits for this sentence
   const sentManual = manualEdits.filter(e => e.sentenceIdx === sentenceIdx);
   for (const me of sentManual) {
-    // Find the deleteText in fullText (allow overlap with fine edits)
-    const pos = fullText.indexOf(me.deleteText);
+    // Use charOffset for precise matching, fallback to indexOf
+    let pos = -1;
+    if (me.charOffset !== undefined && fullText.substring(me.charOffset, me.charOffset + me.deleteText.length) === me.deleteText) {
+      pos = me.charOffset;
+    } else {
+      pos = fullText.indexOf(me.deleteText);
+    }
     if (pos >= 0) {
       deletions.push({
         start: pos,
@@ -2505,6 +2663,27 @@ function rebuildRowWithManualEdits(sentenceIdx) {
         disabled: !!me.disabled
       });
     }
+  }
+
+  // Fast path: if any manual edit covers the entire sentence, just use it directly
+  // (avoids complex overlap resolution that can lose segments)
+  const fullCoverEdit = deletions.find(d => d.type === 'manual' && !d.disabled && d.start === 0 && d.end >= fullText.length);
+  if (fullCoverEdit) {
+    let html = '';
+    if (s.fineEdit) {
+      const feDisabled = fineEditsDisabled.has(s.fineEdit.idx);
+      if (s.fineEdit.type !== 'silence') {
+        const feClass = feDisabled ? 'fine-tag disabled' : 'fine-tag';
+        html += '<span class="' + feClass + '" data-fine-idx="' + s.fineEdit.idx + '" onclick="event.stopPropagation(); toggleFineEdit(' + s.fineEdit.idx + ')" title="' + escapeHtml(s.fineEdit.reason || '') + '">' + escapeHtml(s.fineEdit.type) + '</span>';
+      }
+    }
+    for (const me of sentManual) {
+      const tagClass = me.disabled ? 'manual-tag disabled' : 'manual-tag';
+      html += '<span class="' + tagClass + '">手动</span>';
+    }
+    html += '<span class="manual-delete" onclick="event.stopPropagation(); toggleManualEdit(' + fullCoverEdit.editId + ')" title="手动删除 - 点击恢复">' + escapeHtml(fullText) + '</span>';
+    textEl.innerHTML = html;
+    return;
   }
 
   // Sort deletions by position, then flatten overlaps into non-overlapping segments.
@@ -2550,14 +2729,15 @@ function rebuildRowWithManualEdits(sentenceIdx) {
   // Build HTML
   let html = '';
 
-  // Add fine edit tag if present
+  // Add fine edit tag if present (silence tag saved for after text)
+  let silenceSuffix = '';
   if (s.fineEdit) {
     const feDisabled = fineEditsDisabled.has(s.fineEdit.idx);
     if (s.fineEdit.type === 'silence') {
       const dur = (s.fineEdit.de || 0) - (s.fineEdit.ds || 0);
       const deleteDur = Math.max(0, dur - 0.8);
       const pauseClass = feDisabled ? 'silence-pause disabled' : 'silence-pause';
-      html += '<span class="' + pauseClass + '" data-fine-idx="' + s.fineEdit.idx + '" onclick="event.stopPropagation(); toggleFineEdit(' + s.fineEdit.idx + ')" title="静音' + dur.toFixed(1) + 's → 保留0.8s，删' + deleteDur.toFixed(1) + 's — 点击切换">-' + deleteDur.toFixed(1) + 's</span> ';
+      silenceSuffix = ' <span class="' + pauseClass + '" data-fine-idx="' + s.fineEdit.idx + '" onclick="event.stopPropagation(); toggleFineEdit(' + s.fineEdit.idx + ')" title="静音' + dur.toFixed(1) + 's → 保留0.8s，删' + deleteDur.toFixed(1) + 's — 点击切换">-' + deleteDur.toFixed(1) + 's</span>';
     } else {
       const feClass = feDisabled ? 'fine-tag disabled' : 'fine-tag';
       html += '<span class="' + feClass + '" data-fine-idx="' + s.fineEdit.idx + '" onclick="event.stopPropagation(); toggleFineEdit(' + s.fineEdit.idx + ')" title="' + escapeHtml(s.fineEdit.reason || '') + '">' + escapeHtml(s.fineEdit.type) + '</span>';
@@ -2581,7 +2761,7 @@ function rebuildRowWithManualEdits(sentenceIdx) {
       html += '<span class="fine-delete" onclick="event.stopPropagation(); toggleFineEdit(' + d.feIdx + ')" title="点击切换保留/删除">' + escDel + '</span>';
     } else if (d.type === 'manual') {
       if (d.disabled) {
-        html += escDel;
+        html += '<span class="manual-restored" onclick="event.stopPropagation(); toggleManualEdit(' + d.editId + ')" title="已恢复 - 点击重新删除" style="cursor:pointer;text-decoration-style:dotted;text-decoration-line:underline;text-decoration-color:#d97706;">' + escDel + '</span>';
       } else {
         html += '<span class="manual-delete" onclick="event.stopPropagation(); toggleManualEdit(' + d.editId + ')" title="手动删除 - 点击恢复">' + escDel + '</span>';
       }
@@ -2589,7 +2769,8 @@ function rebuildRowWithManualEdits(sentenceIdx) {
     lastEnd = d.end;
   }
   html += escapeHtml(fullText.substring(lastEnd));
-  
+  html += silenceSuffix;
+
   textEl.innerHTML = html;
 }
 
@@ -2626,7 +2807,7 @@ function getSkipRanges() {
         // Silence: keep 0.8s natural pause, only delete excess
         const silKeep = 0.8;
         if (fe.de - fe.ds > silKeep) {
-          ranges.push([fe.ds + silKeep, fe.de]);
+          ranges.push([fe.ds + silKeep, fe.de, 0, 'sil']);
         }
       } else if (fe.ds !== undefined && fe.de !== undefined) {
         ranges.push([fe.ds, fe.de]);
@@ -2649,7 +2830,7 @@ function getSkipRanges() {
           // Silence: keep 0.8s, only delete excess
           const silKeep = 0.8;
           if (es.de - es.ds > silKeep) {
-            ranges.push([es.ds + silKeep, es.de]);
+            ranges.push([es.ds + silKeep, es.de, 0, 'sil']);
           }
         }
       }
@@ -2839,10 +3020,20 @@ function togglePlay(which) {
 }
 
 let _skipScheduled = null;
+let _lastSkipTime = 0;
 
 function skipIfNeeded() {
   const audio = document.getElementById('audio-original');
   if (!cutMode || audio.paused) return;
+
+  // Debounce: prevent rapid consecutive skips causing stutter
+  const now = performance.now();
+  if (now - _lastSkipTime < 150) {
+    // Still cooling down from last skip - reschedule
+    setTimeout(() => skipIfNeeded(), 150 - (now - _lastSkipTime));
+    return;
+  }
+
   const t = audio.currentTime;
   const rate = audio.playbackRate || 1;
   const ranges = getSkipRanges();
@@ -2858,24 +3049,57 @@ function skipIfNeeded() {
       const nextKept = sentencesData.find(ns => !currentDeletedSet.has(ns.idx) && ns.startTime >= e - 0.1);
       if (nextKept && nextKept.startTime <= e + 0.5) seekTarget = nextKept.startTime;
 
-      // Clean skip: mute → seek → fast restore
-      // Keep audio playing (no pause) to avoid seeked event issues.
-      const savedVol = audio.volume;
-      audio.volume = 0;
-      audio.currentTime = seekTarget;
-      // Restore volume after seek, with aggressive fallback
-      let resumed = false;
-      const resume = () => {
-        if (resumed) return;
-        resumed = true;
-        // Quick fade-in (20ms) to avoid click artifact
-        audio.volume = savedVol * 0.3;
-        setTimeout(() => { audio.volume = savedVol; }, 20);
-        if (cutMode && audio.paused) audio.play();
+      // If seekTarget lands inside another skip range, jump past it too (merge)
+      for (const r2 of ranges) {
+        if (seekTarget >= r2[0] && seekTarget < r2[1]) {
+          seekTarget = r2[1];
+        }
+      }
+
+      // Add 30ms offset for tight-gap edits (stutter at word boundary) to skip
+      // past word onset transient. Skip offset for silence ranges where the
+      // natural gap provides buffer — adding offset would clip the next word.
+      if (r[3] !== 'sil') seekTarget += 0.03;
+
+      _lastSkipTime = performance.now();
+      const isSilenceSkip = r[3] === 'sil';
+
+      if (isSilenceSkip) {
+        // Silence skip: current playback is in silence, no audio to click/pop.
+        // Seek immediately and restore volume without delay — prevents clipping
+        // the first word after the silence.
+        audio.currentTime = seekTarget;
         scheduleNextSkip();
-      };
-      audio.addEventListener('seeked', resume, { once: true });
-      setTimeout(resume, 80); // aggressive fallback (was 200ms)
+      } else {
+        // Speech skip: fade-out(10ms) → seek → settle(40ms) → fade-in(50ms)
+        // The fade-out prevents click/pop when muting mid-word (e.g., safety buffer
+        // pulls skip start into a preceding word at a zero-gap boundary).
+        const savedVol = audio.volume;
+        audio.volume = savedVol * 0.3;
+        setTimeout(() => {
+          audio.volume = 0;
+          audio.currentTime = seekTarget;
+
+          // Restore volume after seek completes
+          let resumed = false;
+          const resume = () => {
+            if (resumed) return;
+            resumed = true;
+            // Hold mute for 40ms (decoder settling), then 4-step fade-in over 50ms
+            audio.volume = 0;
+            setTimeout(() => {
+              audio.volume = savedVol * 0.15;
+              setTimeout(() => { audio.volume = savedVol * 0.4; }, 12);
+              setTimeout(() => { audio.volume = savedVol * 0.7; }, 25);
+              setTimeout(() => { audio.volume = savedVol; }, 50);
+            }, 40);
+            if (cutMode && audio.paused) audio.play();
+            scheduleNextSkip();
+          };
+          audio.addEventListener('seeked', resume, { once: true });
+          setTimeout(resume, 80); // fallback if seeked doesn't fire
+        }, 10);
+      }
       return;
     }
   }
@@ -3071,7 +3295,12 @@ const mcTypeLabels = {
 function markSelectionDeletedAndPrompt() {
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed) return;
-  const selectedText = sel.toString().trim();
+
+  // Strip UI-only labels from selection (same as markSelectionDeleted)
+  const range = sel.getRangeAt(0);
+  const fragment = range.cloneContents();
+  fragment.querySelectorAll('.fine-tag, .manual-tag, .silence-pause, .incoming-silence, .missed-catch-tag').forEach(el => el.remove());
+  const selectedText = (fragment.textContent || '').trim();
   if (!selectedText) return;
 
   const anchor = sel.anchorNode;
@@ -3081,9 +3310,21 @@ function markSelectionDeletedAndPrompt() {
   if (!row) return;
   const sentenceIdx = parseInt(row.id.replace('row-', ''));
 
+  // Calculate charOffset: count text from s-text start to selection start,
+  // excluding UI tags, to get exact position in raw sentence text.
+  let charOffset;
+  try {
+    const preRange = document.createRange();
+    preRange.setStart(textEl, 0);
+    preRange.setEnd(range.startContainer, range.startOffset);
+    const preFrag = preRange.cloneContents();
+    preFrag.querySelectorAll('.fine-tag, .manual-tag, .silence-pause, .incoming-silence, .missed-catch-tag').forEach(el => el.remove());
+    charOffset = (preFrag.textContent || '').length;
+  } catch(e) { charOffset = undefined; }
+
   // 1) Do the deletion immediately (same as markSelectionDeleted)
   const editId = ++manualEditCounter;
-  const edit = { id: editId, sentenceIdx: sentenceIdx, deleteText: selectedText };
+  const edit = { id: editId, sentenceIdx: sentenceIdx, deleteText: selectedText, charOffset: charOffset };
   manualEdits.push(edit);
   undoStack.push({ type: 'manualEdit', editId: editId });
   sel.removeAllRanges();
@@ -3199,42 +3440,128 @@ function removeMissedCatch(id) {
   }
 }
 
-// Patch rebuildRowWithManualEdits to also render missed catches
+// Patch rebuildRowWithManualEdits to also render missed catches + comments
+// Uses DOM manipulation instead of regex on HTML to avoid attribute corruption
 const _origRebuild = rebuildRowWithManualEdits;
 rebuildRowWithManualEdits = function(sentenceIdx) {
   _origRebuild(sentenceIdx);
-  // Now overlay missed catches
   const row = document.getElementById('row-' + sentenceIdx);
   if (!row) return;
   const textEl = row.querySelector('.s-text');
   if (!textEl) return;
 
+  // 1) Render missed catches on manual-delete spans
   const sentMC = missedCatches.filter(mc => mc.sentenceIdx === sentenceIdx);
-  if (sentMC.length === 0) return;
-
-  let html = textEl.innerHTML;
-  // Apply missed catch highlights (on the raw text portions, not already-wrapped spans)
   for (const mc of sentMC) {
-    const escaped = mc.selectedText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    // Only match text NOT already inside a tag
-    const re = new RegExp('(?<!["\'>])(' + escaped + ')(?![^<]*>)', '');
-    const match = html.match(re);
-    if (match) {
-      const tag = `<span class="missed-catch-tag" onclick="removeMissedCatch(${mc.id})" title="点击取消">${mc.typeLabel}</span>`;
-      const wrap = `<span class="missed-catch" title="${mc.typeLabel}: ${mc.reason || '无理由'}">${match[1]}</span>`;
-      html = html.replace(match[0], tag + wrap);
+    const manualSpans = textEl.querySelectorAll('.manual-delete');
+    for (const span of manualSpans) {
+      if (span.textContent === mc.selectedText || span.textContent.includes(mc.selectedText)) {
+        span.classList.add('missed-catch');
+        span.title = mc.typeLabel + ': ' + (mc.reason || '无理由');
+        const tag = document.createElement('span');
+        tag.className = 'missed-catch-tag';
+        tag.onclick = function(e) { e.stopPropagation(); removeMissedCatch(mc.id); };
+        tag.title = '点击取消';
+        tag.textContent = mc.typeLabel;
+        span.parentNode.insertBefore(tag, span);
+        break;
+      }
     }
   }
-  textEl.innerHTML = html;
+
+  // 2) Render comments as blue underline highlights
+  const sentComments = comments.filter(c => c.sentenceIdx === sentenceIdx);
+  if (sentComments.length === 0) return;
+
+  // Get pure text from textEl for matching
+  const walker = document.createTreeWalker(textEl, NodeFilter.SHOW_TEXT, null, false);
+  const textNodes = [];
+  let node;
+  while ((node = walker.nextNode())) textNodes.push(node);
+
+  for (const c of sentComments) {
+    // Build full text and find the comment text position
+    let fullText = '';
+    const nodeMap = []; // [{node, start, end}]
+    textNodes.forEach(tn => {
+      // Skip text inside tag badges
+      if (tn.parentElement.closest('.fine-tag, .manual-tag, .silence-pause, .incoming-silence, .incoming-silence, .missed-catch-tag, .comment-tag')) return;
+      const start = fullText.length;
+      fullText += tn.textContent;
+      nodeMap.push({ node: tn, start: start, end: fullText.length });
+    });
+
+    let pos = -1;
+    if (c.charOffset !== undefined && fullText.substring(c.charOffset, c.charOffset + c.selectedText.length) === c.selectedText) {
+      pos = c.charOffset;
+    } else {
+      pos = fullText.indexOf(c.selectedText);
+    }
+    if (pos < 0) continue;
+    const endPos = pos + c.selectedText.length;
+
+    // Find text nodes to wrap
+    for (const nm of nodeMap) {
+      if (nm.end <= pos || nm.start >= endPos) continue;
+      // This text node overlaps with the comment range
+      const nodeStart = Math.max(pos - nm.start, 0);
+      const nodeEnd = Math.min(endPos - nm.start, nm.node.textContent.length);
+
+      if (nodeStart === 0 && nodeEnd === nm.node.textContent.length) {
+        // Wrap entire node
+        const wrapper = document.createElement('span');
+        wrapper.className = 'comment-highlight';
+        wrapper.title = c.typeLabel + ': ' + (c.reason || '无备注') + ' (点击删除评论)';
+        wrapper.onclick = function(e) { e.stopPropagation(); removeComment(c.id); };
+        nm.node.parentNode.insertBefore(wrapper, nm.node);
+        wrapper.appendChild(nm.node);
+        // Add tag after first wrapped node
+        if (nm.start <= pos) {
+          const tag = document.createElement('span');
+          tag.className = 'comment-tag';
+          tag.textContent = c.typeLabel;
+          wrapper.parentNode.insertBefore(tag, wrapper.nextSibling);
+        }
+      } else {
+        // Split and wrap partial
+        const before = nm.node.textContent.substring(0, nodeStart);
+        const target = nm.node.textContent.substring(nodeStart, nodeEnd);
+        const after = nm.node.textContent.substring(nodeEnd);
+
+        const wrapper = document.createElement('span');
+        wrapper.className = 'comment-highlight';
+        wrapper.title = c.typeLabel + ': ' + (c.reason || '无备注') + ' (点击删除评论)';
+        wrapper.onclick = function(e) { e.stopPropagation(); removeComment(c.id); };
+        wrapper.textContent = target;
+
+        const parent = nm.node.parentNode;
+        if (before) parent.insertBefore(document.createTextNode(before), nm.node);
+        parent.insertBefore(wrapper, nm.node);
+        if (after) parent.insertBefore(document.createTextNode(after), nm.node);
+        parent.removeChild(nm.node);
+
+        // Add tag after first wrapped segment
+        if (nm.start <= pos || nm.start === nodeMap[0].start) {
+          const tag = document.createElement('span');
+          tag.className = 'comment-tag';
+          tag.textContent = c.typeLabel;
+          wrapper.parentNode.insertBefore(tag, wrapper.nextSibling);
+        }
+      }
+      break; // Only wrap first matching node (comment usually in one text node)
+    }
+  }
 };
 
 function exportFeedback() {
-  if (missedCatches.length === 0) {
-    alert('暂无AI遗漏记录。选中文字标记删除时可以记录遗漏类型。');
+  const hasData = missedCatches.length > 0 || comments.length > 0 || restoreFeedback.length > 0
+    || userAddedDeletions.size > 0 || userRemovedDeletions.size > 0;
+  if (!hasData) {
+    alert('暂无反馈数据。可以：\n- 选中文字标记删除（记录遗漏）\n- 选中文字添加评论\n- 恢复删除并记录理由');
     return;
   }
 
-  // Also collect user corrections (added/removed deletions)
+  // Collect user corrections (added/removed deletions)
   const addedDeletions = Array.from(userAddedDeletions).sort((a,b) => a-b);
   const removedDeletions = Array.from(userRemovedDeletions).sort((a,b) => a-b);
 
@@ -3244,7 +3571,7 @@ function exportFeedback() {
   });
 
   const feedbackData = {
-    version: 'feedback_v1',
+    version: 'feedback_v2',
     exported_at: new Date().toISOString(),
     audio_source: document.title || '',
     missed_catches: missedCatches.map(mc => ({
@@ -3257,12 +3584,31 @@ function exportFeedback() {
       reason: mc.reason,
       timestamp: mc.timestamp
     })),
+    comments: comments.map(c => ({
+      sentenceIdx: c.sentenceIdx,
+      selectedText: c.selectedText,
+      charOffset: c.charOffset,
+      type: c.type,
+      typeLabel: c.typeLabel,
+      reason: c.reason,
+      timestamp: c.timestamp
+    })),
+    restore_feedback: restoreFeedback.map(rf => ({
+      sentenceIdx: rf.sentenceIdx,
+      restoredText: rf.restoredText,
+      editType: rf.editType,
+      type: rf.type,
+      typeLabel: rf.typeLabel,
+      reason: rf.reason
+    })),
     user_corrections: {
       added_deletions: addedDeletions,
       removed_deletions: removedDeletions
     },
     summary: {
       total_missed: missedCatches.length,
+      total_comments: comments.length,
+      total_restores: restoreFeedback.length,
       by_type: byType
     }
   };
@@ -3278,9 +3624,13 @@ function exportFeedback() {
   const toast = document.createElement('div');
   toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e3a5f;color:#e0e0e0;padding:24px;border-radius:12px;z-index:9999;max-width:500px;box-shadow:0 8px 32px rgba(0,0,0,0.5);font-size:14px;';
   let typesSummary = Object.entries(byType).map(([t, c]) => `${mcTypeLabels[t] || t}: ${c}`).join('、');
+  const parts = [];
+  if (missedCatches.length > 0) parts.push(missedCatches.length + ' 个遗漏标记' + (typesSummary ? '（' + typesSummary + '）' : ''));
+  if (comments.length > 0) parts.push(comments.length + ' 条评论');
+  if (restoreFeedback.length > 0) parts.push(restoreFeedback.length + ' 条恢复理由');
   toast.innerHTML = `
     <div style="margin-bottom:12px;font-size:16px;font-weight:bold;">&#128270; 已导出 AI 反馈文件</div>
-    <div style="margin-bottom:8px;">${missedCatches.length} 个遗漏标记（${typesSummary}）</div>
+    <div style="margin-bottom:8px;">${parts.join('、') || '用户修正记录'}</div>
     <div style="margin-bottom:8px;">将文件交给 AI，运行自进化 skill 更新规则：</div>
     <div style="background:#0d1117;padding:10px;border-radius:8px;font-family:monospace;font-size:13px;">/podcastcut:自进化</div>
     <button onclick="this.parentElement.remove()" style="margin-top:12px;padding:6px 16px;background:#333;color:#fff;border:none;border-radius:6px;cursor:pointer;">关闭</button>
@@ -3479,12 +3829,228 @@ document.addEventListener('click', function(e) {
   }
 });
 
+// ===== COMMENT SYSTEM =====
+// (comments, commentCounter declared earlier with other data arrays)
+const commentTypeLabels = {
+  audio_glitch: '卡顿/爆破感',
+  awkward_cut: '切割不自然',
+  keep_but_note: '保留但备注',
+  quality_issue: '音质问题',
+  other: '其他'
+};
+
+let _commentPendingText = '';
+let _commentPendingSentenceIdx = -1;
+let _commentPendingCharOffset = undefined;
+
+function addCommentToSelection() {
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) return;
+
+  const range = sel.getRangeAt(0);
+  const fragment = range.cloneContents();
+  fragment.querySelectorAll('.fine-tag, .manual-tag, .silence-pause, .incoming-silence, .incoming-silence, .missed-catch-tag, .comment-tag').forEach(el => el.remove());
+  const selectedText = (fragment.textContent || '').trim();
+  if (!selectedText) return;
+
+  const anchor = sel.anchorNode;
+  const textEl = anchor.parentElement.closest('.s-text');
+  if (!textEl) return;
+  const row = textEl.closest('[id^="row-"]');
+  if (!row) return;
+  const sentenceIdx = parseInt(row.id.replace('row-', ''));
+
+  // Calculate charOffset
+  let charOffset;
+  try {
+    const preRange = document.createRange();
+    preRange.setStart(textEl, 0);
+    preRange.setEnd(range.startContainer, range.startOffset);
+    const preFrag = preRange.cloneContents();
+    preFrag.querySelectorAll('.fine-tag, .manual-tag, .silence-pause, .incoming-silence, .incoming-silence, .missed-catch-tag, .comment-tag').forEach(el => el.remove());
+    charOffset = (preFrag.textContent || '').length;
+  } catch(e) { charOffset = undefined; }
+
+  _commentPendingText = selectedText;
+  _commentPendingSentenceIdx = sentenceIdx;
+  _commentPendingCharOffset = charOffset;
+
+  sel.removeAllRanges();
+  document.getElementById('selection-toolbar').classList.remove('visible');
+
+  // Show comment panel
+  const panel = document.getElementById('comment-panel');
+  document.getElementById('comment-preview-text').textContent = selectedText.length > 80 ? selectedText.slice(0, 80) + '...' : selectedText;
+  document.getElementById('comment-reason').value = '';
+  const rowRect = row.getBoundingClientRect();
+  panel.style.left = Math.min(rowRect.left + 40, window.innerWidth - 340) + 'px';
+  panel.style.top = (rowRect.bottom + 4) + 'px';
+  panel.classList.add('visible');
+  setTimeout(() => document.getElementById('comment-type').focus(), 100);
+}
+
+function hideCommentPanel() {
+  document.getElementById('comment-panel').classList.remove('visible');
+  _commentPendingText = '';
+  _commentPendingSentenceIdx = -1;
+  _commentPendingCharOffset = undefined;
+}
+
+function confirmComment() {
+  if (!_commentPendingText || _commentPendingSentenceIdx < 0) return;
+
+  const cType = document.getElementById('comment-type').value;
+  const reason = document.getElementById('comment-reason').value.trim();
+  const id = ++commentCounter;
+
+  const sent = sentencesData.find(s => s.idx === _commentPendingSentenceIdx);
+
+  // Calculate timestamp
+  let tsStart = null, tsEnd = null;
+  if (sent && sent.words && sent.words.length > 0) {
+    const wordTexts = sent.words.map(w => w.t);
+    const fullText = wordTexts.join('');
+    const pos = _commentPendingCharOffset !== undefined ? _commentPendingCharOffset : fullText.indexOf(_commentPendingText);
+    if (pos >= 0) {
+      let charCount = 0, sw = null, ew = null;
+      for (let i = 0; i < wordTexts.length; i++) {
+        const wEnd = charCount + wordTexts[i].length;
+        if (sw === null && wEnd > pos) sw = i;
+        if (wEnd >= pos + _commentPendingText.length) { ew = i; break; }
+        charCount = wEnd;
+      }
+      if (sw !== null && ew !== null) {
+        tsStart = sent.words[sw].s;
+        tsEnd = sent.words[ew].e;
+      }
+    }
+  }
+
+  const comment = {
+    id: id,
+    sentenceIdx: _commentPendingSentenceIdx,
+    selectedText: _commentPendingText,
+    charOffset: _commentPendingCharOffset,
+    type: cType,
+    typeLabel: commentTypeLabels[cType] || cType,
+    reason: reason || '',
+    timestamp: tsStart !== null ? { start: tsStart, end: tsEnd } : null
+  };
+  comments.push(comment);
+
+  document.getElementById('comment-panel').classList.remove('visible');
+  rebuildRowWithManualEdits(_commentPendingSentenceIdx);
+  _commentPendingText = '';
+  _commentPendingSentenceIdx = -1;
+  _commentPendingCharOffset = undefined;
+  autoSave();
+  _showSaveIndicator('✓ 已添加评论');
+}
+
+function removeComment(id) {
+  const idx = comments.findIndex(c => c.id === id);
+  if (idx >= 0) {
+    const sentIdx = comments[idx].sentenceIdx;
+    comments.splice(idx, 1);
+    rebuildRowWithManualEdits(sentIdx);
+    autoSave();
+  }
+}
+
+// ===== RESTORE FEEDBACK =====
+// (restoreFeedback, restoreFeedbackCounter declared earlier with other data arrays)
+const restoreTypeLabels = {
+  important_content: '重要内容',
+  context_needed: '上下文需要',
+  natural_flow: '保持自然',
+  ai_misjudge: 'AI 误判',
+  other: '其他'
+};
+
+let _restorePending = null; // { type: 'sentence'|'fine'|'manual', idx/editId, text, sentenceIdx, callback }
+
+function showRestorePanel(info) {
+  _restorePending = info;
+  const panel = document.getElementById('restore-panel');
+  document.getElementById('restore-preview-text').textContent = (info.text || '').length > 80 ? info.text.slice(0, 80) + '...' : (info.text || '');
+  document.getElementById('restore-reason').value = '';
+  document.getElementById('restore-type').value = 'important_content';
+
+  // Position near the row
+  const row = document.getElementById('row-' + info.sentenceIdx);
+  if (row) {
+    const rect = row.getBoundingClientRect();
+    panel.style.left = Math.min(rect.left + 40, window.innerWidth - 340) + 'px';
+    panel.style.top = (rect.bottom + 4) + 'px';
+  } else {
+    panel.style.left = '40%';
+    panel.style.top = '40%';
+  }
+  panel.classList.add('visible');
+  setTimeout(() => document.getElementById('restore-type').focus(), 100);
+}
+
+function hideRestorePanel() {
+  document.getElementById('restore-panel').classList.remove('visible');
+  _restorePending = null;
+}
+
+function confirmRestore() {
+  if (!_restorePending) return;
+  const rType = document.getElementById('restore-type').value;
+  const reason = document.getElementById('restore-reason').value.trim();
+  const id = ++restoreFeedbackCounter;
+
+  restoreFeedback.push({
+    id: id,
+    sentenceIdx: _restorePending.sentenceIdx,
+    type: rType,
+    typeLabel: restoreTypeLabels[rType] || rType,
+    reason: reason || '',
+    restoredText: _restorePending.text || '',
+    editType: _restorePending.editType
+  });
+
+  document.getElementById('restore-panel').classList.remove('visible');
+  _restorePending = null;
+  autoSave();
+}
+
+// Panel keyboard handlers (comment + restore)
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    if (document.getElementById('comment-panel').classList.contains('visible')) {
+      e.preventDefault(); confirmComment();
+    } else if (document.getElementById('restore-panel').classList.contains('visible')) {
+      e.preventDefault(); confirmRestore();
+    }
+  }
+  if (e.key === 'Escape') {
+    if (document.getElementById('comment-panel').classList.contains('visible')) {
+      e.preventDefault(); hideCommentPanel();
+    } else if (document.getElementById('restore-panel').classList.contains('visible')) {
+      e.preventDefault(); hideRestorePanel();
+    }
+  }
+});
+
+// Close panels on outside click
+document.addEventListener('mousedown', function(e) {
+  if (!e.target.closest('#comment-panel') && document.getElementById('comment-panel').classList.contains('visible')) {
+    hideCommentPanel();
+  }
+  if (!e.target.closest('#restore-panel') && document.getElementById('restore-panel').classList.contains('visible')) {
+    hideRestorePanel();
+  }
+});
+
 
 </script>
 
 <div id="selection-toolbar">
   <span class="sel-text" id="sel-preview"></span>
-  <button onclick="markSelectionDeletedAndPrompt()">&#9986; 标记删除</button>
+  <button onclick="markSelectionDeletedAndPrompt()">&#9986; 删除</button>
+  <button class="comment-btn" onclick="addCommentToSelection()">&#128172; 评论</button>
 </div>
 
 <div id="missed-catch-panel">
@@ -3506,6 +4072,40 @@ document.addEventListener('click', function(e) {
   <div class="mc-btns">
     <button class="mc-btn mc-btn-cancel" onclick="hideMissedCatchPanel()">跳过</button>
     <button class="mc-btn mc-btn-ok" onclick="confirmMissedCatch()">记录</button>
+  </div>
+</div>
+
+<div id="comment-panel" class="feedback-panel">
+  <div class="mc-title">&#128172; 添加评论</div>
+  <div class="mc-preview" id="comment-preview-text"></div>
+  <select id="comment-type">
+    <option value="audio_glitch">卡顿/爆破感</option>
+    <option value="awkward_cut">切割不自然</option>
+    <option value="keep_but_note">保留但备注</option>
+    <option value="quality_issue">音质问题</option>
+    <option value="other">其他</option>
+  </select>
+  <input type="text" id="comment-reason" placeholder="描述问题（选填，回车确认）">
+  <div class="mc-btns">
+    <button class="mc-btn mc-btn-cancel" onclick="hideCommentPanel()">取消</button>
+    <button class="mc-btn mc-btn-ok" onclick="confirmComment()">添加</button>
+  </div>
+</div>
+
+<div id="restore-panel" class="feedback-panel">
+  <div class="mc-title">&#128161; 为什么恢复这段？</div>
+  <div class="mc-preview" id="restore-preview-text"></div>
+  <select id="restore-type">
+    <option value="important_content">重要内容，不应删</option>
+    <option value="context_needed">上下文需要</option>
+    <option value="natural_flow">保持对话自然</option>
+    <option value="ai_misjudge">AI 误判</option>
+    <option value="other">其他</option>
+  </select>
+  <input type="text" id="restore-reason" placeholder="简述理由（选填，回车确认）">
+  <div class="mc-btns">
+    <button class="mc-btn mc-btn-cancel" onclick="hideRestorePanel()">跳过</button>
+    <button class="mc-btn mc-btn-ok" onclick="confirmRestore()">记录</button>
   </div>
 </div>
 

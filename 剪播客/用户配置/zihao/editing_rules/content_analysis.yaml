@@ -1,0 +1,33 @@
+_source: sample_learning + user_feedback
+_generated_at: "2026-02-22"
+_updated_at: "2026-02-22"
+_confidence: 0.8
+overall_reduction_percent: 45
+aggressiveness: aggressive
+
+# 用户内容偏好（来自并轨审查反馈）
+content_preferences:
+  - type: keep_detail
+    topic: "零工经济细节"
+    reason: "凸显零工经济火热和生活不易，有价值的细节"
+  - type: keep_transition
+    topic: "100万幸福悖论"
+    reason: "与后续内容有衔接关系，删掉会断裂"
+  # 通用原则：涉及社会现实、生活感受的细节段落倾向保留
+  general_note: "用户偏好保留有生活质感的细节，即使信息密度不高"
+detected_types:
+  other:
+    count: 31
+    duration_seconds: 137.2
+  stutter:
+    count: 62
+    duration_seconds: 312.1
+  content_block:
+    count: 275
+    duration_seconds: 1355.9
+  residual:
+    count: 36
+    duration_seconds: 30.6
+  filler_word:
+    count: 21
+    duration_seconds: 10

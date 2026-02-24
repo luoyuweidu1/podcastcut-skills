@@ -655,7 +655,23 @@ ffmpeg -i step1.wav -i voice2.wav \
   -map "[out]" step2.wav
 ```
 
-### 7.4 连续背景音乐：用 volume expression 动态调音量
+### 7.4 `-ss` 位置决定滤镜时间坐标系
+
+**⚠️ 当 `-af` 和 `-ss` 一起使用时，`-ss` 必须放在 `-i` 之前！**
+
+```bash
+# ❌ 错误：-ss 在 -i 之后（输出选项）→ 滤镜处理整个文件时间线
+# afade 在全局时间执行，到片段位置时音量已衰减为 0
+ffmpeg -i source.wav -ss 10 -to 17 -af "afade=t=out:st=6.93:d=0.3" output.wav
+
+# ✅ 正确：-ss 在 -i 之前（输入选项），用 -t 替代 -to
+# 滤镜时间从 0 开始，和片段对齐
+ffmpeg -ss 10 -i source.wav -t 7 -af "afade=t=out:st=6.7:d=0.3" output.wav
+```
+
+**真实案例**：`cut_audio.py` 因此 bug 导致精剪版除第一个片段外全部静音（55 分钟无声）。
+
+### 7.5 连续背景音乐：用 volume expression 动态调音量（原 7.4）
 
 **⚠️ 关键教训：片段间过渡不要用分开的音乐片段拼接（会跳切不连续），应该用一条连续音乐轨道 + `volume=eval=frame` 动态控制音量。**
 
@@ -688,7 +704,7 @@ if(lt(t,23.36),1.0-(t-21.86)/1.5*(1.0-0.08),\
 - **渐变时长**：1.5s，音乐在人声前后平滑升降
 - **过渡到正文**：9秒，渐入1.5s + 渐出2s
 
-### 7.5 过渡到正文音乐
+### 7.6 过渡到正文音乐
 
 ```bash
 # 9秒过渡到正文：渐入1.5s，渐出2s
@@ -875,6 +891,24 @@ cp "$WORK_DIR/podcast_简介.txt" "$WORK_DIR/发布素材/"
 ---
 
 ## 反馈记录
+
+### 2026-02-22
+- **片头→正文使用 acrossfade 过渡**
+  - 问题：硬拼接（concat）导致片头→正文之间有明显断裂感
+  - 解决：使用 `acrossfade=d=5:c1=tri:c2=tri` 做 5 秒交叉淡入淡出
+  - 教训：任何两段音频拼接都应考虑 crossfade 而非直接 concat
+
+- **正文→片尾使用 acrossfade 过渡**
+  - 问题：正文结尾留 7.8s 静音后硬接 outro 不自然
+  - 解决：正文 trim 到只留 1s 结尾静音，然后 `acrossfade=d=3` 过渡到 outro
+
+- **高亮片段需要 fade-in/fade-out 防爆破音**
+  - 问题：从原音频提取 clip 时，切点波形不在零交叉点，产生 click/pop
+  - 解决：每个 clip 加 `afade=t=in:d=0.03,afade=t=out:st=X:d=0.05`（30ms 渐入 + 50ms 渐出）
+
+- **`--gap-vol` 参数：控制高亮间过渡音乐音量**
+  - 问题：高亮片段间的过渡音乐太响，和人声段的低音量背景音乐形成反差
+  - 解决：`mix_highlights_with_music.py` 新增 `--gap-vol` 参数（默认 1.0），可设低（如 0.3）
 
 ### 2026-02-21
 - **移除降噪功能**
