@@ -465,11 +465,39 @@ const rules = UserManager.loadEditingRules(userId);
 - **删前保后**：后说的通常更完整
 - **播客特殊**：思考停顿保留，对话反应时间保留，填充词适度保留
 
-**流程**：
-1. 读取 `subtitles_words.json`（词级数据）和 `sentences.txt`
-2. 跳过步骤 5 已标记删除的句子
-3. 按上表优先级逐条检测
-4. 生成 `fine_analysis.json`
+**流程（混合架构：规则层 + LLM 层）**：
+
+```
+Step 5b = 规则层 + LLM 层 → 合并 → fine_analysis.json
+
+规则层 (run_fine_analysis.js → fine_analysis_rules.json):
+  - 静音检测（需要音频时间戳，LLM 做不了）
+  - 基础卡顿词（连续相同词，确定性 pattern）
+
+LLM 层 (Claude 当前会话 → fine_analysis_llm.json):
+  - 句首填充词（语义判断删/留）
+  - 重说纠正（需要理解语义）
+  - 句内重复（A+中间字+A）
+  - 残句检测（判断完整性）
+  - 单句填充词（"嗯。""啊。"等纯填充句）
+  - 连续填充词的语义判断
+  - 录制讨论（production talk）
+
+合并 (merge_llm_fine.js → fine_analysis.json):
+  LLM 文本标记 → 映射回词级时间戳 → 与规则层去重合并
+```
+
+1. **规则层**：运行 `run_fine_analysis.js` → `fine_analysis_rules.json`
+2. **LLM 层**：Claude 分批读取 `sentences.txt`（~150句/批），输出 JSON 编辑标记 → `fine_analysis_llm.json`
+3. **合并**：运行 `merge_llm_fine.js` → `fine_analysis.json`（最终合并去重版本）
+
+**LLM 层输出格式**：
+```json
+[
+  {"s": 27, "text": "然后", "type": "filler_start", "reason": "句首口癖"},
+  {"s": 96, "text": "我，因为我，infj 是一个，我是，", "type": "self_correction", "reason": "重说纠正"}
+]
+```
 
 **输出文件**：`fine_analysis.json`
 
