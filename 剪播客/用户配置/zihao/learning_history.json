@@ -1,0 +1,97 @@
+{
+  "version": "1.0",
+  "learning_events": [
+    {
+      "type": "sample_learning",
+      "patterns_file": "/tmp/zihao_onboarding/learned_patterns.json",
+      "rules_generated": [
+        "filler_words",
+        "silence",
+        "content_analysis"
+      ],
+      "aggressiveness": "aggressive",
+      "reduction_percent": 45,
+      "date": "2026-02-22"
+    },
+    {
+      "type": "user_feedback",
+      "episode": "并轨",
+      "changes": [
+        {
+          "rule": "silence.threshold_seconds",
+          "from": 3,
+          "to": 0.8,
+          "reason": "用户反馈 >0.8s 静音未被检测，要求降低阈值"
+        }
+      ],
+      "date": "2026-02-22"
+    },
+    {
+      "type": "review_feedback",
+      "episode": "并轨",
+      "feedback_count": 13,
+      "changes_global": [
+        "10-内容分析方法论.md: 新增大段删除后孤立残句检查 (Level 2 step 4)",
+        "2-填充词检测.md: 强化句首嗯/呃/啊为最高优先级精剪规则",
+        "8-重说纠正.md: 新增句中半截重说和指代修正模式",
+        "5-卡顿词.md: 新增数字量词豁免规则 (NUMBER_CHARS + MEASURE_WORDS)",
+        "3-静音段处理.md: 开头5分钟静音阈值降低到0.5s"
+      ],
+      "changes_user": [
+        "content_analysis.yaml: 零工经济细节偏好保留",
+        "content_analysis.yaml: 100万幸福悖论偏好保留",
+        "content_analysis.yaml: 通用偏好 - 有生活质感的细节倾向保留"
+      ],
+      "bugs_reported": [
+        "stutter toggle 后其他编辑被阻断 (SKILL.md 陷阱18)",
+        "stutter 取消后仍显示删除线 (SKILL.md 陷阱19)",
+        "剪辑成品出现原文没有的残句 (SKILL.md 陷阱20)",
+        "审查稿未标删但成品被吞 (SKILL.md 陷阱21)"
+      ],
+      "date": "2026-02-22"
+    }
+    ,
+    {
+      "type": "ai_feedback_json_analysis",
+      "episode": "并轨",
+      "source_file": "ai_feedback_2026-02-23.json",
+      "summary": {
+        "total_missed": 177,
+        "total_comments": 18,
+        "total_restores": 6,
+        "added_deletions": 19,
+        "removed_deletions": 105,
+        "by_missed_type": {
+          "stutter": 72,
+          "self_correction": 62,
+          "residual_sentence": 14,
+          "other": 7,
+          "production_talk": 7,
+          "in_sentence_repeat": 6,
+          "repeated_sentence": 4,
+          "chit_chat": 3,
+          "consecutive_filler": 2
+        }
+      },
+      "key_insights": [
+        "48/72 stutter missed catches are sentence-initial '嗯，' — confirm need for single filler detection in fine analysis",
+        "5/6 restores are '嗯' — reason: '删了有卡顿感' — some fillers serve as natural connectors",
+        "105 sentences restored from粗剪 — two large blocks: 314-350 (零工经济), 940-983 (幸福悖论) — 粗剪过度激进",
+        "12/18 comments about sentence-initial pauses >0.8s — 9 detected but displayed on wrong sentence — fixed with incomingSilences",
+        "7 production_talk missed — meta-comments like '你刚想问什么来着' require content understanding",
+        "62 self_corrections missed — mid-sentence restarts need AI semantic analysis"
+      ],
+      "actions_taken": [
+        "SKILL.md 陷阱22: 句首停顿标记显示位置修复",
+        "generate_review_enhanced.js: 增加 incomingSilences 字段",
+        "review_enhanced.html: 句首渲染 ⏸ -Xs 标记",
+        "3-静音段处理.md: 更新阈值表和句首停顿显示说明"
+      ],
+      "date": "2026-02-23"
+    }
+  ],
+  "preference_evolution": {
+    "filler_sensitivity": "aggressive — user wants most sentence-initial 嗯/呃 removed, but some serve as connectors (restore feedback shows 5 cases where deletion caused stuttering)",
+    "content_preservation": "conservative — 105 sentences restored from 粗剪, user prefers keeping life-textured details and complete thematic sections"
+  }
+}

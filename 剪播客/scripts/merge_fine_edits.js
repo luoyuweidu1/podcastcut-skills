@@ -51,18 +51,16 @@ for (const edit of fineAnalysis.edits) {
   const { words } = sentenceData;
 
   if (type === 'silence') {
-    // 找句内最大间隙
-    let maxGap = 0, gapStart = null, gapEnd = null;
-    for (let i = 1; i < words.length; i++) {
-      const gap = words[i].start - words[i - 1].end;
-      if (gap > maxGap) {
-        maxGap = gap;
-        gapStart = words[i - 1].end;
-        gapEnd = words[i].start;
+    // 直接使用 fine_analysis 里的精确时间（gap 在句子边界外，不能在句内词间找）
+    // 保留 0.8s 自然停顿，只删除超出部分
+    const silStart = edit.deleteStart;
+    const silEnd = edit.deleteEnd;
+    if (silStart !== undefined && silEnd !== undefined) {
+      const keepDur = 0.8;  // 保留的自然停顿
+      const actualStart = silStart + keepDur;
+      if (actualStart < silEnd) {
+        fineSegments.push({ start: actualStart, end: silEnd });
       }
-    }
-    if (gapStart !== null && maxGap > 1.0) {
-      fineSegments.push({ start: gapStart, end: gapEnd });
     }
   } else if (type === 'residual_sentence' || type === 'repeated_sentence') {
     // 整句删除

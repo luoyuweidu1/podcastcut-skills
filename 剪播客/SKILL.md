@@ -465,11 +465,39 @@ const rules = UserManager.loadEditingRules(userId);
 - **删前保后**：后说的通常更完整
 - **播客特殊**：思考停顿保留，对话反应时间保留，填充词适度保留
 
-**流程**：
-1. 读取 `subtitles_words.json`（词级数据）和 `sentences.txt`
-2. 跳过步骤 5 已标记删除的句子
-3. 按上表优先级逐条检测
-4. 生成 `fine_analysis.json`
+**流程（混合架构：规则层 + LLM 层）**：
+
+```
+Step 5b = 规则层 + LLM 层 → 合并 → fine_analysis.json
+
+规则层 (run_fine_analysis.js → fine_analysis_rules.json):
+  - 静音检测（需要音频时间戳，LLM 做不了）
+  - 基础卡顿词（连续相同词，确定性 pattern）
+
+LLM 层 (Claude 当前会话 → fine_analysis_llm.json):
+  - 句首填充词（语义判断删/留）
+  - 重说纠正（需要理解语义）
+  - 句内重复（A+中间字+A）
+  - 残句检测（判断完整性）
+  - 单句填充词（"嗯。""啊。"等纯填充句）
+  - 连续填充词的语义判断
+  - 录制讨论（production talk）
+
+合并 (merge_llm_fine.js → fine_analysis.json):
+  LLM 文本标记 → 映射回词级时间戳 → 与规则层去重合并
+```
+
+1. **规则层**：运行 `run_fine_analysis.js` → `fine_analysis_rules.json`
+2. **LLM 层**：Claude 分批读取 `sentences.txt`（~150句/批），输出 JSON 编辑标记 → `fine_analysis_llm.json`
+3. **合并**：运行 `merge_llm_fine.js` → `fine_analysis.json`（最终合并去重版本）
+
+**LLM 层输出格式**：
+```json
+[
+  {"s": 27, "text": "然后", "type": "filler_start", "reason": "句首口癖"},
+  {"s": 96, "text": "我，因为我，infj 是一个，我是，", "type": "self_correction", "reason": "重说纠正"}
+]
+```
 
 **输出文件**：`fine_analysis.json`
 
@@ -739,6 +767,8 @@ python3 "$SKILL_DIR/剪播客/scripts/cut_audio.py" \
 - ✅ 连续删除句自动分组，无碎片
 - ✅ 重编码确保精确 seek
 - ✅ 显示节省时间统计
+
+**⚠️ 必须使用 `cut_audio.py`**：不要手写 FFmpeg 命令或自行实现剪辑逻辑。见陷阱 17。
 
 ---
 
@@ -1199,12 +1229,145 @@ setTimeout(resume, 80); // 激进 fallback（80ms，原 200ms）
 
 **结论**：HTML 导出 JSON，用户运行 `python3 cut_audio.py` 生成最终音频。
 
-### 陷阱 10: cut_audio.py 必须用 WAV 中间格式
+### 陷阱 10: FFmpeg `-ss` 位置决定滤镜时间坐标系
+
+当 `-af` 滤镜和 `-ss` 一起使用时，`-ss` 的位置至关重要：
+
+```bash
+# ❌ 错误：-ss 在 -i 之后（输出选项）
+# 滤镜处理整个文件时间线，afade 在全局时间 6.93s 执行淡出
+# 但提取的片段从 10s 开始 → 到达时音量已经是 0 → 完全静音！
+ffmpeg -v quiet -i source.wav -ss 10 -to 17 \
+  -af "afade=t=in:d=0.3,afade=t=out:st=6.93:d=0.3" -y output.wav
+
+# ✅ 正确：-ss 在 -i 之前（输入选项），用 -t（时长）替代 -to（绝对时间）
+# 滤镜从时间 0 开始处理，afade 时间参数和片段本身对齐
+ffmpeg -v quiet -ss 10 -i source.wav -t 7 \
+  -af "afade=t=in:d=0.3,afade=t=out:st=6.7:d=0.3" -y output.wav
+```
+
+**真实 bug**：`cut_audio.py` 把 `-ss`/`-to` 放在 `-i` 之后，导致除第一个片段（start=0）外所有片段的淡出在片段开始前已完成，输出 55 分钟静音。只有第一个片段（0-9.12s）正常。
+
+### 陷阱 11: cut_audio.py 必须用 WAV 中间格式（原陷阱 10）
 
 MP3 `-c copy` 切割只有帧级精度（~26ms），会导致保留词首字被吃（如"对"）或删除词尾音泄漏（如"放"）。
 
 **修复**（v2）：先解码为 WAV → 从 WAV 切割（采样级精确）→ 合并后编码回 MP3。临时 WAV 约 647MB（2小时播客），剪完自动清理。
 
-### 陷阱 11: 导出范围终点必须 seekTarget 对齐
+### 陷阱 12: 导出范围终点必须 seekTarget 对齐
 
 HTML 播放器跳过删除段后落在 `nextKept.startTime`。导出函数必须做同样的对齐（snap range end 到下一个保留句起点），否则 ffmpeg 切点和 HTML 听感不一致。
+
+### 陷阱 13: 审查稿手动编辑的文本匹配必须用 charOffset
+
+**问题 1**：用户在句中选中"你"做手动删除，但 `indexOf("你")` 匹配到了句中已被精剪标记的第一个"你"（位置不同），导致标记错位。
+
+**问题 2**：用户选中整句做删除时，`sel.toString()` 包含了 UI 标签（`.fine-tag`、`.manual-tag`）的文本内容（如 `">stutter"`），导致文本匹配失败。
+
+**正确做法**：
+1. `markSelectionDeletedAndPrompt()` 用 `range.cloneContents()` 克隆后**移除所有 UI 标签元素**，再取 `textContent`
+2. 同时计算 `charOffset`（选区在纯文本中的字符偏移位置），存入手动编辑对象
+3. `rebuildRowWithManualEdits()` 匹配时优先用 `charOffset` 精确定位，`indexOf` 作为 fallback
+
+```javascript
+// 计算 charOffset
+const preRange = document.createRange();
+preRange.setStart(textEl, 0);
+preRange.setEnd(range.startContainer, range.startOffset);
+const preFrag = preRange.cloneContents();
+preFrag.querySelectorAll('.fine-tag, .manual-tag, ...').forEach(el => el.remove());
+const charOffset = (preFrag.textContent || '').length;
+```
+
+### 陷阱 14: 审查稿不能用正则处理 innerHTML
+
+**问题**：missed-catch 补丁用正则在 `innerHTML` 上匹配文本，命中了 HTML 属性值（如 `title="stutter"` 中的文本），导致页面出现乱码（`">stutter`）。
+
+**正确做法**：所有文本操作统一用 DOM API（`querySelectorAll`、`insertBefore`、`createElement`），禁止在 `innerHTML` 上做正则替换。
+
+### 陷阱 15: UI 装饰标签不能挡住文本选择
+
+**问题**：`.manual-tag`（显示"手动"徽章）遮挡了下方文字的鼠标事件，导致单字"你"无法被选中划线。
+
+**修复**：给所有装饰标签加 `pointer-events: none`：
+```css
+.manual-tag, .fine-tag, .missed-catch-tag { pointer-events: none; }
+```
+
+### 陷阱 16: 浏览器预览卡顿 ≠ 最终成品问题
+
+**现象**：审查页 cut-mode 播放时，0ms gap 连读词（如"这个球"→"所以"、"但其实困住我们的"）的删除边界有明显卡顿/爆破。
+
+**原因**：浏览器 `<audio>` seek 精度 ≈ 26ms（MP3 帧边界），加上解码器 settling time，0ms gap 的连读词无法干净切割。
+
+**结论**：这是浏览器物理限制，**不影响最终成品**。`cut_audio.py` 解码为 WAV 后在 PCM 样本级操作（精度 ≈ 0.02ms @44100Hz），加上自适应 crossfade，即使紧密连读词也能干净切割。用户实际试听确认无爆破。
+
+**不需要的方案**：
+- ❌ 推荐用户不删紧密连读词 — FFmpeg 成品没问题，不需要限制用户
+- ❌ AI 声音克隆重新生成 — 过度工程化，FFmpeg crossfade 已足够
+
+### 陷阱 17: 步骤 8 必须用 cut_audio.py，不要手写 FFmpeg
+
+**问题**：曾手写 `generate_cut.js`（filter_complex + 188 atrim），导致 FFmpeg 处理极慢（每段都从头解码整个文件）。
+
+**正确做法**：直接调用 `cut_audio.py`，它已解决所有已知问题：
+- WAV 中间格式（采样级精确）
+- `-ss` 在 `-i` 前面（陷阱 10）
+- 自适应 fade（陷阱 11）
+- 说话人音量补偿
+- concat demuxer 拼接（快速）
+
+**不要重新发明轮子**。即使觉得脚本不适用，也应先读 `cut_audio.py` 源码确认，而不是手写替代方案。
+
+### 陷阱 18: 精剪 stutter 取消后，其他编辑被阻断
+
+**现象**：用户取消了某个 stutter 标记（如 411 句的数字误判），但该句上的其他手动编辑（如删除其他词）无法操作。
+
+**可能原因**：`toggleFineEdit()` 改变了 `fineEditsDisabled` 状态后，`rebuildRowText()` 重建 HTML 时，覆盖了手动编辑的渲染（`rebuildRowWithManualEdits` 未被调用）。需要确认 `rebuildRowText` 和 `rebuildRowWithManualEdits` 的调用链是否正确联动。
+
+**待修复**。
+
+### 陷阱 19: stutter 取消后仍显示删除线
+
+**现象**：956 句取消 stutter 后，文本仍有删除标记。974 句 "100万" 中间的数字部分被删了一块。
+
+**可能原因**：同一句有多个精剪编辑（stutter + silence 或其他），取消其中一个 stutter 不影响其他编辑的渲染。用户可能误以为取消 stutter 会取消所有精剪。也可能是数字拆词导致的精剪误标（见陷阱 18 的数字豁免规则）。
+
+**待修复**。
+
+### 陷阱 20: 剪辑成品中出现原文没有的残句
+
+**现象**：951 句听起来是残句，但原始音频里该位置没有问题。可能是 cut_audio.py 拼接时的切点不精确导致的。
+
+**排查方向**：检查 951 句对应的 keep_segment 边界时间，对比 subtitles_words.json 中的词边界，确认是否有 timing 偏移。
+
+**待修复**。
+
+### 陷阱 21: 审查稿未标删但成品中被吞掉
+
+**现象**：1066 句提到 "985" 时，成品中该数字被吞掉，但审查稿上没有标注删除。
+
+**可能原因**：精剪脚本将数字相关词误标为 stutter（见卡顿词规则中的数字豁免），导致 `delete_segments.json` 中包含了该段的删除，但审查稿的渲染可能有遗漏。也可能是 `merge_fine_edits.js` 合并时边界扩展导致相邻内容被吞。
+
+**待修复**。
+
+### 陷阱 22: 句首停顿标记显示在错误位置
+
+**现象**：静音间隙在 fine_analysis 中被分配给上一句（包含 gap 前最后一个词的句子），但用户听到停顿时看的是下一句开头 → 用户认为"没有识别出来"。
+
+**数据**：12 个用户标注的句首停顿中，9 个实际已被检测但显示在上一句末尾，3 个实际 gap < 0.8s（用户感知偏差）。
+
+**修复**：`generate_review_enhanced.js` 增加 `incomingSilences` 字段，将 silence 编辑同时传给下一个非删除句。`review_enhanced.html` 模板在句首渲染 `⏸ -Xs` 标记（黄色虚线边框，可点击联动 toggleFineEdit）。**已修复**。
+
+### 陷阱 23: merge_fine_edits.js 静音编辑未进入 delete_segments（三重 bug）
+
+**现象**：fine_analysis.json 检测到 113 个 silence 编辑，但 merge_fine_edits.js 转换为 delete_segments 时几乎全部丢失 → 最终成品未删除停顿。
+
+**三重 bug**：
+1. **句内搜索**：silence gap 在句子边界外（前一句末尾→下一句开头），但脚本在句内词之间找间隙 → 找不到
+2. **actualWords 过滤了 isGap**：`words` 数组不含 gap 元素，词间距只有自然间隙（~0.1s），不是真正的停顿
+3. **阈值错误**：硬编码 `> 1.0s` 而非 `> 0.8s`
+
+**根本原因**：`fine_analysis.json` 已有精确的 `deleteStart`/`deleteEnd`，但 merge 脚本没有使用，而是试图重新计算。
+
+**修复**：直接使用 `edit.deleteStart`/`edit.deleteEnd`，保留 0.8s 自然停顿后删除超出部分。**已修复**。

@@ -350,9 +350,9 @@ def main():
 
             cmd = [
                 'ffmpeg', '-v', 'quiet',
-                '-i', temp_wav,
                 '-ss', str(start),
-                '-to', str(end),
+                '-i', temp_wav,
+                '-t', str(seg_dur),
                 '-af', ','.join(filters),
                 '-y', output
             ]

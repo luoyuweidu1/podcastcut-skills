@@ -1,0 +1,56 @@
+audience: 青年群体（关注人文教育、生活方式、成长、精神困境）
+purpose: 青年生活漫谈
+duration:
+  target_minutes: 60
+  flexibility_percent: 15
+  aggressiveness: aggressive
+content_analysis:
+  enabled: true
+  detect_types:
+    pre_show: true
+    tech_debug: true
+    chit_chat: true
+    privacy: true
+    repeated_content: true
+    production_talk: true
+technical:
+  enabled: true
+  filler_words:
+    detection: true
+    aggressiveness: aggressive
+    common_fillers:
+      - 就是
+      - 然后
+      - 嗯
+      - 啊
+      - 呃
+      - 对对
+      - 对对对
+      - 哈哈
+    preserve:
+      - 哇
+  speech_errors:
+    detection: true
+    handling: auto_delete
+  repeated_sentences:
+    detection: true
+    handling: keep_first
+  silence:
+    remove_long: true
+    threshold_seconds: 3
+    keep_interval: 0.5
+speakers:
+  hosts:
+    - 小锅
+    - 阿穆尔
+    - 容七
+  guest_history: []
+workflow_automation:
+  auto_qa_enabled: true
+  auto_post_production: false
+  prompt_for_feedback: true
+meta:
+  created_at: "2026-02-22"
+  last_updated: "2026-02-22"
+  usage_count: 0
+  version: "2.0"

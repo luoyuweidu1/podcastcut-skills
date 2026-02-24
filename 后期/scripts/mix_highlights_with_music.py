@@ -59,13 +59,14 @@ def check_volume(filepath):
     return -999
 
 
-def build_volume_expression(timeline, music_vol, fade_dur):
+def build_volume_expression(timeline, music_vol, fade_dur, gap_vol=1.0):
     """
     构建 volume=eval=frame 的动态音量表达式。
 
     timeline: [(start, end, vol), ...] 各时段的目标音量
     music_vol: 人声时的背景音量 (0-1)
     fade_dur: 音量渐变时长 (秒)
+    gap_vol: 过渡段（无人声时）的音乐音量 (0-1)，默认1.0
     """
     # 排序时间线
     timeline.sort(key=lambda x: x[0])
@@ -75,7 +76,7 @@ def build_volume_expression(timeline, music_vol, fade_dur):
     for i, (start, end, vol) in enumerate(timeline):
         if i == 0 and start > 0:
             # 片头区域（start 之前）
-            parts.append(f"if(lt(t,{start:.3f}),1.0,")
+            parts.append(f"if(lt(t,{start:.3f}),{gap_vol},")
 
         if vol < 1.0:
             # 人声区域：渐入到低音量
@@ -83,25 +84,25 @@ def build_volume_expression(timeline, music_vol, fade_dur):
             fade_out_start = end
             fade_out_end = end + fade_dur
 
-            # 渐入低音量
+            # 渐入低音量（从 gap_vol 渐变到 music_vol）
             parts.append(
                 f"if(lt(t,{fade_in_end:.3f}),"
-                f"1.0-(t-{start:.3f})/{fade_dur:.3f}*(1.0-{music_vol}),"
+                f"{gap_vol}-(t-{start:.3f})/{fade_dur:.3f}*({gap_vol}-{music_vol}),"
             )
             # 保持低音量
             parts.append(
                 f"if(lt(t,{fade_out_start:.3f}),{music_vol},"
             )
-            # 渐出恢复
+            # 渐出恢复（从 music_vol 渐变回 gap_vol）
             parts.append(
                 f"if(lt(t,{fade_out_end:.3f}),"
-                f"{music_vol}+(t-{fade_out_start:.3f})/{fade_dur:.3f}*(1.0-{music_vol}),"
+                f"{music_vol}+(t-{fade_out_start:.3f})/{fade_dur:.3f}*({gap_vol}-{music_vol}),"
             )
         else:
-            parts.append(f"if(lt(t,{end:.3f}),1.0,")
+            parts.append(f"if(lt(t,{end:.3f}),{gap_vol},")
 
     # 最后一段
-    parts.append("1.0")
+    parts.append(f"{gap_vol}")
     # 关闭所有括号
     parts.append(")" * (len(parts) - 1))
 
@@ -117,6 +118,7 @@ def main():
     parser.add_argument('--gap-dur', type=float, default=5, help='片段间过渡时长(s)')
     parser.add_argument('--outro-dur', type=float, default=9, help='尾声过渡到正文时长(s)')
     parser.add_argument('--music-vol', type=float, default=0.08, help='人声时背景音乐音量(0-1)')
+    parser.add_argument('--gap-vol', type=float, default=1.0, help='过渡段（无人声）音乐音量(0-1)')
     parser.add_argument('--voice-gain', type=float, default=2.0, help='人声增益倍数')
     parser.add_argument('--fade-transition', type=float, default=1.5, help='音乐升降渐变时长(s)')
     parser.add_argument('--theme-start', type=float, default=0, help='主题曲截取起点(s)')
@@ -178,7 +180,7 @@ def main():
         # ===== Step 1: 创建连续背景音乐轨 =====
         print("\n🎵 Step 1: 创建连续背景音乐轨...")
 
-        vol_expr = build_volume_expression(timeline, args.music_vol, args.fade_transition)
+        vol_expr = build_volume_expression(timeline, args.music_vol, args.fade_transition, args.gap_vol)
 
         music_bed = os.path.join(work_dir, 'music_bed.wav')
         theme_end = args.theme_start + total_dur

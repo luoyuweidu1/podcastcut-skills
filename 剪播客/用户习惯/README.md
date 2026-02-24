@@ -33,3 +33,15 @@
 ## 核心原则
 
 **删前保后**：后说的通常更完整，删除前面保留后面。
+
+## 架构：规则层 + LLM 层
+
+Step 5b 精剪采用 hybrid 架构：
+
+| 层 | 负责 | 输出 |
+|---|---|---|
+| **规则层** (run_fine_analysis.js) | 静音检测（需音频时间戳）、基础卡顿词（连续相同词 + 叠词/ABB豁免） | fine_analysis_rules.json |
+| **LLM 层** (Claude 当前会话) | 句首填充词、重说纠正、残句、整句填充词、句内重复、连续填充词 | fine_analysis_llm.json |
+| **合并** (merge_llm_fine.js) | LLM 文本标记 → 映射回词级时间戳 → 与规则层合并去重 | fine_analysis.json |
+
+**为什么要 hybrid**：纯规则对"重说纠正"等需要语义理解的编辑类型存在天花板，漏检率高（dexter 样本 39% 漏检是重说纠正）。LLM 层补充语义分析能力。

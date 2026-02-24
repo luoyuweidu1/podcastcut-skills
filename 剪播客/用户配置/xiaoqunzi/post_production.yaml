@@ -4,13 +4,14 @@
 
 # --- 片头片尾 ---
 intro:
-  music_path: ""               # 片头音乐文件路径
+  music_path: ""               # 片头音乐文件路径（每期可能不同，启动时询问）
   duration_seconds: 15         # 片头音乐时长
   enabled: true
 
 outro:
-  music_path: ""               # 片尾音乐文件路径
+  music_path: ""               # 片尾音乐文件路径（同上）
   duration_seconds: 15         # 片尾音乐时长
+  same_as_intro: true          # 片尾音乐与片头相同
   enabled: true
 
 # --- 高亮片段 ---
@@ -18,6 +19,23 @@ highlights:
   enabled: true
   count: 3                     # 推荐高亮片段数量
   generate_intro_preview: true # 生成片头预览（多个高亮拼接+背景音乐）
+
+# --- 音频混合参数 ---
+audio_mix:
+  voice_gain: 3.0              # 人声增益倍数（默认2.0，用户偏好更突出人声）
+  music_vol: 0.03              # 人声时背景音量（默认0.08，用户偏好更低）
+  gap_vol: 0.3                 # 过渡段音量（默认1.0，用户偏好低调过渡）
+  fade_transition: 1.5         # 音乐升降渐变秒数
+  intro_dur: 10                # 片头纯音乐时长
+  gap_dur: 5                   # 片段间过渡时长
+  outro_dur: 9                 # 尾声过渡到正文
+  theme_start: 1.2             # 音乐截取起点（跳过前奏静音）
+
+# --- 拼接过渡 ---
+transitions:
+  intro_to_main_crossfade: 5   # 片头→正文 crossfade 秒数
+  main_to_outro_crossfade: 3   # 正文→片尾 crossfade 秒数
+  ending_silence: 1            # 正文结尾保留静音秒数
 
 # --- 章节时间戳 ---
 timestamps:
@@ -36,5 +54,5 @@ description:
 
 # --- 元数据 ---
 meta:
-  configured: false            # 首次后期时会设为 true
-  last_updated: ""
+  configured: true
+  last_updated: "2026-02-22"

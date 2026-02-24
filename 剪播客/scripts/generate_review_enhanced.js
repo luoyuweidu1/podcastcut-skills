@@ -179,6 +179,10 @@ for (let i = 0; i < sentences.length; i++) {
     if (fe.ds !== undefined && fe.de !== undefined) {
       feEntry.ds = Math.round(fe.ds * 100) / 100;
       feEntry.de = Math.round(fe.de * 100) / 100;
+    } else if (fe.deleteStart !== undefined && fe.deleteEnd !== undefined) {
+      // silence 编辑用 deleteStart/deleteEnd 字段名
+      feEntry.ds = Math.round(fe.deleteStart * 100) / 100;
+      feEntry.de = Math.round(fe.deleteEnd * 100) / 100;
     } else if (fe.deleteText && wordsArr.length > 0) {
       // Fallback: 文本匹配
       const wordTexts = wordsArr.map(w => w.t);
@@ -256,6 +260,38 @@ for (let i = 0; i < sentencesData.length; i++) {
   }
 }
 
+// ===== 句首停顿标记（将句尾 silence 也传给下一句显示）=====
+// 用户审查时，停顿感知在下一句开头，而非上一句末尾
+// 所以每个 silence 除了标注在 prevSentence，还要作为 incomingSilence 传给 nextSentence
+const sentIdxToPos = {};
+sentencesData.forEach((s, pos) => { sentIdxToPos[s.idx] = pos; });
+if (fineAnalysis) {
+  fineAnalysis.edits.forEach(edit => {
+    if (edit.type !== 'silence') return;
+    const curPos = sentIdxToPos[edit.sentenceIdx];
+    if (curPos === undefined) return;
+    // 找下一个非删除句
+    for (let np = curPos + 1; np < sentencesData.length; np++) {
+      const nextS = sentencesData[np];
+      if (!nextS.isAiDeleted) {
+        if (!nextS.incomingSilences) nextS.incomingSilences = [];
+        nextS.incomingSilences.push({
+          idx: edit._idx,
+          duration: edit.duration || parseFloat(((edit.deleteEnd || 0) - (edit.deleteStart || 0)).toFixed(1)),
+          ds: Math.round((edit.deleteStart || 0) * 100) / 100,
+          de: Math.round((edit.deleteEnd || 0) * 100) / 100,
+          fromSentenceIdx: edit.sentenceIdx
+        });
+        break;
+      }
+    }
+  });
+}
+const incomingCount = sentencesData.filter(s => s.incomingSilences).length;
+if (incomingCount > 0) {
+  console.log(`   句首停顿标记: ${incomingCount} 个句子`);
+}
+
 // ===== 统计 =====
 const totalSentences = sentencesData.length;
 const deletedCount = sentencesData.filter(s => s.isAiDeleted && !s.isSuggestedDelete).length;
@@ -315,6 +351,7 @@ template = template.replace('__SPEAKER_STYLES__', speakerStyles);
 template = template.replaceAll('__SPEAKER_CLASS_FUNC__', speakerClassExpr);
 template = template.replace(/__AUDIO_SRC__/g, audioSrc);
 template = template.replace(/__TITLE__/g, title);
+template = template.replace('__GEN_TIMESTAMP__', String(Date.now()));
 
 fs.writeFileSync(outputFile, template);
 const sizeKB = Math.round(fs.statSync(outputFile).size / 1024);
