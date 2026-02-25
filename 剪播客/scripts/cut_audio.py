@@ -197,9 +197,10 @@ def get_segment_speaker(seg_start, seg_end, speaker_segments):
 
 
 def main():
-    # 参数解析：支持位置参数 + --speakers-json 可选参数
+    # 参数解析：支持位置参数 + --speakers-json / --no-fade 可选参数
     positional_args = []
     speakers_json = None
+    no_fade = False
 
     i = 1
     while i < len(sys.argv):
@@ -210,6 +211,9 @@ def main():
             else:
                 print("--speakers-json 需要指定文件路径")
                 sys.exit(1)
+        elif sys.argv[i] == '--no-fade':
+            no_fade = True
+            i += 1
         else:
             positional_args.append(sys.argv[i])
             i += 1
@@ -303,8 +307,11 @@ def main():
             print("   各说话人音量差异 < 0.5dB，无需补偿")
         print("")
 
-    # 从 WAV 提取保留片段，带自适应淡入淡出
-    if speaker_compensation and any(g > 0 for g in speaker_compensation.values()):
+    # 从 WAV 提取保留片段
+    has_vol = speaker_compensation and any(g > 0 for g in speaker_compensation.values())
+    if no_fade:
+        print(f"🎬 提取保留片段（无淡入淡出{' + 说话人音量对齐' if has_vol else ''}）...")
+    elif has_vol:
         print("🎬 提取保留片段（带自适应淡入淡出 + 说话人音量对齐）...")
     else:
         print("🎬 提取保留片段（带自适应淡入淡出）...")
@@ -318,8 +325,13 @@ def main():
         is_first = (i == 0)
         is_last = (i == len(keep_segs) - 1)
 
-        fade_in_dur = 0.0 if is_first else calc_fade_duration(seg_dur)
-        fade_out_dur = 0.0 if is_last else calc_fade_duration(seg_dur)
+        if no_fade:
+            # 微 fade 3ms：防止波形不连续的 click，但不影响语音
+            fade_in_dur = 0.0 if is_first else 0.003
+            fade_out_dur = 0.0 if is_last else 0.003
+        else:
+            fade_in_dur = 0.0 if is_first else calc_fade_duration(seg_dur)
+            fade_out_dur = 0.0 if is_last else calc_fade_duration(seg_dur)
 
         # 安全检查：淡入 + 淡出不能超过片段总长的 60%
         if fade_in_dur + fade_out_dur > seg_dur * 0.6:

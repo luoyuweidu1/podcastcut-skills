@@ -476,7 +476,9 @@ Step 5b = 规则层 + LLM 层 → 合并 → fine_analysis.json
 
 LLM 层 (Claude 当前会话 → fine_analysis_llm.json):
   - 句首填充词（语义判断删/留）
-  - 重说纠正（需要理解语义）
+  - 重说纠正（需要理解语义）⚠️ 漏检率最高的类型，务必仔细检查
+    → 详见 用户习惯/8-重说纠正.md 的 8 种子模式 + LLM 自查清单
+    → 重点关注：粒子结尾 false start、同头扩展、近义重述
   - 句内重复（A+中间字+A）
   - 残句检测（判断完整性）
   - 单句填充词（"嗯。""啊。"等纯填充句）
@@ -772,6 +774,36 @@ python3 "$SKILL_DIR/剪播客/scripts/cut_audio.py" \
 
 ---
 
+### 步骤 8b: 成品静音裁剪 🆕
+
+剪辑成品后，删除内容前后的短静音会合并成超阈值的长停顿。**必须在成品上再扫一遍。**
+
+**为什么不在 delete_segments 阶段处理？**
+- 用户手动编辑（恢复/删除）会产生新的合并间隙
+- merge_llm_fine.js 的 post-merge gap cleanup 是基于预测的，不够精确
+- **直接在成品音频上用 FFmpeg silencedetect 扫描最简单可靠**
+
+```bash
+python3 "$SKILL_DIR/剪播客/scripts/trim_silences.py" \
+  "$BASE_DIR/3_成品/${AUDIO_NAME}_精剪版_v1.mp3"
+# 默认: 检测 >0.8s 静音，裁剪到 0.6s
+# 输出: *_trimmed.mp3
+
+# 自定义参数:
+python3 "$SKILL_DIR/剪播客/scripts/trim_silences.py" \
+  input.mp3 output.mp3 \
+  --threshold 0.8 \   # 检测阈值
+  --target 0.6 \      # 每段静音保留的目标时长
+  --noise -30          # silencedetect 噪声阈值 dB
+```
+
+**关键设计**：
+- target 比 threshold 低 0.2s（保留 0.3+0.3=0.6s），因为 silencedetect 边界检测和裁切点不完全对齐（见陷阱 24）
+- 独立脚本，不依赖 delete_segments，任何 MP3 都能跑
+- 可迭代：用户不满意可以调参数重跑
+
+---
+
 ```
 步骤-1: 用户识别 + 偏好确认 🆕v5
 步骤0:  创建目录
@@ -784,7 +816,8 @@ python3 "$SKILL_DIR/剪播客/scripts/cut_audio.py" \
 步骤6:  生成审查界面 → review_enhanced.html ⭐
 步骤7:  审查+编辑+导出 → delete_segments_edited.json ⭐
 步骤7b: 反馈学习 🆕v5 → 更新 editing_rules/
-步骤8:  剪辑 → 播客名_精剪版_v1.mp3 🎉
+步骤8:  剪辑 → 播客名_精剪版_v1.mp3
+步骤8b: 成品静音裁剪 🆕 → 播客名_精剪版_v1_trimmed.mp3 🎉
 步骤9b: 自动质检 🆕v5（可选）→ QA 报告
 步骤10: 后期处理 🆕v5（可选）→ 片头/时间戳/标题
 步骤11: 最终交付 🆕v5 → episode_history + 汇总
@@ -1350,6 +1383,32 @@ const charOffset = (preFrag.textContent || '').length;
 **可能原因**：精剪脚本将数字相关词误标为 stutter（见卡顿词规则中的数字豁免），导致 `delete_segments.json` 中包含了该段的删除，但审查稿的渲染可能有遗漏。也可能是 `merge_fine_edits.js` 合并时边界扩展导致相邻内容被吞。
 
 **待修复**。
+
+### 陷阱 24: 静音裁剪保留量必须低于检测阈值
+
+**问题**：silencedetect 阈值 0.8s，裁剪时保留 0.4+0.4=0.8s，结果仍有 300 个 0.80-0.85s 的静音被报告。
+
+**原因**：silencedetect 的 "silence boundary" 和裁切点不是同一位置。silencedetect 看的是能量低于 noise dB 的连续区域，但裁切点是按时间戳硬切的，边缘处的低能量音频（如呼吸尾音）会被 silencedetect 算入静音区间。
+
+**正确做法**：保留量 = 目标阈值 - 0.2s 的 buffer。如目标 0.8s，保留 0.3+0.3=0.6s。`trim_silences.py` 默认 `--target 0.6` 已内置此 buffer。
+
+### 陷阱 25: 句中删词后的间隙感知阈值远低于句间
+
+**问题**：s49 删了 "他也"（卡顿重复），删除范围仅覆盖词本身 `[279.94, 280.78]`，前后词的间隙（279.82→281.46 = 1.64s）产生了明显的不自然停顿。
+
+**原因**：
+1. 句间 0.8s 停顿是自然的（换气/消化），但句中 0.3s 以上的间隙就被感知为"卡了"
+2. ASR 时间戳有间隙：被删词的 start 晚于实际发声，end 早于下一词
+
+**正确做法**：删除句中内容时，范围必须扩展到 `[prev_word.end, next_word.start]`，不留间隙。适用于 stutter、self_correction、句内 filler 等所有句中删除类型。
+
+### 陷阱 26: 填充词删除范围必须覆盖 onset 泄露
+
+**问题**：s9 末尾的 "嗯" 已标记删除 `[21.13, 21.73]`，但成品中仍有残音。
+
+**原因**：ASR 报告 filler.start (21.13) 比实际发声晚。前一词 "岁" 结束在 20.53，中间 0.6s 间隙包含 "嗯" 的起始音。
+
+**正确做法**：填充词删除范围 = `[prev_word.end, next_word.start]`，而非 `[filler.start, filler.end]`。详见 `用户习惯/2-填充词检测.md` 删除边界章节。
 
 ### 陷阱 22: 句首停顿标记显示在错误位置
 

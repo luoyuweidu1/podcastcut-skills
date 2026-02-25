@@ -1,0 +1,74 @@
+audience: "关注健康、长寿、压力管理的知识型听众"
+purpose: "知识传递，深度解读《超越百岁》等健康科学书籍"
+duration:
+  target_minutes: 0
+  flexibility_percent: 100
+  aggressiveness: moderate
+content_analysis:
+  enabled: true
+  detect_types:
+    pre_show: true
+    tech_debug: true
+    chit_chat: true
+    privacy: true
+    repeated_content: true
+    production_talk: true
+technical:
+  enabled: true
+  filler_words:
+    detection: true
+    aggressiveness: aggressive
+    common_fillers:
+      - 嗯
+      - 呃
+      - 额
+      - 啊
+      - 嗯嗯
+      - 就是
+      - 然后
+      - 这个
+      - 那个
+      - 对对
+      - 对对对
+      - 哈哈
+    preserve:
+      - 哇
+      - 哦
+  speech_errors:
+    detection: true
+    handling: auto_delete
+  repeated_sentences:
+    detection: true
+    handling: keep_first
+  silence:
+    remove_long: true
+    threshold_seconds: 0.8
+    keep_interval: 0.8
+speakers:
+  hosts:
+    - 老秦
+    - 小段
+  guest_history: []
+workflow_automation:
+  auto_qa_enabled: true
+  auto_post_production: false
+  prompt_for_feedback: true
+feedback_learnings:
+  suggest_delete_calibration:
+    # lucia 恢复了 22/68 个 suggest_delete 句子（32%恢复率）
+    # 恢复的内容全部是"与主题相关的延伸讨论"（经济周期、人类耐力等）
+    # 结论：知识播客中，用真实案例佐证观点的"跑题"段落，用户视为有价值内容
+    note: "suggest_delete 对知识播客偏激进，延伸讨论/类比/案例应倾向保留"
+    restore_rate: 0.32
+  stutter_preference:
+    # lucia 标记 "我我"(2x)、"对对"(2x) 为漏检
+    # 比 xiaoqunzi 更严格
+    note: "moderate aggressiveness 下，2x 自然重复也应标记删除"
+  production_talk_sensitivity:
+    # s13 "好的，那么我们就开始了" 和 s85 "嗯，怎么了？" 被标为漏检
+    note: "录制过渡语和插话都应检测为 production_talk"
+meta:
+  created_at: "2026-02-25"
+  last_updated: "2026-02-25"
+  usage_count: 1
+  version: "2.0"

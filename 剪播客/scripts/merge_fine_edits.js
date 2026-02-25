@@ -96,9 +96,15 @@ for (const edit of fineAnalysis.edits) {
     }
 
     if (deleteStartWord !== null && deleteEndWord !== null) {
+      // 扩展删除范围到相邻词边界，防止 ASR onset 泄露和尾部静音残留
+      // 规则：[前一个词.end, 后一个词.start]，详见 用户习惯/2-填充词检测.md
+      const prevWord = deleteStartWord > 0 ? words[deleteStartWord - 1] : null;
+      const nextWord = deleteEndWord < words.length - 1 ? words[deleteEndWord + 1] : null;
+      const expandedStart = prevWord ? prevWord.end : words[deleteStartWord].start;
+      const expandedEnd = nextWord ? nextWord.start : words[deleteEndWord].end;
       fineSegments.push({
-        start: words[deleteStartWord].start,
-        end: words[deleteEndWord].end
+        start: expandedStart,
+        end: expandedEnd
       });
     } else {
       skipped++;
