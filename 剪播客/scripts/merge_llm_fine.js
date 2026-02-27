@@ -67,11 +67,11 @@ if (fs.existsSync(llmPath)) {
   const llmRaw = llmData.edits || llmData; // support both {edits:[]} and bare array
   console.log(`🤖 LLM layer: ${llmRaw.length} raw edits`);
 
-  let mapped = 0, failed = 0;
+  let mapped = 0, failed = 0, remapped = 0;
   for (const edit of llmRaw) {
-    const sentIdx = edit.s;
+    let sentIdx = edit.s;
     const deleteText = edit.text;
-    const sent = sentences.find(s => s.idx === sentIdx);
+    let sent = sentences.find(s => s.idx === sentIdx);
 
     if (!sent) {
       console.warn(`   ⚠️ Sentence ${sentIdx} not found, skipping`);
@@ -80,7 +80,22 @@ if (fs.existsSync(llmPath)) {
     }
 
     // Map text to timestamps
-    const result = mapTextToTimestamps(sent, deleteText);
+    let result = mapTextToTimestamps(sent, deleteText);
+
+    // Off-by-1 fallback: LLM may confuse file line numbers (1-indexed) with sentence indices (0-indexed)
+    if (!result && sentIdx > 0) {
+      const prevSent = sentences.find(s => s.idx === sentIdx - 1);
+      if (prevSent) {
+        const prevResult = mapTextToTimestamps(prevSent, deleteText);
+        if (prevResult) {
+          result = prevResult;
+          sent = prevSent;
+          sentIdx = sentIdx - 1;
+          remapped++;
+        }
+      }
+    }
+
     if (!result) {
       console.warn(`   ⚠️ Could not map "${deleteText}" in sentence ${sentIdx}: "${sent.text.substring(0, 40)}..."`);
       failed++;
@@ -111,7 +126,7 @@ if (fs.existsSync(llmPath)) {
     llmEdits.push(feEntry);
     mapped++;
   }
-  console.log(`   ✅ Mapped: ${mapped}, ⚠️ Failed: ${failed}`);
+  console.log(`   ✅ Mapped: ${mapped}${remapped ? ` (${remapped} via off-by-1 fallback)` : ''}, ⚠️ Failed: ${failed}`);
 } else {
   console.log(`⚠️  No LLM file found at ${llmPath}`);
 }
