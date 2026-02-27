@@ -752,10 +752,12 @@ python3 "$SKILL_DIR/剪播客/scripts/cut_audio.py" \
   "$BASE_DIR/3_成品/${AUDIO_NAME}_精剪版_v1.mp3" \
   "$BASE_DIR/1_转录/audio.mp3" \
   delete_segments_edited.json \
-  --speakers-json "$BASE_DIR/1_转录/subtitles_words.json"
+  --speakers-json "$BASE_DIR/1_转录/subtitles_words.json" \
+  --no-fade
 ```
 
 > `--speakers-json` 默认始终传入。脚本自动检测音量差异，< 0.5dB 时跳过补偿，无副作用。
+> **`--no-fade` 必须传**：默认自适应 fade（最大 0.3s）会吃掉紧邻切点的短音节。`--no-fade` 用 3ms 微 fade 替代，防爆破但不影响语音。
 
 **输出**：
 - `3_成品/播客名_精剪版_v1.mp3`
@@ -763,8 +765,8 @@ python3 "$SKILL_DIR/剪播客/scripts/cut_audio.py" \
 
 **剪辑特点**：
 - ✅ WAV 中间格式，采样级精确（无 MP3 帧边界偏移）
-- ✅ 自适应淡入淡出：每个切点自动加 fade，消除断句感
-  - 时长 = `clamp(片段时长 × 8%, 0.03s, 0.3s)`，首尾段不加
+- ✅ 3ms 微 fade（`--no-fade` 模式）：防 PCM 波形不连续的爆破，不影响语音
+  - ⚠️ 禁止用默认自适应 fade：最大 0.3s 会吃掉短音节（如 0.36s 的"很久"几乎整个被淡入）
 - ✅ 说话人音量对齐（`--speakers-json`）：检测各说话人平均响度，自动补偿差异（最大 +6dB）
 - ✅ 连续删除句自动分组，无碎片
 - ✅ 重编码确保精确 seek
@@ -1343,10 +1345,10 @@ const charOffset = (preFrag.textContent || '').length;
 
 **问题**：曾手写 `generate_cut.js`（filter_complex + 188 atrim），导致 FFmpeg 处理极慢（每段都从头解码整个文件）。
 
-**正确做法**：直接调用 `cut_audio.py`，它已解决所有已知问题：
+**正确做法**：直接调用 `cut_audio.py --no-fade`，它已解决所有已知问题：
 - WAV 中间格式（采样级精确）
 - `-ss` 在 `-i` 前面（陷阱 10）
-- 自适应 fade（陷阱 11）
+- `--no-fade`：3ms 微 fade 防爆破，不吃短音节
 - 说话人音量补偿
 - concat demuxer 拼接（快速）
 

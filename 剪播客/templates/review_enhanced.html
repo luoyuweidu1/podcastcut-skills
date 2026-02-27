@@ -2312,7 +2312,11 @@ function exportDeleteSegments() {
         }
       }
       const gapBefore = s - closestPrevEnd;
-      if (gapBefore < 0.20 && s > 0.05) {
+      // Match getSkipRanges() buffering: zero-gap word boundary needs 100ms
+      // pullback to cover ASR onset lag; wider gaps need less.
+      if (gapBefore < 0.02 && s > 0.10) {
+        merged[i][0] = Math.max(0, s - 0.10);
+      } else if (gapBefore < 0.20 && s > 0.05) {
         merged[i][0] = Math.max(0, s - 0.05);
       }
     }
