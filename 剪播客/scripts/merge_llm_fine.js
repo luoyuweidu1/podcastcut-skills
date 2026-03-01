@@ -296,18 +296,18 @@ for (const sent of sentences) {
         const substantiveGapWords = gapWords.filter(w => w.length > 0 && !HESITATION_WORDS.has(w));
 
         // Check if word immediately after each occurrence is different substantive content
-        let firstContText = '';
-        let secondContText = '';
-        if (firstAfterPos < aj) {
-          firstContText = words[activeIndices[firstAfterPos]].text.replace(/[，。！？、：；""''（）\s]/g, '');
+        // Skip over hesitation/filler words to find the first substantive continuation
+        function findSubstantiveCont(startPos, endPos) {
+          for (let p = startPos; p < endPos; p++) {
+            const t = words[activeIndices[p]].text.replace(/[，。！？、：；""''（）\s]/g, '');
+            if (t.length > 0 && !HESITATION_WORDS.has(t)) return t;
+          }
+          return '';
         }
-        if (afterSecond < activeIndices.length) {
-          secondContText = words[activeIndices[afterSecond]].text.replace(/[，。！？、：；""''（）\s]/g, '');
-        }
+        const firstContText = findSubstantiveCont(firstAfterPos, aj);
+        const secondContText = findSubstantiveCont(afterSecond, activeIndices.length);
 
         const bothContinueDifferently = firstContText !== secondContText &&
-          !HESITATION_WORDS.has(firstContText) &&
-          !HESITATION_WORDS.has(secondContText) &&
           firstContText.length > 0 && secondContText.length > 0;
 
         // Rule 1: If gap has only substantive words (no hesitation), and continuations differ → parallel

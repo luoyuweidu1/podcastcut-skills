@@ -1,5 +1,174 @@
 {
   "version": "1.0",
-  "learning_events": [],
+  "learning_events": [
+    {
+      "type": "feedback_learning",
+      "source_file": "output/2026-02-27_meeting_02/3_成品/ai_feedback_meeting_02.json",
+      "adjustments_applied": [
+        {
+          "rule": "stutter",
+          "direction": "increase_detection",
+          "confidence": 0.95,
+          "reason": "AI 遗漏了 8 个 \"stutter\" 类型的内容"
+        },
+        {
+          "rule": "self_correction",
+          "direction": "increase_detection",
+          "confidence": 0.95,
+          "reason": "AI 遗漏了 14 个 \"self_correction\" 类型的内容"
+        },
+        {
+          "rule": "filler_words",
+          "direction": "increase_detection",
+          "confidence": 0.8,
+          "reason": "AI 遗漏了 3 个 \"consecutive_filler\" 类型的内容"
+        },
+        {
+          "rule": "content_analysis",
+          "direction": "increase_aggressiveness",
+          "confidence": 0.8,
+          "reason": "用户手动新增了 29 个删除，可能需要提高整体激进度"
+        },
+        {
+          "rule": "content_analysis",
+          "direction": "increase_detection",
+          "confidence": 0.7,
+          "reason": "AI 遗漏了 2 个 \"production_talk\" 类型的内容"
+        },
+        {
+          "rule": "filler_words",
+          "direction": "increase_detection",
+          "confidence": 0.6,
+          "reason": "AI 遗漏了 1 个 \"in_sentence_repeat\" 类型的内容"
+        }
+      ],
+      "summary": {
+        "missed_catches": 28,
+        "added_deletions": 29,
+        "removed_deletions": 0
+      },
+      "date": "2026-02-27"
+    },
+    {
+      "type": "feedback_learning",
+      "source_file": "/sessions/sweet-admiring-heisenberg/mnt/uploads/ai_feedback_2026-02-28.json",
+      "adjustments_applied": [
+        {
+          "rule": "stutter",
+          "direction": "increase_detection",
+          "confidence": 0.95,
+          "reason": "AI 遗漏了 173 个 \"stutter\" 类型的内容"
+        },
+        {
+          "rule": "self_correction",
+          "direction": "increase_detection",
+          "confidence": 0.95,
+          "reason": "AI 遗漏了 22 个 \"self_correction\" 类型的内容"
+        },
+        {
+          "rule": "filler_words",
+          "direction": "increase_detection",
+          "confidence": 0.95,
+          "reason": "AI 遗漏了 9 个 \"in_sentence_repeat\" 类型的内容"
+        },
+        {
+          "rule": "filler_words",
+          "direction": "increase_detection",
+          "confidence": 0.8,
+          "reason": "AI 遗漏了 3 个 \"consecutive_filler\" 类型的内容"
+        },
+        {
+          "rule": "content_analysis",
+          "direction": "increase_aggressiveness",
+          "confidence": 0.8,
+          "reason": "用户手动新增了 30 个删除，可能需要提高整体激进度"
+        },
+        {
+          "rule": "repeated_sentences",
+          "direction": "increase_detection",
+          "confidence": 0.7,
+          "reason": "AI 遗漏了 2 个 \"repeated_sentence\" 类型的内容"
+        },
+        {
+          "rule": "content_analysis",
+          "direction": "increase_detection",
+          "confidence": 0.6,
+          "reason": "AI 遗漏了 1 个 \"chit_chat\" 类型的内容"
+        },
+        {
+          "rule": "content_analysis",
+          "direction": "increase_detection",
+          "confidence": 0.6,
+          "reason": "AI 遗漏了 1 个 \"production_talk\" 类型的内容"
+        }
+      ],
+      "summary": {
+        "missed_catches": 211,
+        "added_deletions": 30,
+        "removed_deletions": 0
+      },
+      "date": "2026-02-28"
+    },
+    {
+      "type": "feedback_learning",
+      "source_file": "/sessions/sweet-admiring-heisenberg/mnt/uploads/ai_feedback_2026-02-28.json",
+      "adjustments_applied": [
+        {
+          "rule": "stutter",
+          "direction": "increase_detection",
+          "confidence": 0.95,
+          "reason": "AI 遗漏了 173 个 \"stutter\" 类型的内容"
+        },
+        {
+          "rule": "self_correction",
+          "direction": "increase_detection",
+          "confidence": 0.95,
+          "reason": "AI 遗漏了 22 个 \"self_correction\" 类型的内容"
+        },
+        {
+          "rule": "filler_words",
+          "direction": "increase_detection",
+          "confidence": 0.95,
+          "reason": "AI 遗漏了 9 个 \"in_sentence_repeat\" 类型的内容"
+        },
+        {
+          "rule": "filler_words",
+          "direction": "increase_detection",
+          "confidence": 0.8,
+          "reason": "AI 遗漏了 3 个 \"consecutive_filler\" 类型的内容"
+        },
+        {
+          "rule": "content_analysis",
+          "direction": "increase_aggressiveness",
+          "confidence": 0.8,
+          "reason": "用户手动新增了 30 个删除，可能需要提高整体激进度"
+        },
+        {
+          "rule": "repeated_sentences",
+          "direction": "increase_detection",
+          "confidence": 0.7,
+          "reason": "AI 遗漏了 2 个 \"repeated_sentence\" 类型的内容"
+        },
+        {
+          "rule": "content_analysis",
+          "direction": "increase_detection",
+          "confidence": 0.6,
+          "reason": "AI 遗漏了 1 个 \"chit_chat\" 类型的内容"
+        },
+        {
+          "rule": "content_analysis",
+          "direction": "increase_detection",
+          "confidence": 0.6,
+          "reason": "AI 遗漏了 1 个 \"production_talk\" 类型的内容"
+        }
+      ],
+      "summary": {
+        "missed_catches": 211,
+        "added_deletions": 30,
+        "removed_deletions": 0
+      },
+      "date": "2026-02-28"
+    }
+  ],
   "preference_evolution": {}
 }
