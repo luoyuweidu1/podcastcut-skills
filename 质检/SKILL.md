@@ -1,10 +1,14 @@
 ---
 name: podcastcut:质检
-description: 播客剪辑质量检测。自动分析剪切点的能量突变、静音异常、频谱跳变，输出质量报告并标记需要人工复听的片段。触发词：质检、检查剪辑、QA、check edit
+description: |
+  播客剪辑质检：两阶段自动检测。
+  Phase A（数据层）：在 cut_audio 之后检查 delete_segments 的正确性——恢复句是否被误剪、手动删除是否生效、切点静音、大段删除衔接。
+  Phase B（信号层）：对剪辑后音频做信号分析（能量/频谱/静音）+ 可选 Gemini AI 听感评估，标记需要人工复听的片段。
+  触发词：质检、审查剪辑、检查音频、audit、QA、检查一下剪辑结果、check edit
 ---
 
 <!--
-input: 剪辑后的播客音频
+input: delete_segments + 剪辑后音频
 output: QA 报告（JSON + 可读摘要）
 pos: 在 /podcastcut-edit 之后使用
 
@@ -15,7 +19,7 @@ pos: 在 /podcastcut-edit 之后使用
 
 # 播客剪辑质检
 
-> 自动检测剪辑问题 → 标记可疑片段 → 只听几个标记点，不用从头听到尾
+> 两阶段自动检测：先查数据层（delete_segments 是否正确），再查信号层（音频是否平滑）。目标是把大部分机械性检查交给脚本，让用户只需关注少数真正需要人耳判断的地方。
 
 ---
 
@@ -26,12 +30,16 @@ pos: 在 /podcastcut-edit 之后使用
 ```
 请提供以下信息：
 
-1. **剪辑后的播客音频路径**
-   - 例如：`output/2026-02-21_播客名/3_成品/podcast_精剪版.mp3`
+1. **output 目录路径**
+   - 例如：`output/2026-02-27_meeting_02`
+   - 需要包含 `1_转录/`、`2_分析/`、`3_成品/`
 
-2. **（可选）Gemini API Key**
+2. **剪辑后的播客音频路径**（Phase B 需要）
+   - 例如：`output/.../3_成品/podcast_精剪版_v14_trimmed.mp3`
+
+3. **（可选）Gemini API Key**
    - 如果已配置环境变量 GEMINI_API_KEY，会自动启用 AI 听感评估
-   - 没有也没关系，信号层分析已能检出大多数问题
+   - 没有也没关系，Phase A + 信号层分析已能检出大多数问题
 ```
 
 ---
@@ -39,40 +47,45 @@ pos: 在 /podcastcut-edit 之后使用
 ## 架构
 
 ```
-┌─────────────────────────────────────────────────┐
-│              播客剪辑质检                         │
-│                                                  │
-│  输入: 剪辑后音频                                 │
-│                                                  │
-│  ┌───────────────┐    ┌───────────────────────┐  │
-│  │  Layer 1      │    │  Layer 2              │  │
-│  │  信号分析      │    │  AI 听感评估           │  │
-│  │  (librosa)    │    │  (Gemini Audio API)   │  │
-│  │               │    │                       │  │
-│  │  - 能量突变    │    │  - 停顿自然度          │  │
-│  │  - 静音异常    │    │  - 过渡平滑度          │  │
-│  │  - 波形不连续  │    │  - 整体节奏感          │  │
-│  │  - 频谱跳变    │    │  - 语义连贯性          │  │
-│  │  - 呼吸音截断  │    │                       │  │
-│  └───────┬───────┘    └──────────┬────────────┘  │
-│          │                       │               │
-│          └───────────┬───────────┘               │
-│                      ▼                           │
-│          ┌───────────────────────┐               │
-│          │  Layer 3              │               │
-│          │  报告生成              │               │
-│          │                       │               │
-│          │  - 综合质量评分        │               │
-│          │  - 问题片段时间戳      │               │
-│          │  - 问题类型分类        │               │
-│          │  - 建议修复方式        │               │
-│          └───────────────────────┘               │
-│                                                  │
-│  输出: QA Report (JSON + Markdown 摘要)           │
-└─────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│                    播客剪辑质检                            │
+│                                                          │
+│  ┌─────────────────────────────────────────────────────┐ │
+│  │  Phase A: 数据层质检 (audit_cut.js)                  │ │
+│  │                                                     │ │
+│  │  输入: delete_segments + fine_analysis + sentences   │ │
+│  │                                                     │ │
+│  │  检查 1: 恢复句完整性（排除有意 fine edit）            │ │
+│  │  检查 2: 用户手动删除是否生效                          │ │
+│  │  检查 3: 切点静音检测                                 │ │
+│  │  检查 4: 大段删除衔接审查                              │ │
+│  │                                                     │ │
+│  │  → auto_fix.js 自动修复                              │ │
+│  │  → 重新剪辑 → 再验证                                 │ │
+│  └─────────────────────────────────────────────────────┘ │
+│                         ↓                                │
+│  ┌─────────────────────────────────────────────────────┐ │
+│  │  Phase B: 信号层质检                                 │ │
+│  │                                                     │ │
+│  │  输入: 剪辑后音频 (MP3/WAV)                          │ │
+│  │                                                     │ │
+│  │  Layer 1: 信号分析 (signal_analysis.py / librosa)    │ │
+│  │    - 频谱跳变 (MFCC cosine similarity)              │ │
+│  │    - 不自然静音 (silence duration)                    │ │
+│  │    - 播客模式：忽略 energy_jump（全是假阳性）          │ │
+│  │                                                     │ │
+│  │  Layer 2: AI 听感评估 (ai_listen.py / Gemini, 可选) │ │
+│  │    - 全局采样：6 个 30s 片段评估整体节奏              │ │
+│  │    - 可疑复查：Layer 1 的 HIGH 问题 AI 二次确认       │ │
+│  │                                                     │ │
+│  │  Layer 3: 综合报告 (report_generator.py)             │ │
+│  └─────────────────────────────────────────────────────┘ │
+│                                                          │
+│  输出: audit_report.json + qa_report.json + qa_summary.md│
+└──────────────────────────────────────────────────────────┘
 ```
 
-**设计原则**：Layer 1 独立可用，无需任何 API Key 即可提供 80% 的价值。Layer 2 是锦上添花。
+**设计原则**：Phase A 无需音频、纯数据校验；Phase B 的 Layer 1 无需 API Key 纯本地运算；Layer 2 是锦上添花。
 
 ---
 
@@ -82,211 +95,167 @@ pos: 在 /podcastcut-edit 之后使用
 用户: 帮我检查一下剪辑质量
 用户: 质检这个播客
 用户: QA 我的播客
+用户: 审查剪辑
 用户: check edit
 ```
 
-## 输入
+---
 
-- 剪辑后的播客音频（MP3 / WAV / M4A）
-- （可选）Gemini API Key（环境变量 `GEMINI_API_KEY`）
+## Phase A: 数据层质检
 
-## 输出
+在 cut_audio 剪辑完成后、用户审听前运行。也可以在用户审听反馈后、重剪之前运行，确认所有反馈都已正确应用。
 
-1. **QA 报告 JSON** — 结构化数据，给程序用
-2. **QA 摘要** — 人类可读的 Markdown，标注需要复听的片段
-3. **总体评分** — 1-10 分
+### A1: 审查
+
+```bash
+node <skill_dir>/scripts/audit_cut.js <output_dir>
+```
+
+`<output_dir>` 是包含 `1_转录/`、`2_分析/`、`3_成品/` 的那个目录。
+
+脚本会做 4 项检查：
+
+**检查 1 — 恢复句完整性**
+遍历所有用户恢复的句子，检查每个 word 是否被 delete segment 覆盖。关键改进：会排除"有意的 fine edit"（如口吃/填充词删除），只报告无法用 fine_analysis 解释的异常覆盖。这能发现：
+- 旧 HTML 导出遗留的 wholeSentence segment
+- 跨句 segment 意外覆盖（原始 AI 分析的 segment 未在 restore 时清除）
+
+**检查 2 — 用户手动删除**
+读取 `user_corrections.added_deletions`（用户确认的整句删除），验证对应时间范围确实有 delete segment 覆盖。`missed_catches`（AI 建议项）仅在有精确时间戳时才检查。
+
+**检查 3 — 切点静音**
+扫描所有相邻 segment 之间的保留区间。如果保留区间内没有语音内容且时长 > 0.3s，标记为潜在停顿。这些停顿在原始录音中不明显，但删除前后内容后会暴露出来。
+
+**检查 4 — 大段删除**
+列出所有 > 5s 的删除段，附上前后文本。这些无法自动判断好坏，但能帮用户快速定位需要重点听的位置。
+
+### A2: 自动修复
+
+```bash
+# 先 dry-run 看看会改什么
+node <skill_dir>/scripts/auto_fix.js <output_dir> --dry-run
+
+# 确认后执行（会自动备份原文件）
+node <skill_dir>/scripts/auto_fix.js <output_dir>
+```
+
+自动修复覆盖：
+- **恢复句覆盖** → 移除异常 segment（排除有意 fine edit）
+- **切点静音** → 扩展相邻 segment 覆盖静音
+
+不自动修复（报告给用户）：
+- **手动删除未生效** → 需要人工确认精确删除范围
+- **大段删除衔接** → 需要人耳判断
+
+### A3: 重剪并验证
+
+修复后重新执行 cut_audio.py 和 trim_silences.py，然后再跑一次 audit_cut.js 确认所有问题已清除。
+
+### A4: 生成审听指南
+
+质检通过后，生成一份简洁的审听指南给用户，包括：
+- 大段删除的时间戳和前后文（让用户听衔接）
+- 之前报告过的 bug 的时间戳（让用户确认修复）
+- 新增手动删除的时间戳
+- 恢复句的时间戳（确认保留完整）
+
+按时间顺序排列，标注大致的输出音频时间（可用删除段总时长估算偏移），方便用户跳着听。
 
 ---
 
-## 流程
+## Phase B: 信号层质检
+
+在 Phase A 通过、音频重新剪辑后运行。直接分析输出音频的信号质量。
+
+### B1: Layer 1 — 信号分析
+
+```bash
+python3 <skill_dir>/scripts/signal_analysis.py \
+  --input <音频路径> \
+  --output <output_dir>/2_分析/qa_signal_report.json
+```
+
+自动检测剪切点，运行 5 项检测（能量突变、不自然静音、波形不连续、频谱跳变、呼吸音截断）。
+
+**播客模式优化**（在 report_generator 中自动应用）：
+- energy_jump：播客中全是假阳性（自然语气/说话人切换），忽略
+- zcr_discontinuity / breath_truncation：播客中误报太多，忽略
+- 只保留 spectral_jump 和 unnatural_silence
+
+### B2: Layer 2 — AI 听感评估（可选）
+
+```bash
+# 需要 GEMINI_API_KEY（环境变量或 .env 文件）
+python3 <skill_dir>/scripts/ai_listen.py \
+  --input <音频路径> \
+  --signal-report <output_dir>/2_分析/qa_signal_report.json \
+  --output <output_dir>/2_分析/qa_ai_report.json
+```
+
+两种采样策略：
+- **全局采样**：等间隔抽取 6 个 30s 片段，评估整体节奏和风格一致性
+- **可疑片段复查**：对 Layer 1 标记的 HIGH 问题做 AI 二次确认（减少误报）
+
+### B3: Layer 3 — 综合报告
+
+```bash
+python3 <skill_dir>/scripts/report_generator.py \
+  --signal <output_dir>/2_分析/qa_signal_report.json \
+  --ai <output_dir>/2_分析/qa_ai_report.json \
+  --output <output_dir>/2_分析/qa_report.json \
+  --summary <output_dir>/2_分析/qa_summary.md
+```
+
+合并 Layer 1 和 Layer 2 的结果，生成综合评分和人类可读摘要。
+
+---
+
+## 完整流程
 
 ```
-0. 询问用户：音频路径
+0. 询问用户：output 目录 + 音频路径
     ↓
-1. Layer 1: 信号分析（自动检测剪切点 + 5 项检测）
+1. Phase A: 数据层质检
+   a. audit_cut.js → 检查 delete_segments
+   b. auto_fix.js → 自动修复可修复的问题
+   c. 重剪音频（如有修复）
+   d. 再跑一次 audit_cut.js 确认通过
     ↓
-2. Layer 2:（可选）AI 听感评估（Gemini 评估可疑片段）
+2. Phase B: 信号层质检
+   a. signal_analysis.py → 检测剪切点信号问题
+   b. ai_listen.py → AI 听感评估（可选）
+   c. report_generator.py → 生成综合报告
     ↓
-3. Layer 3: 生成综合报告
-    ↓
-4. 向用户展示摘要，标注需要人工复听的片段
+3. 向用户展示摘要
+   - Phase A 残留问题（手动删除未生效 等）
+   - Phase B 需复听片段（频谱跳变 等）
+   - 大段删除衔接审查点
     ↓
 完成
 ```
 
 ---
 
-## 一、Layer 1: 信号分析
+## 输入输出
 
-### 剪切点自动检测
+**Phase A 输入（自动从 output_dir 读取）：**
+- `2_分析/delete_segments_edited.json`（或 `delete_segments.json`）
+- `2_分析/fine_analysis.json`
+- `2_分析/sentences.txt`
+- `2_分析/segment_corrections.json`（如有）
+- `2_分析/ai_feedback_*.json`（如有）
+- `1_转录/subtitles_words.json`
 
-不依赖上游数据，直接从音频中检测剪辑痕迹：
+**Phase B 输入：**
+- 剪辑后的播客音频（MP3 / WAV / M4A）
+- （可选）Gemini API Key（环境变量 `GEMINI_API_KEY`）
 
-```python
-# 自动检测策略：
-# 1. 能量包络突变检测 — 短时 RMS 能量的急剧变化
-# 2. 静音段边界检测 — 静音段前后是潜在的剪切点
-# 3. 频谱不连续检测 — MFCC 特征的突变点
-```
-
-### 5 项检测
-
-| # | 检测项 | 方法 | 判定阈值 | 严重度 |
-|---|--------|------|----------|--------|
-| 1 | 能量突变 | 剪切点前后 100ms 窗口的 RMS 能量比 | ratio > 3.0 | high |
-| 2 | 不自然静音 | 静音段过短(<100ms)或过长(>2s) | 基于上下文动态调整 | medium |
-| 3 | 波形不连续 | 剪切点的零交叉率(ZCR)突变 | ZCR 变化 > 2 标准差 | medium |
-| 4 | 频谱跳变 | 剪切点前后的 MFCC 余弦相似度 | similarity < 0.7 | high |
-| 5 | 呼吸音截断 | 检测剪切点是否落在呼吸音中间 | 能量包络模式匹配 | low |
-
-### 运行命令
-
-```bash
-python3 "$SKILL_DIR/质检/scripts/signal_analysis.py" \
-  --input "$WORK_DIR/podcast_精剪版.mp3" \
-  --output "$WORK_DIR/qa_signal_report.json"
-```
-
-### 输出格式
-
-```json
-{
-  "audio_file": "podcast_精剪版.mp3",
-  "duration_seconds": 5400,
-  "detected_cut_points": 42,
-  "issues": [
-    {
-      "timestamp": 45.23,
-      "type": "energy_jump",
-      "severity": "high",
-      "detail": "Energy ratio 5.2x at cut point",
-      "suggestion": "Add 50ms crossfade",
-      "listen_range": [43.0, 48.0]
-    },
-    {
-      "timestamp": 123.45,
-      "type": "unnatural_silence",
-      "severity": "medium",
-      "detail": "Silence duration 50ms between sentences (expected 300-500ms)",
-      "suggestion": "Extend silence to 300ms",
-      "listen_range": [121.0, 126.0]
-    }
-  ],
-  "signal_score": 8.2,
-  "summary": {
-    "total_issues": 3,
-    "high": 1,
-    "medium": 1,
-    "low": 1
-  }
-}
-```
-
----
-
-## 二、Layer 2: AI 听感评估（可选）
-
-使用 Gemini 的原生音频理解能力评估人耳层面的听感。需要 `GEMINI_API_KEY` 环境变量。
-
-### 评估策略
-
-不是把整集扔给 Gemini（太贵），而是有针对性地评估：
-
-| 策略 | 说明 | 片段时长 |
-|------|------|----------|
-| 全局采样 | 等间隔抽取 5-8 个片段，评估整体节奏和风格一致性 | 30 秒/个 |
-| 可疑片段复查 | 对 Layer 1 标记的问题片段，用 AI 二次确认（减少误报） | 10 秒/个 |
-
-### Gemini Prompt
-
-```
-You are a professional podcast editor evaluating an audio edit.
-Listen carefully to this clip and evaluate:
-
-1. TRANSITION QUALITY (1-10): Does the edit point sound natural?
-   - Is there an abrupt change in background noise or room tone?
-   - Does the speaker's intonation flow naturally across the edit?
-   - Are pauses between sentences/words at a natural duration?
-
-2. SPECIFIC ISSUES: List any moments that sound "off" with timestamps.
-
-3. VERDICT: "pass" / "review_recommended" / "redo_recommended"
-
-Be precise with timestamps. A professional listener would catch these issues.
-```
-
-### 成本预估
-
-| 播客时长 | API 调用次数 | 预估成本 |
-|----------|-------------|----------|
-| 30 分钟 | 20-30 次 | $0.10-0.30 |
-| 60 分钟 | 30-50 次 | $0.20-0.50 |
-| 90 分钟 | 40-60 次 | $0.30-0.60 |
-
-### 运行命令
-
-```bash
-# 需要设置环境变量
-export GEMINI_API_KEY="your-api-key"
-
-python3 "$SKILL_DIR/质检/scripts/ai_listen.py" \
-  --input "$WORK_DIR/podcast_精剪版.mp3" \
-  --signal-report "$WORK_DIR/qa_signal_report.json" \
-  --output "$WORK_DIR/qa_ai_report.json"
-```
-
----
-
-## 三、Layer 3: 综合报告
-
-合并 Layer 1 和 Layer 2 的结果，生成人类可快速浏览的 QA 报告。
-
-### 报告内容
-
-| 部分 | 说明 |
-|------|------|
-| 总体评分 | 综合 signal_score 和 AI 评分，1-10 |
-| 需要复听的片段 | 按严重程度排序，带时间戳 |
-| 自动通过的片段 | 两层都没问题，标为 PASS |
-| 统计摘要 | 总剪切数、问题率、各类问题分布 |
-
-### 运行命令
-
-```bash
-python3 "$SKILL_DIR/质检/scripts/report_generator.py" \
-  --signal "$WORK_DIR/qa_signal_report.json" \
-  --ai "$WORK_DIR/qa_ai_report.json" \
-  --output "$WORK_DIR/qa_report.json" \
-  --summary "$WORK_DIR/qa_summary.md"
-```
-
-### 摘要示例
-
-```markdown
-# 播客剪辑质检报告
-
-**音频**: podcast_精剪版.mp3
-**时长**: 1:30:00
-**检测剪切点**: 42 个
-**总体评分**: 8.2 / 10
-
-## 需要人工复听的片段（3 个）
-
-| # | 时间 | 问题类型 | 严重度 | 说明 |
-|---|------|----------|--------|------|
-| 1 | 00:45 | 能量突变 | HIGH | 能量比 5.2x，建议加 50ms 交叉淡化 |
-| 2 | 02:03 | 不自然静音 | MEDIUM | 句间静音仅 50ms，建议延长到 300ms |
-| 3 | 15:22 | 频谱跳变 | MEDIUM | 背景噪声在剪切点突变 |
-
-## 统计
-
-- HIGH: 1 个
-- MEDIUM: 2 个
-- LOW: 0 个
-- 自动通过: 39 个（92.9%）
-
-> 只需复听以上 3 个片段（约 15 秒），无需听完整集。
-```
+**输出：**
+- `2_分析/audit_report.json` — Phase A 数据层质检报告
+- `2_分析/qa_signal_report.json` — Layer 1 信号分析报告
+- `2_分析/qa_ai_report.json` — Layer 2 AI 评估报告（可选）
+- `2_分析/qa_report.json` — 综合报告（JSON）
+- `2_分析/qa_summary.md` — 综合报告（Markdown 摘要）
 
 ---
 
@@ -295,52 +264,39 @@ python3 "$SKILL_DIR/质检/scripts/report_generator.py" \
 启动时创建：
 
 ```
-- [ ] 询问用户：音频路径
-- [ ] Layer 1: 信号分析（检测剪切点 + 5 项检测）
-- [ ] Layer 2:（可选）AI 听感评估
-- [ ] Layer 3: 生成综合报告
+- [ ] 询问用户：output 目录 + 音频路径
+- [ ] Phase A: 数据层质检 (audit_cut.js)
+- [ ] Phase A: 自动修复 (auto_fix.js)
+- [ ] Phase A: 重剪验证（如需要）
+- [ ] Phase B: Layer 1 信号分析
+- [ ] Phase B: Layer 2 AI 听感评估（可选）
+- [ ] Phase B: Layer 3 综合报告
 - [ ] 向用户展示摘要
 ```
 
 ---
 
-## 输出文件
+## 常见问题模式
 
-```
-qa_signal_report.json         # Layer 1 信号分析结果
-qa_ai_report.json             # Layer 2 AI 评估结果（可选）
-qa_report.json                # 综合报告（JSON）
-qa_summary.md                 # 综合报告（Markdown 摘要）
-```
+根据实际使用积累的经验：
 
----
+### Phase A 常见问题
 
-## 与其他 Skill 的关系
+| 问题模式 | 根因 | 自动修复？ |
+|---------|------|-----------|
+| 恢复句仍被剪（非 fine edit） | 旧 HTML 导出遗留或跨句 segment | ✅ 移除异常 segment |
+| 恢复句内 fine edit 被误移除 | 批量修复太激进（现已通过 edit 匹配避免） | — 不再发生 |
+| 删除后出现异常停顿 | 原始录音自然静音被暴露 | ✅ 扩展 segment 消除 |
+| 手动整句删除未生效 | pipeline 未为该句生成 segment | ❌ 需人工确认范围 |
+| 大段删除衔接不自然 | 删除跨话题/上下文断裂 | ❌ 需人耳判断 |
 
-```
-/podcastcut-content     → 内容剪辑
-/podcastcut-edit        → 执行剪辑
-/podcastcut-质检        → 剪辑质检 ← 本 Skill
-/podcastcut-后期        → 最终润色
-```
+### Phase B 常见问题
 
-**推荐流程：**
-
-```
-原始音频/视频
-    ↓
-/podcastcut-content     ← 删除废话、跑题、隐私
-    ↓
-/podcastcut-edit        ← 执行剪辑，输出精剪版
-    ↓
-/podcastcut-质检        ← 自动检测剪辑问题，标记复听点
-    ↓
-（人工复听标记片段，必要时调整）
-    ↓
-/podcastcut-后期        ← 片头预览 + 背景音乐 + 时间戳 + 标题 + 简介
-    ↓
-发布
-```
+| 问题模式 | 根因 | 解决 |
+|---------|------|------|
+| energy_jump 全是假阳性 | 播客中自然语气/说话人切换 | 播客模式自动忽略 |
+| spectral_jump | 剪切点前后背景噪声变化 | 需人工复听确认 |
+| unnatural_silence | 剪切产生的过短/过长静音 | 调整剪切范围 |
 
 ---
 
@@ -352,7 +308,7 @@ qa_summary.md                 # 综合报告（Markdown 摘要）
 
 **原因**：播客中自然的说话人切换、语气变化都会产生巨大的能量比（10x-105x 都是正常的）。AI 复查确认 top 10 极端 energy_jump（105x, 78x, 72x…）**全部是假阳性**。
 
-**解决**：播客模式下完全忽略 energy_jump，只保留 spectral_jump（频谱跳变）和 unnatural_silence（不自然静音）。过滤后从 800 个 → 1 个，复听从 394 → 9 个。
+**解决**：播客模式下完全忽略 energy_jump，只保留 spectral_jump 和 unnatural_silence。过滤后从 800 个 → 1 个，复听从 394 → 9 个。
 
 ### 陷阱 2：Gemini 模型名需要用最新版
 
@@ -360,7 +316,13 @@ qa_summary.md                 # 综合报告（Markdown 摘要）
 
 **解决**：使用 `gemini-2.5-flash`。模型更新频繁，如果遇到 404，用 `client.models.list()` 查看可用模型。
 
-### 陷阱 3：API Key 从 .env 自动加载
+### 陷阱 3：Check 1 恢复句误报——有意的 fine edit
+
+**现象**：Check 1 报告恢复句被 segment 覆盖，但其实是用户有意保留的口吃/填充词删除。
+
+**解决**：audit_cut.js 使用 fine_analysis edit 匹配逻辑，如果 segment 与某个 fine edit 有显著重叠（>50% 或 >0.3s），视为有意的 fine edit 而不报告。
+
+### 陷阱 4：API Key 从 .env 自动加载
 
 `ai_listen.py` 会自动从项目根目录的 `.env` 文件读取 `GEMINI_API_KEY`，无需手动 export。
 
@@ -369,7 +331,10 @@ qa_summary.md                 # 综合报告（Markdown 摘要）
 ## 依赖
 
 ```txt
-# requirements.txt
+# Phase A (Node.js)
+node >= 16
+
+# Phase B (Python)
 librosa>=0.10.0
 numpy>=1.24.0
 soundfile>=0.12.0
@@ -400,39 +365,29 @@ pip install google-genai          # 可选，启用 AI 听感评估
 
 ---
 
-## 示例对话
+## 与其他 Skill 的关系
 
 ```
-用户: 帮我质检一下剪辑后的播客
+/podcastcut-content     → 内容剪辑
+/podcastcut-edit        → 执行剪辑
+/podcastcut-质检        → 剪辑质检 ← 本 Skill（Phase A + Phase B）
+/podcastcut-后期        → 最终润色
+```
 
-AI: 好的，请提供剪辑后的播客音频路径。
+**推荐流程：**
 
-用户: output/2026-02-21_聊天/3_成品/podcast_精剪版.mp3
-
-AI: 收到！开始质检...
-
-    Layer 1: 信号分析
-    ✓ 检测到 42 个剪切点
-    ✓ 5 项检测完成
-
-    Layer 2: AI 听感评估
-    ⓘ 未配置 GEMINI_API_KEY，跳过（仅使用信号分析结果）
-
-    ## 质检报告
-
-    **总体评分: 8.2 / 10**
-
-    ### 需要人工复听的片段（3 个）
-
-    | # | 时间 | 问题 | 严重度 |
-    |---|------|------|--------|
-    | 1 | 00:45 | 能量突变 5.2x | HIGH |
-    | 2 | 02:03 | 静音过短 50ms | MEDIUM |
-    | 3 | 15:22 | 频谱跳变 | MEDIUM |
-
-    只需复听以上 3 个片段（约 15 秒），无需听完整集。
-
-    报告已保存：
-    - qa_report.json
-    - qa_summary.md
+```
+原始音频/视频
+    ↓
+/podcastcut-content     ← 删除废话、跑题、隐私
+    ↓
+/podcastcut-edit        ← 执行剪辑，输出精剪版
+    ↓
+/podcastcut-质检        ← Phase A 数据层 → 修复 → Phase B 信号层
+    ↓
+（人工复听标记片段，必要时调整）
+    ↓
+/podcastcut-后期        ← 片头预览 + 背景音乐 + 时间戳 + 标题 + 简介
+    ↓
+发布
 ```

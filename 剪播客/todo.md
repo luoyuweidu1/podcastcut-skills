@@ -13,4 +13,4 @@
 
 ## 精剪规则待完善
 
-- [ ] **句首单独填充词检测**：48/72 stutter missed catches 是句首 "嗯，"。当前 fine analysis 只检测连续相同词，不检测单独的句首填充词。规则已更新在 `2-填充词检测.md`，但 generate_fine_analysis.js 是每次会话内联生成的，需要在 SKILL.md 的 Step 5b prompt 里加入此规则。
+- [x] **句首单独填充词检测**：48/72 stutter missed catches 是句首 "嗯，"。已创建 `用户习惯/LLM精剪prompt模板.md`，句首填充词列为检测清单第 1 项（最高优先级）。SKILL.md Step 5b 已更新引用此模板，批次缩小到 50-80 句/批。

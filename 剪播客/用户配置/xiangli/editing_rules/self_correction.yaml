@@ -1,0 +1,7 @@
+sensitivity: moderate
+missed_count: 44
+_last_adjustment:
+  date: "2026-02-28"
+  reason: AI 遗漏了 22 个 "self_correction" 类型的内容
+  direction: increase_detection
+_source: feedback_learning

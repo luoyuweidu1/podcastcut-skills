@@ -98,14 +98,19 @@ output/
     - 按 用户习惯/ 基础规则 + editing_rules/ 用户覆盖
     - 输出: fine_analysis.json
     ↓
-6. 生成增强审查界面 (review_enhanced.html)
+5c. 审查 Agent（Second Pass）🆕v5.1（原7b，移至6之前）
+    - 自动审查 5a 粗剪 + 5b 精剪的标记
+    - 逐句对照原文 + 删除标记，catch missed edits
+    - 输出补充标记 → 合并到 fine_analysis_llm.json → 重新 merge
+    ↓
+6. 生成增强审查界面 (review_enhanced.html)（已包含 5c 补充标记）
     ↓
 7. 用户审查 + 编辑 + 导出
     ↓
-7b. 反馈学习 🆕v5
+7c. 反馈学习 🆕v5
     - 如用户导出了 AI 反馈（ai_feedback_*.json）
     - 运行 analyze_feedback.js → 生成调整建议
-    - 确认后 apply_feedback_to_rules.js → 更新 editing_rules
+    - 分层更新：通用 prompt + 个人偏好
     ↓
 8. 合并删除建议 + 精剪
     ↓
@@ -490,15 +495,27 @@ LLM 层 (Claude 当前会话 → fine_analysis_llm.json):
 ```
 
 1. **规则层**：运行 `run_fine_analysis.js` → `fine_analysis_rules.json`
-2. **LLM 层**：Claude 分批读取 `sentences.txt`（~150句/批），输出 JSON 编辑标记 → `fine_analysis_llm.json`
+2. **LLM 层**：Claude 分批读取 `sentences.txt`（**50-80句/批**），按检测清单逐句扫描 → `fine_analysis_llm.json`
+   - **⚠️ 必须先读 `用户习惯/LLM精剪prompt模板.md`**，按其中的 8 项检测清单逐句检查
+   - 心态：像"校对员"逐字审读，不是像"读者"理解大意
+   - 最高优先级：句首填充词（占历史漏检 67%）和重说纠正（占 54%）
 3. **合并**：运行 `merge_llm_fine.js` → `fine_analysis.json`（最终合并去重版本）
+
+**LLM 层执行要点**：
+- 批次大小：50-80句（不是150），防止注意力稀释
+- 每句必检 8 项清单（句首填充词、连续填充词、重说纠正、句内重复、残句、纯填充句、录制讨论、卡顿词补充）
+- 输出 `scan_summary` 统计各类型数量，用于自查
 
 **LLM 层输出格式**：
 ```json
-[
-  {"s": 27, "text": "然后", "type": "filler_start", "reason": "句首口癖"},
-  {"s": 96, "text": "我，因为我，infj 是一个，我是，", "type": "self_correction", "reason": "重说纠正"}
-]
+{
+  "batch_range": [0, 59],
+  "edits": [
+    {"s": 27, "text": "嗯，", "type": "filler_start", "reason": "句首填充词'嗯'"},
+    {"s": 96, "text": "我，因为我，", "type": "self_correction", "reason": "重说纠正：半截重说"}
+  ],
+  "scan_summary": {"total_sentences": 60, "sentences_with_edits": 8}
+}
 ```
 
 **输出文件**：`fine_analysis.json`
@@ -694,50 +711,250 @@ open "$BASE_DIR/review_enhanced.html"
 
 ---
 
-### 步骤 7b: 反馈学习 🆕v5
+### 步骤 5c: 审查 Agent（Second Pass）🆕v5.1（原步骤 7b，移至步骤 6 之前）
 
-**用户审查修正 → 自动分析 → 更新 editing_rules**
+**目的**：自动审查 5a 粗剪和 5b 精剪的标记质量，catch any missed edits。替代用户手动逐句检查。
+**执行时机**：在步骤 5b 完成后、步骤 6 生成审查界面之前执行。这样审查界面一次性包含所有标记，用户只需审查一遍。
 
-审查页已有"导出 AI 反馈"按钮（蓝色），导出 `ai_feedback_*.json`，包含：
-- `missed_catches` — AI 遗漏（用户手动标记的删除）
-- `user_corrections.added_deletions` — 用户新增的删除
-- `user_corrections.removed_deletions` — 用户撤销 AI 删除的
+**为什么需要**：
+- 5b LLM 层的 self_correction 漏检率高达 50%（meeting_02 数据：14/28 漏检）
+- 单字代词卡顿（"我我"/"他他"）容易落在规则层和 LLM 层之间
+- 5a 粗剪可能漏掉 production_talk（录制讨论/开场过渡句）
+- 人工审查 500+ 句非常耗时
 
-**触发条件**：检测到 `2_分析/` 目录下有 `ai_feedback_*.json` 文件
+**设计原则**：
+- 独立于 5b 的 LLM 层（不同 prompt、不同视角）
+- 以 5a+5b 的已有标记为基础，专注查漏
+- 输出 `review_agent_catches.json`，合并到审查界面的 `extraFineEdits`
+
+**流程**：
+
+```bash
+# 输入：
+# - sentences.txt（全文）
+# - semantic_deep_analysis.json（5a 标记）
+# - fine_analysis.json（5b 标记，规则层+LLM层合并后）
+# - subtitles_words.json（词级时间戳）
+
+# 输出：
+# - review_agent_catches.json（补充标记）
+```
+
+**审查策略（分 3 轮）**：
+
+**轮 1：粗剪审查（5a 质量）**
+- 逐段检查 keep 段落：是否有 production_talk、跑题闲聊被遗漏？
+- 检查删除段落边界：是否切在了句中？是否吞掉了有价值内容？
+- 批次：按 5a 的 blocks 结构，每块检查
+
+**轮 2：精剪审查（5b 质量）**— 核心轮次
+- 对所有 keep 句子，按检测清单逐句重新扫描（与 5b LLM 层相同的 8 项清单）
+- **但重点不同**：不是全面检测，而是**对照 5b 已有标记，找遗漏**
+- 特别关注 5b 历史漏检率最高的类型：
+  1. self_correction（50% 漏检率）：同头扩展、磕绊重启、粒子结尾假启动
+  2. stutter（29%）：单字代词重复（我我/他他/它它）、极端重复（≥3次）
+  3. consecutive_filler：连续"这个这个这个"
+  4. production_talk：开场过渡句、录制间互动
+- 批次：50-80 句/批，与 5b 一致
+
+**轮 3：交叉验证**
+- 检查 5b 已标记的编辑是否有误标（false positive）
+- 特别关注：强调 vs 口误的判断、数字/专业术语被误标
+
+**输出格式**：
+```json
+{
+  "version": "review_agent_v1",
+  "reviewed_at": "2026-02-27T...",
+  "catches": [
+    {
+      "sentenceIdx": 30,
+      "type": "self_correction",
+      "deleteText": "我",
+      "reason": "单字代词重复'我我'，5b 未检出",
+      "source": "review_agent_round2",
+      "confidence": 0.9
+    }
+  ],
+  "false_positives": [
+    {
+      "sentenceIdx": 85,
+      "existingEditIdx": 3,
+      "reason": "原始标记为 stutter，但实际是强调重复",
+      "confidence": 0.7
+    }
+  ],
+  "summary": {
+    "sentences_reviewed": 400,
+    "new_catches": 12,
+    "false_positives_found": 2,
+    "by_type": { "self_correction": 6, "stutter": 4, "production_talk": 2 }
+  }
+}
+```
+
+**与审查界面的集成**：
+- `review_agent_catches.json` 中的 catches → 合并到 fine_analysis.json 的 extraFineEdits
+- false_positives → 在审查界面中标记为"待确认"（不自动取消）
+- 重新生成 review_enhanced.html 时自动包含
+
+**⚠️ 执行要点**：
+- 审查 Agent 使用独立的 prompt（不是复用 5b 的 LLM精剪prompt模板.md）
+- prompt 重点是"挑刺"和"对照检查"，而非"全面检测"
+- 对 5b 已标记的编辑，默认信任（不重复验证），除非有明确 false positive 信号
+- 输出 confidence < 0.7 的 catch 不进入 extraFineEdits，仅记录
+
+**🔧 v5.1 更新：优化 residual_sentence 判断逻辑**
+- **断句 ≠ 残句**：口语中的跨句表达（如"极大的拓宽了我自己原来的。" + "事业，因为..."）是正常的语流切分，不应标记删除
+  - 很多用户恢复的 FP 都属于这类—5c 误将断句判定为应删除的残句
+  - 5a/5b 中 residual_sentence 类型的标记需重新评估
+- **只有真正不完整且后续没有补完的句子才算残句**（如重复启动后被中断，且整体表达没有结论）
+- **residual_sentence 的 confidence 阈值提高到 0.9**：降低误标率
+
+---
+
+### 步骤 7c: 反馈学习 🆕v5
+
+**用户审查修正 → 分析 → 分层更新（通用 prompt + 个人偏好）**
+
+**输入来源**（二选一）：
+- **方式 A**：审查页"导出 AI 反馈"按钮（蓝色）→ `ai_feedback_*.json`
+- **方式 B**：从 `delete_segments.json` 的 `editState` 转换（见陷阱 30）
 
 **流程**：
 ```bash
-cd "$BASE_DIR/2_分析"
+cd "$BASE_DIR/3_成品"
+
+# 0. 如果没有 ai_feedback 文件，从 editState 转换（见陷阱 30）
+# missedCatches → missed_catches, manualEdits → added_deletions, userRemoved → removed_deletions
 
 # 1. 分析反馈
 node "$SKILL_DIR/剪播客/scripts/analyze_feedback.js" \
   ai_feedback_*.json \
-  feedback_analysis.json \
-  fine_analysis.json
+  "$BASE_DIR/2_分析/semantic_deep_analysis.json" \
+  "$BASE_DIR/2_分析/fine_analysis_llm.json" \
+  > feedback_analysis_result.json
 
-# 2. 呈现调整建议给用户确认
-cat feedback_analysis.json
-# → 显示建议（如：降低"嗯"删除激进度、提高静音阈值等）
-
-# 3. 用户确认后，应用到 editing_rules
+# 2. 将个人偏好类调整应用到 editing_rules（如激进度）
 node "$SKILL_DIR/剪播客/scripts/apply_feedback_to_rules.js" \
-  feedback_analysis.json \
+  feedback_analysis_result.json \
   <userId>
+
+# 3. ⚠️ 重要：通用检测改进必须手动更新 prompt 模板（见陷阱 31）
+# - 提取 missedCatches 中的具体漏检 pattern
+# - 将新 pattern 和示例写入 用户习惯/LLM精剪prompt模板.md
+# - 清理 editing_rules 中不属于个人偏好的条目（如 missed_count）
 ```
 
-**反馈 → 规则映射**：
+**分层更新原则（见陷阱 31）**：
 
-| 反馈类型 | 更新目标 | 示例 |
+| 反馈性质 | 更新目标 | 示例 |
 |----------|----------|------|
-| 用户恢复填充词删除 | `editing_rules/filler_words.yaml` | 降低激进度 |
-| 用户恢复静音删除 | `editing_rules/silence.yaml` | 提高阈值 |
-| 用户恢复内容块删除 | `editing_rules/content_analysis.yaml` | 降低激进度 |
-| AI 遗漏卡顿词 | `editing_rules/stutter.yaml` | 新增模式 |
+| LLM 漏检的具体 pattern | `用户习惯/LLM精剪prompt模板.md` | 新增 self_correction 子模式、卡顿词示例 |
+| 个人激进度偏好 | `用户配置/editing_rules/` | content_analysis.aggressiveness: aggressive |
+| 个人类型保留偏好 | `用户配置/editing_rules/` | 降低填充词删除激进度 |
 
 **学习规则**：
 - 置信度 ≥ 0.5 才生成调整建议
-- 所有调整必须经用户确认后写入
+- 个人偏好类自动写入 editing_rules
+- 通用检测类需 Claude 手动分析 pattern 并更新 prompt 模板
 - 记录到 `learning_history.json`
+
+---
+
+### 步骤 7d: 评估指标计算 🆕v5.1
+
+**自动计算 AI 分析质量指标，跟踪 AI 水平趋势**
+
+**触发时机**：用户在步骤 7 中点击"导出 AI 反馈"按钮后自动执行
+
+**计算逻辑**：
+
+基于 `ai_feedback_*.json` 中的用户修正数据计算：
+
+```json
+{
+  "eval_date": "2026-02-28",
+  "episode": "episode_name",
+  "metrics": {
+    "overall": {
+      "tp": 24,           // TP = AI提出的编辑 - 用户恢复的FP (29 - 5)
+      "fp": 5,            // 用户标记为恢复的编辑
+      "fn": 8,            // 用户补标的漏检（来自missedCatches）
+      "precision": 0.828, // TP / (TP + FP) = 24 / 29
+      "recall": 0.75      // TP / (TP + FN) = 24 / 32
+    },
+    "by_type": {
+      "self_correction": {
+        "tp": 8, "fp": 1, "fn": 2, "precision": 0.89, "recall": 0.8
+      },
+      "stutter": {
+        "tp": 7, "fp": 1, "fn": 3, "precision": 0.875, "recall": 0.7
+      },
+      "production_talk": {
+        "tp": 5, "fp": 1, "fn": 1, "precision": 0.833, "recall": 0.833
+      },
+      "filler_word": {
+        "tp": 4, "fp": 2, "fn": 2, "precision": 0.667, "recall": 0.667
+      }
+    }
+  },
+  "analysis": {
+    "high_confidence_types": ["self_correction", "production_talk"],
+    "needs_improvement": ["filler_word"],
+    "false_positive_pattern": "断句误判为残句（s48/80/88/128/187）"
+  }
+}
+```
+
+**执行脚本**（自动触发）：
+
+```bash
+node "$SKILL_DIR/剪播客/scripts/calculate_eval_metrics.js" \
+  ai_feedback_*.json \
+  "$BASE_DIR/2_分析/fine_analysis.json" \
+  > eval_metrics_current.json
+
+# 追加到历史记录
+node "$SKILL_DIR/剪播客/scripts/append_eval_history.js" \
+  eval_metrics_current.json \
+  "$BASE_DIR/eval_history.json"
+```
+
+**输出文件**：
+
+- `3_成品/eval_metrics_current.json`：当前 episode 的详细指标
+- `eval_history.json`（项目根目录）：历史趋势记录
+
+```json
+// eval_history.json 结构
+{
+  "episodes": [
+    { "episode": "ep1", "date": "2026-02-15", "precision": 0.82, "recall": 0.75 },
+    { "episode": "ep2", "date": "2026-02-28", "precision": 0.828, "recall": 0.75 }
+  ],
+  "by_type_trends": {
+    "self_correction": [0.80, 0.89],
+    "stutter": [0.70, 0.875],
+    "production_talk": [0.90, 0.833]
+  },
+  "improvement_notes": [
+    "2026-02-28: 提高residual_sentence阈值到0.9，减少断句误判"
+  ]
+}
+```
+
+**用途**：
+
+- 📊 跟踪 AI 分析质量的版本间趋势变化
+- 🎯 识别需要改进的 type（如 filler_word 的 recall 过低）
+- 📝 为 prompt 优化提供数据支撑（看哪些 type 容易 FP 或 FN）
+- 📈 多 episode 后可统计 Precision@recall 曲线
+
+**⚠️ 注意**：
+- 评估基于用户修正的反馈数据，假设用户修正是正确的
+- 首个 episode 的指标作为基线（baseline），后续版本可与之比较
+- 如果用户反馈不完整（未导出），则该 episode 不计入历史
 
 ---
 
@@ -815,9 +1032,11 @@ python3 "$SKILL_DIR/剪播客/scripts/trim_silences.py" \
 步骤4:  句子分割 → sentences.txt
 步骤5a: 内容分析（段落级）→ semantic_deep_analysis.json ⭐ (用户级规则)
 步骤5b: 精剪分析（词/句级）→ fine_analysis.json ⭐ (基础规则+用户覆盖)
-步骤6:  生成审查界面 → review_enhanced.html ⭐
+步骤5c: 审查 Agent (Second Pass) 🆕v5.1 → 补充漏检标记 → 重新 merge
+步骤6:  生成审查界面 → review_enhanced.html ⭐（已包含 5c 结果）
 步骤7:  审查+编辑+导出 → delete_segments_edited.json ⭐
-步骤7b: 反馈学习 🆕v5 → 更新 editing_rules/
+步骤7c: 反馈学习 🆕v5 → 分层更新 prompt + editing_rules
+步骤7d: 评估指标计算 🆕v5.1 → 自动计算 precision/recall → eval_history.json
 步骤8:  剪辑 → 播客名_精剪版_v1.mp3
 步骤8b: 成品静音裁剪 🆕 → 播客名_精剪版_v1_trimmed.mp3 🎉
 步骤9b: 自动质检 🆕v5（可选）→ QA 报告
@@ -828,8 +1047,8 @@ python3 "$SKILL_DIR/剪播客/scripts/trim_silences.py" \
 **用户交互点**：
 - 步骤-1：首次使用 Onboarding / 日常确认偏好
 - 步骤3后：确认说话人映射
-- 步骤7：在浏览器中审核 AI 建议、手动编辑、导出剪辑文件
-- 步骤7b：确认反馈学习的规则调整建议
+- 步骤7：在浏览器中审核 AI 建议（已含 5c 审查 Agent 的补充标记）、手动编辑、导出剪辑文件
+- 步骤7c：确认反馈学习的规则调整建议
 - 步骤8后：试听精剪版，如需调整回到步骤7
 
 ---
@@ -1411,6 +1630,56 @@ const charOffset = (preFrag.textContent || '').length;
 **原因**：ASR 报告 filler.start (21.13) 比实际发声晚。前一词 "岁" 结束在 20.53，中间 0.6s 间隙包含 "嗯" 的起始音。
 
 **正确做法**：填充词删除范围 = `[prev_word.end, next_word.start]`，而非 `[filler.start, filler.end]`。详见 `用户习惯/2-填充词检测.md` 删除边界章节。
+
+### 陷阱 27: `--no-fade` 不是可选项
+
+**问题**：每次跑 `cut_audio.py` 都忘了加 `--no-fade`，导致默认 0.3s 自适应 fade 吃掉短音节（如 S6 "呢啊" 删除后相邻音量骤降）。
+
+**教训**：`--no-fade` **必须传**（已在步骤 8 说明中强调），但实践中仍容易忘。Claude 执行步骤 8 时必须自查是否包含此参数。
+
+### 陷阱 28: ASR onset pullback 必须覆盖所有间隙大小
+
+**问题**：review_enhanced.html 的 `exportDeleteSegments()` 只对 gap < 300ms 做 onset pullback（前移 50ms），gap ≥ 300ms 时不处理。导致 S13 "对"（gap 470ms）、S14 "嗯"（gap 280ms→已处理但类似问题）删除后仍有残音。
+
+**原因**：ASR 报告的词起始时间比实际发声晚 30-90ms（onset lag），这与间隙大小无关。
+
+**修复**：添加 `else if (s > 0.05)` 分支，对所有非零间隙都做 pullback：
+```javascript
+} else if (s > 0.05) {
+  // 大间隙：仍需 onset pullback，clamp 到 min(50ms, gap/2)
+  const pullback = Math.min(0.05, gapBefore / 2);
+  merged[i][0] = Math.max(0, s - pullback);
+}
+```
+
+### 陷阱 29: 单字文本匹配歧义（merge_llm_fine.js）
+
+**问题**：S100 LLM 编辑 `text: "一"` 通过 `fullClean.indexOf("一")` 匹配到了 W1758 "介绍一下" 中的 "一"（第一个出现），而非目标 W1761 "的一" 中的 "一"。导致 "介绍一下" 被错误删除。
+
+**原因**：`indexOf` 匹配第一个出现，单字或双字编辑极易命中错误位置。
+
+**正确做法（LLM prompt 层）**：LLM 输出的 `text` 字段必须包含足够上下文消歧。如：
+- ❌ `"text": "一"` — 歧义
+- ✅ `"text": "的一"` — 明确
+
+**已更新 `LLM精剪prompt模板.md`**。后续可在 merge_llm_fine.js 中加入匹配验证（如检查匹配位置附近的词是否与 LLM 标记的句子上下文一致）。
+
+### 陷阱 30: feedback loop 输入格式需要转换
+
+**问题**：`analyze_feedback.js` 期望 `ai_feedback_*.json`（由审查页"导出 AI 反馈"按钮生成），但实际操作中用户直接编辑 `delete_segments.json` 导出，其 `editState` 格式不同。
+
+**转换映射**：
+- `editState.missedCatches` → `feedback.missed_catches`
+- `editState.manualEdits[].sentenceIdx` → `feedback.user_corrections.added_deletions`
+- `editState.userRemoved` → `feedback.user_corrections.removed_deletions`
+
+### 陷阱 31: feedback loop 输出应分两层
+
+**问题**：`apply_feedback_to_rules.js` 将所有调整都写入 `用户配置/editing_rules/`（per-user），但大部分漏检（self_correction pattern、stutter pattern）是 LLM 检测能力不足的通用问题，不是个人偏好。
+
+**正确做法**：
+- **通用检测改进**（LLM 漏检的具体 pattern）→ 更新 `用户习惯/LLM精剪prompt模板.md`，所有用户受益
+- **个人偏好**（激进度、特定类型的保留/删除偏好）→ 写入 `用户配置/editing_rules/`
 
 ### 陷阱 22: 句首停顿标记显示在错误位置
 
