@@ -1629,8 +1629,10 @@ function selectionBatchDelete() {
   const batchChanges = [];
   _selectionRowIndices.forEach(sIdx => {
     let segs = segmentsBySentence[sIdx] || [];
-    if (segs.length === 0 || !segs.some(s => s.enabled)) {
-      // No segments yet or none enabled — create one
+    const hasActiveWhole = segs.some(s => s.enabled && s.scope === 'whole');
+    if (!hasActiveWhole) {
+      // No active whole-scope segment — create one for whole-sentence deletion
+      // (may have partial segments like silence_merged or filler_start)
       const s = sentencesData.find(s => s.idx === sIdx);
       if (s) {
         const seg = {
@@ -1646,12 +1648,13 @@ function selectionBatchDelete() {
         };
         segments.push(seg);
         segmentById[seg.id] = seg;
-        segmentsBySentence[sIdx] = [seg];
+        if (!segmentsBySentence[sIdx]) segmentsBySentence[sIdx] = [];
+        segmentsBySentence[sIdx].push(seg);
         batchChanges.push({ id: seg.id, wasEnabled: false, isNew: true });
         deletedIndices.push(sIdx);
       }
     } else {
-      // Segments exist; enable all original ones
+      // Has whole segment but may be disabled — re-enable original ones
       segs.forEach(seg => {
         if (!seg.enabled && seg.isOriginal) {
           batchChanges.push({ id: seg.id, wasEnabled: false });
@@ -1660,11 +1663,12 @@ function selectionBatchDelete() {
         }
       });
     }
-    updateRowVisual(sIdx);
   });
   if (batchChanges.length > 0) {
     undoStack.push({ type: 'segmentBatch', changes: batchChanges });
     syncLegacySets();
+    // Update visuals AFTER syncLegacySets so currentDeletedSet is up-to-date
+    _selectionRowIndices.forEach(sIdx => updateRowVisual(sIdx));
     _showSaveIndicator('✓ 批量删除 ' + deletedIndices.length + ' 句');
   }
   updateStats();
@@ -1716,11 +1720,11 @@ function selectionBatchRestore() {
         restoredCount++;
       }
     });
-    updateRowVisual(sIdx);
   });
   if (batchChanges.length > 0) {
     undoStack.push({ type: 'segmentBatch', changes: batchChanges });
     syncLegacySets();
+    _selectionRowIndices.forEach(sIdx => updateRowVisual(sIdx));
     _showSaveIndicator('✓ 批量恢复 ' + restoredCount + ' 句');
   }
   updateStats();
@@ -1749,9 +1753,11 @@ document.addEventListener('mousedown', function(e) {
 function toggleDeletion(idx) {
   let segs = segmentsBySentence[idx] || [];
   const anyEnabled = segs.some(s => s.enabled);
+  const hasWholeSegment = segs.some(s => s.scope === 'whole');
 
-  if (segs.length === 0) {
-    // No existing segments — user is adding a new deletion
+  if (!hasWholeSegment) {
+    // No whole-scope segment — create one for whole-sentence deletion
+    // (may have partial segments like silence_merged or filler_start)
     const s = sentencesData.find(s => s.idx === idx);
     if (s) {
       const seg = {
@@ -1767,7 +1773,8 @@ function toggleDeletion(idx) {
       };
       segments.push(seg);
       segmentById[seg.id] = seg;
-      segmentsBySentence[idx] = [seg];
+      if (!segmentsBySentence[idx]) segmentsBySentence[idx] = [];
+      segmentsBySentence[idx].push(seg);
       segs = segmentsBySentence[idx];
 
       undoStack.push({
@@ -2589,15 +2596,33 @@ function collectActiveRanges(opts) {
     }
     if (pos < 0) return;
 
-    let charCount = 0, startW = null, endW = null;
+    let charCount = 0, startW = null, endW = null, startCharOffset = 0, endCharOffset = 0;
+    const delEnd = pos + me.deleteText.length;
     for (let i = 0; i < wordTexts.length; i++) {
+      const wStart = charCount;
       const wEnd = charCount + wordTexts[i].length;
-      if (startW === null && wEnd > pos) startW = i;
-      if (wEnd >= pos + me.deleteText.length) { endW = i; break; }
+      if (startW === null && wEnd > pos) {
+        startW = i;
+        startCharOffset = pos - wStart; // chars to skip within this word
+      }
+      if (wEnd >= delEnd) {
+        endW = i;
+        endCharOffset = wEnd - delEnd; // chars to keep at end of this word
+        break;
+      }
       charCount = wEnd;
     }
     if (startW !== null && endW !== null) {
-      ranges.push([s.words[startW].s, s.words[endW].e]);
+      // Interpolate time within partial ASR words
+      const sw = s.words[startW];
+      const ew = s.words[endW];
+      const startTime = (startCharOffset > 0 && wordTexts[startW].length > 0)
+        ? sw.s + (sw.e - sw.s) * (startCharOffset / wordTexts[startW].length)
+        : sw.s;
+      const endTime = (endCharOffset > 0 && wordTexts[endW].length > 0)
+        ? ew.e - (ew.e - ew.s) * (endCharOffset / wordTexts[endW].length)
+        : ew.e;
+      ranges.push([startTime, endTime]);
     }
   });
 
@@ -2675,14 +2700,21 @@ function exportDeleteSegments() {
     }
 
     // --- Range end: align with next kept content (seekTarget logic) ---
-    // Find the next kept sentence whose first word starts near range end.
-    // This matches the HTML player's seekTarget behavior.
-    const nextKept = sentencesData.find(ns =>
-      !currentDeletedSet.has(ns.idx) && ns.startTime >= e - 0.1
+    // Only snap for ranges that end at/near a sentence boundary (whole-sentence
+    // deletions). Do NOT snap when range end falls inside a kept sentence
+    // (mid-sentence fine edit) — that would eat the sentence's remaining words.
+    const containingSent = sentencesData.find(ns =>
+      !currentDeletedSet.has(ns.idx) && ns.startTime < e - 0.1 && ns.endTime > e + 0.1
     );
-    if (nextKept && nextKept.startTime <= e + 0.5) {
-      // Snap end to next kept sentence's start — exactly where playback resumes
-      merged[i][1] = nextKept.startTime;
+    if (!containingSent) {
+      // Range end is NOT inside a kept sentence → safe to snap
+      const nextKept = sentencesData.find(ns =>
+        !currentDeletedSet.has(ns.idx) && ns.startTime >= e - 0.1
+      );
+      if (nextKept && nextKept.startTime <= e + 0.5) {
+        // Snap end to next kept sentence's start — exactly where playback resumes
+        merged[i][1] = nextKept.startTime;
+      }
     }
   }
 

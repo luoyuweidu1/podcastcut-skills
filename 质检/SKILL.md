@@ -210,6 +210,59 @@ python3 <skill_dir>/scripts/report_generator.py \
 
 ---
 
+## Phase C: 语义层质检 🆕v6
+
+在 Phase A/B 完成后运行。对剪辑后音频重新转录，与预期文本对齐，检测残留问题和语义断裂。
+
+**默认可选**（开销大：需额外一次阿里云 API 调用 ~3 分钟）。当 Phase A/B 发现问题时自动启用。
+用户偏好开关：`workflow_automation.semantic_review_enabled`
+
+### C1: 重转录 + 对齐
+
+```bash
+# 1. 对剪辑后音频重新转录
+bash <skill_dir>/剪播客/scripts/aliyun_funasr_transcribe.sh <cut_audio_url> <speaker_count>
+
+# 2. 生成字级转录
+node <skill_dir>/剪播客/scripts/generate_subtitles_from_aliyun.js \
+  <new_transcription.json> <speaker_mapping.json>
+
+# 3. 语义审核
+node <skill_dir>/scripts/semantic_review.js \
+  --new-words <new_subtitles_words.json> \
+  --original-words <original_subtitles_words.json> \
+  --delete-segments <delete_segments_edited.json> \
+  --sentences <sentences.txt> \
+  --output <output_dir>/2_分析/qa_semantic_report.json
+```
+
+### C2: 4 项检查
+
+| 检查 | 说明 | 检测方法 |
+|------|------|---------|
+| **C1 残留填充词** | 剪辑后仍残留 嗯/啊/那个/对/就是 | 模式匹配重转录文本 |
+| **C2 残留卡顿** | 剪辑后仍有 我我/他他 等重复 | 重复模式检测 |
+| **C3 语义断裂** | 切点前后上下文不连贯 | Claude 评估 10 句窗口（需 AI 判断） |
+| **C4 内容缺失** | 应保留的内容在剪辑后消失 | 词级 LCS 对齐空隙 |
+
+### C3: 输出
+
+`2_分析/qa_semantic_report.json`：
+```json
+{
+  "phase": "C",
+  "checks": {
+    "residual_fillers": [{ "time": 12.5, "text": "嗯", "context": "..." }],
+    "residual_stutters": [],
+    "semantic_breaks": [{ "cut_point_time": 345.2, "before": "...", "after": "...", "severity": "HIGH" }],
+    "missing_content": [{ "expected": "这个观点很重要", "time_range": [120, 125] }]
+  },
+  "summary": { "total_issues": 3, "by_severity": { "HIGH": 1, "MEDIUM": 2 } }
+}
+```
+
+---
+
 ## 完整流程
 
 ```
@@ -226,9 +279,15 @@ python3 <skill_dir>/scripts/report_generator.py \
    b. ai_listen.py → AI 听感评估（可选）
    c. report_generator.py → 生成综合报告
     ↓
-3. 向用户展示摘要
+3. Phase C: 语义层质检（可选，Phase A/B 有问题时自动启用）
+   a. 重新转录剪辑后音频
+   b. semantic_review.js → 4 项检查
+   c. Claude 评估语义断裂（C3）
+    ↓
+4. 向用户展示摘要
    - Phase A 残留问题（手动删除未生效 等）
    - Phase B 需复听片段（频谱跳变 等）
+   - Phase C 语义问题（残留填充词、语义断裂 等）
    - 大段删除衔接审查点
     ↓
 完成
@@ -256,6 +315,7 @@ python3 <skill_dir>/scripts/report_generator.py \
 - `2_分析/qa_ai_report.json` — Layer 2 AI 评估报告（可选）
 - `2_分析/qa_report.json` — 综合报告（JSON）
 - `2_分析/qa_summary.md` — 综合报告（Markdown 摘要）
+- `2_分析/qa_semantic_report.json` — Phase C 语义审核报告（可选）
 
 ---
 
@@ -271,6 +331,7 @@ python3 <skill_dir>/scripts/report_generator.py \
 - [ ] Phase B: Layer 1 信号分析
 - [ ] Phase B: Layer 2 AI 听感评估（可选）
 - [ ] Phase B: Layer 3 综合报告
+- [ ] Phase C: 语义层质检（如需要）
 - [ ] 向用户展示摘要
 ```
 
@@ -368,26 +429,9 @@ pip install google-genai          # 可选，启用 AI 听感评估
 ## 与其他 Skill 的关系
 
 ```
-/podcastcut-content     → 内容剪辑
-/podcastcut-edit        → 执行剪辑
-/podcastcut-质检        → 剪辑质检 ← 本 Skill（Phase A + Phase B）
-/podcastcut-后期        → 最终润色
+/podcastcut-剪播客      → 阶段 1-5（转录 → 分析 → 审查 → 剪辑）
+/podcastcut-质检        → 阶段 6（本 Skill: Phase A + B + C）
+/podcastcut-后期        → 阶段 7（后期处理）
 ```
 
-**推荐流程：**
-
-```
-原始音频/视频
-    ↓
-/podcastcut-content     ← 删除废话、跑题、隐私
-    ↓
-/podcastcut-edit        ← 执行剪辑，输出精剪版
-    ↓
-/podcastcut-质检        ← Phase A 数据层 → 修复 → Phase B 信号层
-    ↓
-（人工复听标记片段，必要时调整）
-    ↓
-/podcastcut-后期        ← 片头预览 + 背景音乐 + 时间戳 + 标题 + 简介
-    ↓
-发布
-```
+本 Skill 对应流程中的**阶段 6**，在剪辑执行（阶段 5）之后、后期处理（阶段 7）之前。

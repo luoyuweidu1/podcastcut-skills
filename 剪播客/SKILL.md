@@ -14,7 +14,7 @@ pos: 阿里云转录 + AI深度理解 + 增强审核 + 自动剪辑
 3. CHANGELOG.md 更新日志
 -->
 
-# 剪播客 v5
+# 剪播客 v6
 
 > 阿里云FunASR API转录 + Claude深度语义分析 + 增强网页审核 + 自动剪辑 + 个性化偏好学习
 
@@ -64,75 +64,57 @@ output/
         └── server.log                           # 服务器日志（可选）
 ```
 
-## 流程
+## 流程（v6 八阶段）
 
 ```
--1. 用户识别 + 偏好确认 🆕v5
-    → 识别用户（环境变量 / 询问）
-    → 首次：Onboarding（播客链接 / 样本学习 / 手动问答）
-    → 日常：读取用户偏好 + 确认本次需求
-    → 加载用户级 editing_rules（基础规则 + 用户覆盖）
+┌─────────────────────────────────────────────────────────────────┐
+│ 用户偏好（持久化）                                                │
+│ 基础剪辑规则/ (共享) + 用户偏好/<userId>/ (个人)                   │
+│ ← 反馈写回: 阶段 4、6、8                                         │
+└─────────────┬──────────────────────────┬──────────────────┬─────┘
+              ↓                          ↓                  ↓
+阶段 1: 用户启动
+    → 新用户：样本学习 或 单次问卷（1-2 轮对话）
+    → 老用户："已加载偏好，什么音频？几个说话人？"
     ↓
-0. 创建输出目录
+阶段 2: 剪辑分析
+    2.1 基础设施：建目录 → 准备音频 → 上传公网 → 转录 → 分句
+    2.2 粗剪分析（段落级）: semantic_deep_analysis.json
+    2.3 精剪分析（词/句级）: fine_analysis.json
     ↓
-1. 提取/准备音频 (ffmpeg)
+阶段 3: AI 自审查
+    → 自动审查粗剪 + 精剪标记，catch missed edits
+    → 输出补充标记 → 合并 → 重新 merge
     ↓
-2. 上传获取公网 URL (uguu.se)
+阶段 4: 用户审核稿
+    → 生成 review_enhanced.html
+    → 用户审查 + 编辑 + 导出
+    → 反馈学习 ← ai_feedback → 更新用户偏好
     ↓
-3. 转录 + 说话人映射 (subtitles_words.json)
-    - 调用阿里云FunASR API（3分钟）
-    - 识别说话人身份（前20句）
-    - 创建speaker_mapping.json
-    - 生成字级别转录
+阶段 5: 剪辑执行
+    → 合并删除建议 + 精剪
+    → cut_audio.py 一键生成精剪版
+    → trim_silences.py 成品静音裁剪
     ↓
-4. 句子分割 (sentences.txt)
+阶段 6: AI 质检 → /podcastcut-质检
+    → Phase A: 数据层（delete_segments 正确性）
+    → Phase B: 信号层（能量/频谱/静音 + 可选 Gemini AI）
+    → Phase C: 语义层（重转录对齐，残留检测）🆕v6
+    → 反馈学习 ← QA 问题 → 更新基础剪辑规则
     ↓
-5a. 内容分析（段落级）🔄v5 使用用户级规则
-    - 通读全文，划分话题段落
-    - 按用户 preferences 的 detect_types 开关识别删除类型
-    - 参考用户 editing_rules/content_analysis.yaml 的激进度
-    - 输出: semantic_deep_analysis.json
+阶段 7: 后期处理 → /podcastcut-后期
+    → 高亮片段 + 片头片尾音乐 + 时间戳章节 + 标题建议
     ↓
-5b. 精剪分析（词/句级）🔄v5 使用用户级规则
-    - 检测：静音、残句、重复句、卡顿词、重说纠正、填充词
-    - 按 用户习惯/ 基础规则 + editing_rules/ 用户覆盖
-    - 输出: fine_analysis.json
-    ↓
-5c. 审查 Agent（Second Pass）🆕v5.1（原7b，移至6之前）
-    - 自动审查 5a 粗剪 + 5b 精剪的标记
-    - 逐句对照原文 + 删除标记，catch missed edits
-    - 输出补充标记 → 合并到 fine_analysis_llm.json → 重新 merge
-    ↓
-6. 生成增强审查界面 (review_enhanced.html)（已包含 5c 补充标记）
-    ↓
-7. 用户审查 + 编辑 + 导出
-    ↓
-7c. 反馈学习 🆕v5
-    - 如用户导出了 AI 反馈（ai_feedback_*.json）
-    - 运行 analyze_feedback.js → 生成调整建议
-    - 分层更新：通用 prompt + 个人偏好
-    ↓
-8. 合并删除建议 + 精剪
-    ↓
-9. 一键剪辑生成精剪版
-    ↓
-9b. 自动质检 🆕v5（可选）
-    - 如 preferences.workflow_automation.auto_qa_enabled
-    - 自动跑 /podcastcut-质检
-    ↓
-10. 后期处理 🆕v5（可选）
-    - 首次：确认后期偏好 → 存入 post_production.yaml
-    - 后续：读取偏好 → 执行 /podcastcut-后期
-    ↓
-11. 最终交付
-    - 汇总输出 + 保存 episode_history
-    - 提醒导出反馈
+阶段 8: 用户终审 🆕v6
+    → 生成 review_final.html（质检结果 + 可点击时间戳）
+    → 用户复听标记点 → "确认无问题" / "需要重剪"
+    → 反馈学习 ← 终审反馈 → 更新用户偏好
 ```
 
 ## 执行步骤
 
 
-### 步骤 -1: 用户识别 + 偏好确认 🆕v5
+### 阶段 1: 用户启动
 
 **⚠️ 这是整个流程的第一步。用户说"剪播客"时，必须先走这一步。**
 
@@ -164,58 +146,35 @@ node scripts/user_manager.js create <userId>
 
 ---
 
-#### Onboarding（新用户）
+#### 新用户 Onboarding（1-2 轮对话）
 
-**主动引导，按以下顺序逐步提问：**
+**路径 A：有往期样本（推荐，最精准）**
+1. 问："你有以前剪辑过的音频吗？（剪辑前 + 剪辑后各一份）"
+2. 如有 → 转录两版 → 运行样本学习：
+   ```bash
+   python3 scripts/analyze_editing_samples.py --before-transcript ... --after-transcript ... --output learned_patterns.json
+   node scripts/generate_rule_overrides.js learned_patterns.json <userId>
+   ```
+3. 呈现提取的偏好表，用户确认 → 保存到 `editing_rules/`
+4. 可选：问播客链接（`node scripts/parse_podcast_link.js <url> <userId>`）补充播客画像
 
-**0. 播客链接（可选，优先）**
-- 主动问："你有小宇宙或 Apple Podcasts 的链接吗？"
-- 如有：运行 `node scripts/parse_podcast_link.js <url> <userId>`
-- AI 自动提取播客名、描述、主题 → 写入 `podcast_profile.yaml`
-- 后续受众/目的等问题可自动填充（用户确认即可）
-- 如没有（如播客未上线）：跳过，后续手动填
+**路径 B：无往期样本**
+单次结构化提问，一条消息搞定：
+> "设置你的剪辑偏好：
+> 1. 播客类型？（受众、目的）
+> 2. 理想时长和激进度？conservative（10-20%删）/ moderate（20-35%）/ aggressive（35-50%）
+> 3. 特殊需求？（如：保留所有语气词、大力删卡顿 等）"
 
-**1. 剪辑样本学习（可选，推荐）**
-- 主动问："你有以前剪辑过的音频样本吗？（剪辑前 + 剪辑后各一份）"
-- 如有：
-  1. 收集：原始音频路径 + 剪后音频路径 + 说话人数量
-  2. 用阿里云转录两个版本
-  3. 运行 `python3 scripts/analyze_editing_samples.py --before-transcript ... --after-transcript ... --output learned_patterns.json`
-  4. 运行 `node scripts/generate_rule_overrides.js learned_patterns.json <userId>`
-  5. AI 呈现提取的偏好，用户确认后保存到 `editing_rules/`
-  6. **可跳过手动问答**（样本已提供足够信息）
-
-**2. 播客定位 (首次必填)**
-- 主动问受众、目的
-- 如播客链接已提取信息，此处确认即可
-
-**3. 时长偏好**
-- 主动问理想时长（如 90 分钟）
-- 主动问激进度：conservative（10-20%）/ moderate（20-35%）/ aggressive（35-50%）
-
-**4. 内容逻辑偏好**
-- 主动问是否启用 AI 内容分析
-- 6 种删除类型各自开关：录前准备、技术调试、跑题闲聊、隐私信息、重复内容、制作讨论
-
-**5. 技术细节偏好**
-- 主动问口癖检测激进度、重复句处理、静音阈值
-
-**6. 说话人信息**
-- 主动问常用说话人姓名
-
-**后期偏好延迟到首次使用后期 skill 时再询问。**
+未回答的用保守默认值。后期偏好延迟到首次使用后期 skill 时再询问。
 
 ---
 
-#### 日常使用（已有用户）
+#### 老用户回访
 
-如果用户已存在，Claude 会：
 1. 读取用户 `preferences.yaml` + `editing_rules/`
-2. 简要确认："已加载你的偏好配置。"
-3. **直接问**："你这次要剪什么播客？把音频文件给我，告诉我几个说话人。"
-4. 拿到音频路径后立即 `ffprobe` 获取时长，与目标时长对比
-5. 如果原始时长明显超出目标（如 147min vs 90min），**当场告知用户**："原始 XXX 分钟，目标 YYY 分钟，需要删掉约 ZZZ 分钟。5a 阶段会做内容精选（裁掉部分话题段落），不仅仅是删除有问题的内容。确认？"
-6. 确认是否有特殊要求（如有，临时调整）
+2. 一句话确认："已加载你的偏好。今天处理什么音频？几个说话人？"
+3. 拿到音频后 `ffprobe` 获取时长，与目标对比，如差距大当场告知
+4. 确认是否有特殊要求（如有，临时调整）
 
 #### 偏好管理
 
@@ -227,18 +186,22 @@ node scripts/user_manager.js prefs <userId>     # 查看用户偏好
 node scripts/user_manager.js rules <userId>     # 查看 editing rules
 
 # 直接编辑
-open 用户配置/<userId>/preferences.yaml          # 编辑意图层偏好
+open 用户偏好/<userId>/preferences.yaml          # 编辑意图层偏好
 
 # 或告诉 Claude
 # "更新我的默认时长为90分钟"
 # "我现在偏好激进删减"
 ```
 
-**偏好文件位置**：`/Volumes/T9/claude_skill/podcastcut/剪播客/用户配置/<userId>/`
+**偏好文件位置**：`/Volumes/T9/claude_skill/podcastcut/剪播客/用户偏好/<userId>/`
 
 ---
 
-### 步骤 0: 创建输出目录
+### 阶段 2: 剪辑分析
+
+#### 2.1 基础设施
+
+##### 创建输出目录
 
 ```bash
 # 变量设置（根据实际音频调整）——后续所有步骤都依赖这些变量
@@ -252,7 +215,7 @@ BASE_DIR="$SKILL_DIR/output/${DATE}_${AUDIO_NAME}/剪播客"
 mkdir -p "$BASE_DIR/1_转录" "$BASE_DIR/2_分析" "$BASE_DIR/3_成品"
 ```
 
-### 步骤 1: 准备音频
+##### 准备音频
 
 ```bash
 # 转换/复制原始音频用于转录
@@ -271,7 +234,7 @@ echo "✅ 音频已准备: audio.mp3 (转录用) + audio_seekable.mp3 (审查页
 
 > **审查页面必须使用 `audio_seekable.mp3`**。步骤 6 生成 HTML 时 `--audio` 参数传 `1_转录/audio_seekable.mp3`。
 
-### 步骤 2: 上传获取公网URL
+##### 上传获取公网URL
 
 ```bash
 # 上传到uguu.se（24小时有效）
@@ -290,7 +253,7 @@ AUDIO_URL="$UPLOAD_RESPONSE"
 - 如需长期保存，使用阿里云OSS或其他云存储
 - 确保URL可公网访问
 
-### 步骤 3: 转录 + 说话人映射 → subtitles_words.json
+##### 转录 + 说话人映射 → subtitles_words.json
 
 本步骤完成：API转录 → 识别说话人 → 生成字级别转录
 
@@ -332,7 +295,7 @@ echo "✅ 步骤3完成：subtitles_words.json 已生成"
 - `identify_speakers.js` 辅助工具帮助快速识别
 - `subtitles_words.json` 是后续所有步骤的基础
 
-### 步骤 4: 句子分割 (sentences.txt)
+##### 句子分割 (sentences.txt)
 
 从字级别转录生成句子级别文本，方便后续分析。
 
@@ -354,9 +317,9 @@ node "$SKILL_DIR/剪播客/scripts/generate_sentences.js" "$BASE_DIR/1_转录/su
 
 ---
 
-### 步骤 5a: Claude深度语义分析 🔄v5
+#### 2.2 粗剪分析（段落级）
 
-> 详细方法论见 `用户习惯/10-内容分析方法论.md`
+> 详细方法论见 `基础剪辑规则/10-内容分析方法论.md`
 
 采用**两级分析**：先段落级扫描标记大块删除区间，再对边界逐句微调。
 
@@ -432,19 +395,19 @@ const rules = UserManager.loadEditingRules(userId);
 
 ---
 
-### 步骤 5b: 精剪分析（词/句级）🔄v5
+#### 2.3 精剪分析（词/句级）
 
-> 基础规则见 `用户习惯/` 目录下的 1-9 号文件（全局共享）
-> 用户覆盖见 `用户配置/<userId>/editing_rules/`（个性化参数）
+> 基础规则见 `基础剪辑规则/` 目录下的 1-9 号文件（全局共享）
+> 用户覆盖见 `用户偏好/<userId>/editing_rules/`（个性化参数）
 
 步骤 5 删大块（内容级），步骤 5b 删口癖和语病（词/句级）。两步的结果合并后送入审查界面。
 
 **🆕v5 规则合并机制**：
 
 ```
-最终规则 = 基础规则（用户习惯/）+ 用户覆盖（editing_rules/）
+最终规则 = 基础规则（基础剪辑规则/）+ 用户覆盖（editing_rules/）
 ```
-- **基础规则**（`用户习惯/1-9.md`）：所有用户共享的检测方法论和默认阈值
+- **基础规则**（`基础剪辑规则/1-9.md`）：所有用户共享的检测方法论和默认阈值
 - **用户覆盖**（`editing_rules/*.yaml`）：来自样本学习或反馈闭环的个性化参数
   - `filler_words.yaml` — 每个填充词的删除率（如"嗯" 85%、"啊" 55%）
   - `silence.yaml` — 自定义静音阈值（如 2.5s）
@@ -453,7 +416,7 @@ const rules = UserManager.loadEditingRules(userId);
 
 **分析对象**：步骤 5 中标记为 `keep` 的句子（已删的不再分析）
 
-**按优先级依次检测**（规则详见 `用户习惯/README.md`）：
+**按优先级依次检测**（规则详见 `基础剪辑规则/README.md`）：
 
 | 优先级 | 类型       | 规则文件       | 说明                                    |
 | ------ | ---------- | -------------- | --------------------------------------- |
@@ -466,7 +429,7 @@ const rules = UserManager.loadEditingRules(userId);
 | 7      | 连续填充词 | 7-连续填充词   | "嗯啊"、"呃啊"，全删                    |
 | 8      | 单个填充词 | 2-填充词检测   | 单个"嗯"/"啊"默认保留（播客保持对话感） |
 
-**核心原则**（`用户习惯/1-核心原则.md`）：
+**核心原则**（`基础剪辑规则/1-核心原则.md`）：
 - **删前保后**：后说的通常更完整
 - **播客特殊**：思考停顿保留，对话反应时间保留，填充词适度保留
 
@@ -482,7 +445,7 @@ Step 5b = 规则层 + LLM 层 → 合并 → fine_analysis.json
 LLM 层 (Claude 当前会话 → fine_analysis_llm.json):
   - 句首填充词（语义判断删/留）
   - 重说纠正（需要理解语义）⚠️ 漏检率最高的类型，务必仔细检查
-    → 详见 用户习惯/8-重说纠正.md 的 8 种子模式 + LLM 自查清单
+    → 详见 基础剪辑规则/8-重说纠正.md 的 8 种子模式 + LLM 自查清单
     → 重点关注：粒子结尾 false start、同头扩展、近义重述
   - 句内重复（A+中间字+A）
   - 残句检测（判断完整性）
@@ -496,7 +459,7 @@ LLM 层 (Claude 当前会话 → fine_analysis_llm.json):
 
 1. **规则层**：运行 `run_fine_analysis.js` → `fine_analysis_rules.json`
 2. **LLM 层**：Claude 分批读取 `sentences.txt`（**50-80句/批**），按检测清单逐句扫描 → `fine_analysis_llm.json`
-   - **⚠️ 必须先读 `用户习惯/LLM精剪prompt模板.md`**，按其中的 8 项检测清单逐句检查
+   - **⚠️ 必须先读 `基础剪辑规则/LLM精剪prompt模板.md`**，按其中的 8 项检测清单逐句检查
    - 心态：像"校对员"逐字审读，不是像"读者"理解大意
    - 最高优先级：句首填充词（占历史漏检 67%）和重说纠正（占 54%）
 3. **合并**：运行 `merge_llm_fine.js` → `fine_analysis.json`（最终合并去重版本）
@@ -565,7 +528,111 @@ LLM 层 (Claude 当前会话 → fine_analysis_llm.json):
 
 ---
 
-### 步骤 6: 生成增强审查界面
+### 阶段 3: AI 自审查
+
+**目的**：自动审查 5a 粗剪和 5b 精剪的标记质量，catch any missed edits。替代用户手动逐句检查。
+**执行时机**：在步骤 5b 完成后、步骤 6 生成审查界面之前执行。这样审查界面一次性包含所有标记，用户只需审查一遍。
+
+**为什么需要**：
+- 5b LLM 层的 self_correction 漏检率高达 50%（meeting_02 数据：14/28 漏检）
+- 单字代词卡顿（"我我"/"他他"）容易落在规则层和 LLM 层之间
+- 5a 粗剪可能漏掉 production_talk（录制讨论/开场过渡句）
+- 人工审查 500+ 句非常耗时
+
+**设计原则**：
+- 独立于 5b 的 LLM 层（不同 prompt、不同视角）
+- 以 5a+5b 的已有标记为基础，专注查漏
+- 输出 `review_agent_catches.json`，合并到审查界面的 `extraFineEdits`
+
+**流程**：
+
+```bash
+# 输入：
+# - sentences.txt（全文）
+# - semantic_deep_analysis.json（5a 标记）
+# - fine_analysis.json（5b 标记，规则层+LLM层合并后）
+# - subtitles_words.json（词级时间戳）
+
+# 输出：
+# - review_agent_catches.json（补充标记）
+```
+
+**审查策略（分 3 轮）**：
+
+**轮 1：粗剪审查（5a 质量）**
+- 逐段检查 keep 段落：是否有 production_talk、跑题闲聊被遗漏？
+- 检查删除段落边界：是否切在了句中？是否吞掉了有价值内容？
+- 批次：按 5a 的 blocks 结构，每块检查
+
+**轮 2：精剪审查（5b 质量）**— 核心轮次
+- 对所有 keep 句子，按检测清单逐句重新扫描（与 5b LLM 层相同的 8 项清单）
+- **但重点不同**：不是全面检测，而是**对照 5b 已有标记，找遗漏**
+- 特别关注 5b 历史漏检率最高的类型：
+  1. self_correction（50% 漏检率）：同头扩展、磕绊重启、粒子结尾假启动
+  2. stutter（29%）：单字代词重复（我我/他他/它它）、极端重复（≥3次）
+  3. consecutive_filler：连续"这个这个这个"
+  4. production_talk：开场过渡句、录制间互动
+- 批次：50-80 句/批，与 5b 一致
+
+**轮 3：交叉验证**
+- 检查 5b 已标记的编辑是否有误标（false positive）
+- 特别关注：强调 vs 口误的判断、数字/专业术语被误标
+
+**输出格式**：
+```json
+{
+  "version": "review_agent_v1",
+  "reviewed_at": "2026-02-27T...",
+  "catches": [
+    {
+      "sentenceIdx": 30,
+      "type": "self_correction",
+      "deleteText": "我",
+      "reason": "单字代词重复'我我'，5b 未检出",
+      "source": "review_agent_round2",
+      "confidence": 0.9
+    }
+  ],
+  "false_positives": [
+    {
+      "sentenceIdx": 85,
+      "existingEditIdx": 3,
+      "reason": "原始标记为 stutter，但实际是强调重复",
+      "confidence": 0.7
+    }
+  ],
+  "summary": {
+    "sentences_reviewed": 400,
+    "new_catches": 12,
+    "false_positives_found": 2,
+    "by_type": { "self_correction": 6, "stutter": 4, "production_talk": 2 }
+  }
+}
+```
+
+**与审查界面的集成**：
+- `review_agent_catches.json` 中的 catches → 合并到 fine_analysis.json 的 extraFineEdits
+- false_positives → 在审查界面中标记为"待确认"（不自动取消）
+- 重新生成 review_enhanced.html 时自动包含
+
+**⚠️ 执行要点**：
+- 审查 Agent 使用独立的 prompt（不是复用 5b 的 LLM精剪prompt模板.md）
+- prompt 重点是"挑刺"和"对照检查"，而非"全面检测"
+- 对 5b 已标记的编辑，默认信任（不重复验证），除非有明确 false positive 信号
+- 输出 confidence < 0.7 的 catch 不进入 extraFineEdits，仅记录
+
+**🔧 v5.1 更新：优化 residual_sentence 判断逻辑**
+- **断句 ≠ 残句**：口语中的跨句表达（如"极大的拓宽了我自己原来的。" + "事业，因为..."）是正常的语流切分，不应标记删除
+  - 很多用户恢复的 FP 都属于这类—5c 误将断句判定为应删除的残句
+  - 5a/5b 中 residual_sentence 类型的标记需重新评估
+- **只有真正不完整且后续没有补完的句子才算残句**（如重复启动后被中断，且整体表达没有结论）
+- **residual_sentence 的 confidence 阈值提高到 0.9**：降低误标率
+
+---
+
+### 阶段 4: 用户审核稿
+
+#### 4.1 生成增强审查界面
 
 生成 `review_enhanced.html`，提供可视化审核 + 实时试听 + 交互编辑。
 
@@ -675,7 +742,7 @@ open "$BASE_DIR/review_enhanced.html"
 
 ---
 
-### 步骤 7: 审查、编辑、导出
+#### 4.2 审查、编辑、导出
 
 打开审查页面，审核 AI 建议，进行手动编辑，导出剪辑文件。
 
@@ -711,109 +778,7 @@ open "$BASE_DIR/review_enhanced.html"
 
 ---
 
-### 步骤 5c: 审查 Agent（Second Pass）🆕v5.1（原步骤 7b，移至步骤 6 之前）
-
-**目的**：自动审查 5a 粗剪和 5b 精剪的标记质量，catch any missed edits。替代用户手动逐句检查。
-**执行时机**：在步骤 5b 完成后、步骤 6 生成审查界面之前执行。这样审查界面一次性包含所有标记，用户只需审查一遍。
-
-**为什么需要**：
-- 5b LLM 层的 self_correction 漏检率高达 50%（meeting_02 数据：14/28 漏检）
-- 单字代词卡顿（"我我"/"他他"）容易落在规则层和 LLM 层之间
-- 5a 粗剪可能漏掉 production_talk（录制讨论/开场过渡句）
-- 人工审查 500+ 句非常耗时
-
-**设计原则**：
-- 独立于 5b 的 LLM 层（不同 prompt、不同视角）
-- 以 5a+5b 的已有标记为基础，专注查漏
-- 输出 `review_agent_catches.json`，合并到审查界面的 `extraFineEdits`
-
-**流程**：
-
-```bash
-# 输入：
-# - sentences.txt（全文）
-# - semantic_deep_analysis.json（5a 标记）
-# - fine_analysis.json（5b 标记，规则层+LLM层合并后）
-# - subtitles_words.json（词级时间戳）
-
-# 输出：
-# - review_agent_catches.json（补充标记）
-```
-
-**审查策略（分 3 轮）**：
-
-**轮 1：粗剪审查（5a 质量）**
-- 逐段检查 keep 段落：是否有 production_talk、跑题闲聊被遗漏？
-- 检查删除段落边界：是否切在了句中？是否吞掉了有价值内容？
-- 批次：按 5a 的 blocks 结构，每块检查
-
-**轮 2：精剪审查（5b 质量）**— 核心轮次
-- 对所有 keep 句子，按检测清单逐句重新扫描（与 5b LLM 层相同的 8 项清单）
-- **但重点不同**：不是全面检测，而是**对照 5b 已有标记，找遗漏**
-- 特别关注 5b 历史漏检率最高的类型：
-  1. self_correction（50% 漏检率）：同头扩展、磕绊重启、粒子结尾假启动
-  2. stutter（29%）：单字代词重复（我我/他他/它它）、极端重复（≥3次）
-  3. consecutive_filler：连续"这个这个这个"
-  4. production_talk：开场过渡句、录制间互动
-- 批次：50-80 句/批，与 5b 一致
-
-**轮 3：交叉验证**
-- 检查 5b 已标记的编辑是否有误标（false positive）
-- 特别关注：强调 vs 口误的判断、数字/专业术语被误标
-
-**输出格式**：
-```json
-{
-  "version": "review_agent_v1",
-  "reviewed_at": "2026-02-27T...",
-  "catches": [
-    {
-      "sentenceIdx": 30,
-      "type": "self_correction",
-      "deleteText": "我",
-      "reason": "单字代词重复'我我'，5b 未检出",
-      "source": "review_agent_round2",
-      "confidence": 0.9
-    }
-  ],
-  "false_positives": [
-    {
-      "sentenceIdx": 85,
-      "existingEditIdx": 3,
-      "reason": "原始标记为 stutter，但实际是强调重复",
-      "confidence": 0.7
-    }
-  ],
-  "summary": {
-    "sentences_reviewed": 400,
-    "new_catches": 12,
-    "false_positives_found": 2,
-    "by_type": { "self_correction": 6, "stutter": 4, "production_talk": 2 }
-  }
-}
-```
-
-**与审查界面的集成**：
-- `review_agent_catches.json` 中的 catches → 合并到 fine_analysis.json 的 extraFineEdits
-- false_positives → 在审查界面中标记为"待确认"（不自动取消）
-- 重新生成 review_enhanced.html 时自动包含
-
-**⚠️ 执行要点**：
-- 审查 Agent 使用独立的 prompt（不是复用 5b 的 LLM精剪prompt模板.md）
-- prompt 重点是"挑刺"和"对照检查"，而非"全面检测"
-- 对 5b 已标记的编辑，默认信任（不重复验证），除非有明确 false positive 信号
-- 输出 confidence < 0.7 的 catch 不进入 extraFineEdits，仅记录
-
-**🔧 v5.1 更新：优化 residual_sentence 判断逻辑**
-- **断句 ≠ 残句**：口语中的跨句表达（如"极大的拓宽了我自己原来的。" + "事业，因为..."）是正常的语流切分，不应标记删除
-  - 很多用户恢复的 FP 都属于这类—5c 误将断句判定为应删除的残句
-  - 5a/5b 中 residual_sentence 类型的标记需重新评估
-- **只有真正不完整且后续没有补完的句子才算残句**（如重复启动后被中断，且整体表达没有结论）
-- **residual_sentence 的 confidence 阈值提高到 0.9**：降低误标率
-
----
-
-### 步骤 7c: 反馈学习 🆕v5
+#### 4.3 反馈学习
 
 **用户审查修正 → 分析 → 分层更新（通用 prompt + 个人偏好）**
 
@@ -842,7 +807,7 @@ node "$SKILL_DIR/剪播客/scripts/apply_feedback_to_rules.js" \
 
 # 3. ⚠️ 重要：通用检测改进必须手动更新 prompt 模板（见陷阱 31）
 # - 提取 missedCatches 中的具体漏检 pattern
-# - 将新 pattern 和示例写入 用户习惯/LLM精剪prompt模板.md
+# - 将新 pattern 和示例写入 基础剪辑规则/LLM精剪prompt模板.md
 # - 清理 editing_rules 中不属于个人偏好的条目（如 missed_count）
 ```
 
@@ -850,9 +815,9 @@ node "$SKILL_DIR/剪播客/scripts/apply_feedback_to_rules.js" \
 
 | 反馈性质 | 更新目标 | 示例 |
 |----------|----------|------|
-| LLM 漏检的具体 pattern | `用户习惯/LLM精剪prompt模板.md` | 新增 self_correction 子模式、卡顿词示例 |
-| 个人激进度偏好 | `用户配置/editing_rules/` | content_analysis.aggressiveness: aggressive |
-| 个人类型保留偏好 | `用户配置/editing_rules/` | 降低填充词删除激进度 |
+| LLM 漏检的具体 pattern | `基础剪辑规则/LLM精剪prompt模板.md` | 新增 self_correction 子模式、卡顿词示例 |
+| 个人激进度偏好 | `用户偏好/editing_rules/` | content_analysis.aggressiveness: aggressive |
+| 个人类型保留偏好 | `用户偏好/editing_rules/` | 降低填充词删除激进度 |
 
 **学习规则**：
 - 置信度 ≥ 0.5 才生成调整建议
@@ -862,7 +827,7 @@ node "$SKILL_DIR/剪播客/scripts/apply_feedback_to_rules.js" \
 
 ---
 
-### 步骤 7d: 评估指标计算 🆕v5.1
+#### 4.4 评估指标计算
 
 **自动计算 AI 分析质量指标，跟踪 AI 水平趋势**
 
@@ -958,7 +923,11 @@ node "$SKILL_DIR/剪播客/scripts/append_eval_history.js" \
 
 ---
 
-### 步骤 8: 一键剪辑生成精剪版
+### 阶段 5: 剪辑执行
+
+> **交互规范**：阶段 5 包含 5.1 + 5.2 两步，应**连续执行、统一汇报**。5.1 完成后不要向用户展示中间产物或报告，直接继续 5.2。全部完成后再告知用户最终成品路径和时长统计。
+
+#### 5.1 一键剪辑生成精剪版
 
 使用 FFmpeg 剪辑音频。先解码为 WAV 确保采样级精确切割。
 
@@ -993,7 +962,7 @@ python3 "$SKILL_DIR/剪播客/scripts/cut_audio.py" \
 
 ---
 
-### 步骤 8b: 成品静音裁剪 🆕
+#### 5.2 成品静音裁剪
 
 剪辑成品后，删除内容前后的短静音会合并成超阈值的长停顿。**必须在成品上再扫一遍。**
 
@@ -1053,7 +1022,7 @@ python3 "$SKILL_DIR/剪播客/scripts/trim_silences.py" \
 
 ---
 
-### 步骤 9b: 自动质检 🆕v5（可选）
+### 阶段 6: AI 质检 → /podcastcut-质检
 
 **条件**：`preferences.yaml` 中 `workflow_automation.auto_qa_enabled: true`
 
@@ -1073,13 +1042,13 @@ python3 "$SKILL_DIR/剪播客/scripts/trim_silences.py" \
 
 ---
 
-### 步骤 10: 后期处理 🆕v5（可选）
+### 阶段 7: 后期处理 → /podcastcut-后期
 
 **条件**：`preferences.yaml` 中 `workflow_automation.auto_post_production` 控制是否自动触发
 
 **首次使用后期**：
 1. 询问后期偏好（片头音乐、时间戳格式、标题风格等）
-2. 保存到 `用户配置/<userId>/post_production.yaml`
+2. 保存到 `用户偏好/<userId>/post_production.yaml`
 3. 执行 `/podcastcut-后期` skill
 
 **后续使用**：
@@ -1101,16 +1070,31 @@ node -e "
 
 ---
 
-### 步骤 11: 最终交付 🆕v5
+### 阶段 8: 用户终审 🆕v6
 
-**汇总所有输出 + 记录到 episode_history**
+**生成终审页面 + 最终确认 + 记录 episode_history**
 
 **流程**：
-1. 汇总本次处理的所有产出物：
-   - 精剪版音频（步骤 8）
-   - QA 报告（步骤 9b，如有）
-   - 后期产物（步骤 10，如有）
-2. 记录到 `episode_history.json`：
+1. 生成 `review_final.html`（终审页面）：
+   ```bash
+   node "$SKILL_DIR/剪播客/scripts/generate_review_final.js" \
+     --audio "$BASE_DIR/3_成品/播客名_精剪版_trimmed.mp3" \
+     --audit-report "$BASE_DIR/2_分析/audit_report.json" \
+     --signal-report "$BASE_DIR/2_分析/qa_signal_report.json" \
+     --semantic-report "$BASE_DIR/2_分析/qa_semantic_report.json" \
+     --words "$BASE_DIR/1_转录/subtitles_words.json" \
+     --output "$BASE_DIR/review_final.html"
+   ```
+   页面包含：
+   - 内嵌音频播放器（剪辑后成品）
+   - AI 质检问题列表（数据层/信号层/语义层），按严重度排序
+   - 每条带可点击时间戳 → 音频自动 seek
+   - 切点前后上下文文本预览
+   - "确认无问题" / "需要重剪" 按钮
+   - 统计信息：原始时长、成品时长、删除比例
+2. 用户在终审页面操作后，导出 `final_review_feedback.json`
+3. 如有"需要重剪"标记 → 回到阶段 4 重新编辑
+4. 如全部通过 → 记录到 `episode_history.json`：
    ```bash
    node -e "
      const um = require('$SKILL_DIR/剪播客/scripts/user_manager');
@@ -1126,8 +1110,37 @@ node -e "
      });
    "
    ```
-3. 如 `preferences.yaml` 中 `workflow_automation.prompt_for_feedback: true`：
-   - 提醒用户："如果你在审查时有修正 AI 的建议，记得在审查页导出 AI 反馈（蓝色按钮），下次剪辑时系统会自动学习。"
+5. 反馈学习：如有终审反馈，运行 `capture_final_feedback.js` 更新偏好
+
+---
+
+## 反馈学习（内建，原自进化 skill）
+
+> 让 Agent 从用户反馈中持续改进，无需单独触发。
+
+### 两层学习
+
+| 学习类型 | 目标位置 | 触发时机 | 示例 |
+|----------|----------|----------|------|
+| **全局方法论** | `基础剪辑规则/*.md` | 发现检测逻辑缺陷 | 新的卡顿模式、改进静音检测算法 |
+| **个人偏好** | `用户偏好/<userId>/editing_rules/` | 用户审核修正 | 某用户喜欢保留"嗯"，降低填充词删除率 |
+
+**关键区别**：用户审查修正（恢复/新增删除）→ 个人偏好；方法论缺陷（检测逻辑有 bug）→ 全局规则。
+
+### 3 个反馈捕获点
+
+| 捕获点 | 阶段 | 输入 | 处理 |
+|--------|------|------|------|
+| FP1 | 阶段 4（用户审核） | `ai_feedback_*.json` 或 editState diff | `analyze_feedback.js` → `apply_feedback_to_rules.js` → 更新 `editing_rules/` |
+| FP2 | 阶段 6（AI 质检） | QA 报告 + 用户修正 | 系统性 QA 失败模式 → 更新 `基础剪辑规则/` |
+| FP3 | 阶段 8（用户终审） | `final_review_feedback.json` | `capture_final_feedback.js` → 按类型分发到全局或个人偏好 |
+
+### 原则
+
+- 反馈**写入 skill 文档**（`基础剪辑规则/` 或 `用户偏好/`），**不存 agent memory**，确保跨机器、跨账号可用
+- 整合到正文相应位置（不是只往末尾追加）
+- 反馈记录只记事件，不重复规则
+- 直接从上下文分析问题，不要问"什么问题"
 
 ---
 
@@ -1319,7 +1332,7 @@ done
 ## 版本历史
 
 ### v5.0 (2026-02-21)
-- 🧑‍💼 Per-user 偏好系统：用户配置文件夹 + YAML 格式
+- 🧑‍💼 Per-user 偏好系统：用户偏好文件夹 + YAML 格式
 - 🎓 新用户 Onboarding：播客链接解析 + 剪辑样本学习 + 扩展偏好问答
 - 🔄 两层规则架构：preferences.yaml（意图层）→ editing_rules/（执行层）
 - 📊 反馈闭环：审查修正自动分析 → editing_rules 更新
@@ -1629,7 +1642,7 @@ const charOffset = (preFrag.textContent || '').length;
 
 **原因**：ASR 报告 filler.start (21.13) 比实际发声晚。前一词 "岁" 结束在 20.53，中间 0.6s 间隙包含 "嗯" 的起始音。
 
-**正确做法**：填充词删除范围 = `[prev_word.end, next_word.start]`，而非 `[filler.start, filler.end]`。详见 `用户习惯/2-填充词检测.md` 删除边界章节。
+**正确做法**：填充词删除范围 = `[prev_word.end, next_word.start]`，而非 `[filler.start, filler.end]`。详见 `基础剪辑规则/2-填充词检测.md` 删除边界章节。
 
 ### 陷阱 27: `--no-fade` 不是可选项
 
@@ -1675,11 +1688,11 @@ const charOffset = (preFrag.textContent || '').length;
 
 ### 陷阱 31: feedback loop 输出应分两层
 
-**问题**：`apply_feedback_to_rules.js` 将所有调整都写入 `用户配置/editing_rules/`（per-user），但大部分漏检（self_correction pattern、stutter pattern）是 LLM 检测能力不足的通用问题，不是个人偏好。
+**问题**：`apply_feedback_to_rules.js` 将所有调整都写入 `用户偏好/editing_rules/`（per-user），但大部分漏检（self_correction pattern、stutter pattern）是 LLM 检测能力不足的通用问题，不是个人偏好。
 
 **正确做法**：
-- **通用检测改进**（LLM 漏检的具体 pattern）→ 更新 `用户习惯/LLM精剪prompt模板.md`，所有用户受益
-- **个人偏好**（激进度、特定类型的保留/删除偏好）→ 写入 `用户配置/editing_rules/`
+- **通用检测改进**（LLM 漏检的具体 pattern）→ 更新 `基础剪辑规则/LLM精剪prompt模板.md`，所有用户受益
+- **个人偏好**（激进度、特定类型的保留/删除偏好）→ 写入 `用户偏好/editing_rules/`
 
 ### 陷阱 22: 句首停顿标记显示在错误位置
 

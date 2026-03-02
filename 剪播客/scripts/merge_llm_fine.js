@@ -55,17 +55,69 @@ let rulesEdits = [];
 if (fs.existsSync(rulesPath)) {
   const rulesData = JSON.parse(fs.readFileSync(rulesPath, 'utf8'));
   rulesEdits = rulesData.edits || [];
-  console.log(`📐 Rules layer: ${rulesEdits.length} edits`);
+  const needsReview = rulesEdits.filter(e => e.needsReview).length;
+  console.log(`📐 Rules layer: ${rulesEdits.length} edits (${needsReview} needsReview)`);
 } else {
   console.log(`⚠️  No rules file found at ${rulesPath}`);
 }
 
 // Load LLM edits and map text → timestamps
 let llmEdits = [];
+let rulesReviewActions = []; // LLM's review of rules layer needsReview items
 if (fs.existsSync(llmPath)) {
   const llmData = JSON.parse(fs.readFileSync(llmPath, 'utf8'));
   const llmRaw = llmData.edits || llmData; // support both {edits:[]} and bare array
   console.log(`🤖 LLM layer: ${llmRaw.length} raw edits`);
+
+  // Collect rules_review from all batches
+  if (llmData.rules_review) {
+    rulesReviewActions.push(...llmData.rules_review);
+  }
+  // Support multi-batch format where each batch has its own rules_review
+  if (Array.isArray(llmData.batches)) {
+    for (const batch of llmData.batches) {
+      if (batch.rules_review) rulesReviewActions.push(...batch.rules_review);
+    }
+  }
+
+  // Apply LLM review decisions to rules edits
+  if (rulesReviewActions.length > 0) {
+    const rejected = rulesReviewActions.filter(r => r.action === 'reject');
+    const confirmed = rulesReviewActions.filter(r => r.action === 'confirm');
+    console.log(`🔍 LLM rules review: ${confirmed.length} confirmed, ${rejected.length} rejected`);
+
+    // Remove rejected edits from rules layer
+    for (const rej of rejected) {
+      const beforeCount = rulesEdits.length;
+      rulesEdits = rulesEdits.filter(e => !(e.sentenceIdx === rej.s && e.needsReview));
+      if (rulesEdits.length < beforeCount) {
+        console.log(`   ❌ Rejected S${rej.s}: ${rej.reason}`);
+      }
+    }
+
+    // Mark confirmed edits (remove needsReview flag, boost confidence)
+    for (const conf of confirmed) {
+      const edit = rulesEdits.find(e => e.sentenceIdx === conf.s && e.needsReview);
+      if (edit) {
+        delete edit.needsReview;
+        delete edit.reviewHint;
+        edit.confidence = 0.9;
+        edit.llmReviewed = true;
+      }
+    }
+  }
+
+  // Handle unreviewed needsReview items: default to confirm (user feedback says 2x repeats are mostly stutter)
+  const unreviewed = rulesEdits.filter(e => e.needsReview);
+  if (unreviewed.length > 0) {
+    console.log(`   ⚡ ${unreviewed.length} needsReview items not reviewed by LLM → default confirm`);
+    for (const e of unreviewed) {
+      delete e.needsReview;
+      delete e.reviewHint;
+      e.confidence = 0.75;
+      e.llmReviewed = false;
+    }
+  }
 
   let mapped = 0, failed = 0, remapped = 0;
   for (const edit of llmRaw) {
@@ -114,6 +166,48 @@ if (fs.existsSync(llmPath)) {
       deleteEnd: result.de,
       reason: edit.reason || ''
     };
+
+    // === KEEPTEXT TRIMMING ===
+    // For stutter edits, deleteText often includes the kept portion
+    // e.g. deleteText='选选择' keepText='选择' → should only delete '选' (W314), not both W314+W315
+    // Fix: trim keepText words from the end of the delete range
+    if (edit.keepText && edit.keepText.length > 0 && result.wordRange) {
+      const keepClean = edit.keepText.replace(/[，。！？、：；""''（）\s]/g, '');
+      if (keepClean.length > 0) {
+        const [wStart, wEnd] = result.wordRange;
+        const localStart = wStart - sent.wordRange[0];
+        const localEnd = wEnd - sent.wordRange[0];
+        const sentWords = sent.words;
+
+        // Count keepText chars from the end of the word range
+        let keepCharsRemaining = keepClean.length;
+        let newEndLocal = localEnd;
+        for (let wi = localEnd; wi >= localStart && keepCharsRemaining > 0; wi--) {
+          const wClean = sentWords[wi].text.replace(/[，。！？、：；""''（）\s]/g, '');
+          if (wClean.length <= keepCharsRemaining) {
+            keepCharsRemaining -= wClean.length;
+            newEndLocal = wi - 1;
+          } else {
+            // Partial word match — keepText starts in the middle of this word
+            // Can't split a word, so keep the whole word (conservative)
+            break;
+          }
+        }
+
+        if (newEndLocal >= localStart && newEndLocal < localEnd) {
+          // Successfully trimmed keepText words from the end
+          const newEndGlobal = sent.wordRange[0] + newEndLocal;
+          feEntry.wordRange = [wStart, newEndGlobal];
+          feEntry.deleteEnd = parseFloat(sentWords[newEndLocal].end.toFixed(2));
+          // Update deleteText to reflect only the deleted portion
+          const trimmedWords = [];
+          for (let wi = localStart; wi <= newEndLocal; wi++) {
+            trimmedWords.push(sentWords[wi].text);
+          }
+          feEntry.deleteText = trimmedWords.join('');
+        }
+      }
+    }
 
     // For whole-sentence deletions (single_filler, residual_sentence)
     if (edit.type === 'single_filler' || edit.type === 'residual_sentence') {
@@ -480,7 +574,7 @@ const totalTimeSaved = merged.reduce((sum, e) => {
 // === POST-MERGE GAP CLEANUP ===
 // After all edits are determined, simulate the post-deletion timeline
 // and find gaps > threshold that were created by merging adjacent silences.
-// See: 用户习惯/3-静音段处理.md "合并间隙二次扫描"
+// See: 基础剪辑规则/3-静音段处理.md "合并间隙二次扫描"
 
 console.log('\n🔍 Post-merge gap cleanup...');
 

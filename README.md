@@ -33,7 +33,6 @@ ln -s "$PODCASTCUT_DIR/安装"    ~/.claude/skills/podcastcut-安装
 ln -s "$PODCASTCUT_DIR/剪播客"  ~/.claude/skills/podcastcut-剪播客
 ln -s "$PODCASTCUT_DIR/后期"    ~/.claude/skills/podcastcut-后期
 ln -s "$PODCASTCUT_DIR/质检"    ~/.claude/skills/podcastcut-质检
-ln -s "$PODCASTCUT_DIR/自进化"  ~/.claude/skills/podcastcut-自进化
 ```
 
 验证：重启 Claude Code，按 `/` 应该能看到 `podcastcut-安装`、`podcastcut-剪播客` 等。
@@ -63,47 +62,55 @@ cp .env.example .env
 
 详细安装说明见 `/podcastcut-安装`。
 
-## 使用流程
+## 8 阶段流水线
 
 ```
 /podcastcut-剪播客
     │
-    ├─ 转录（阿里云 FunASR，~3 分钟）
-    ├─ 说话人识别 + 映射
-    ├─ 句子分割
-    ├─ AI 内容分析（段落级删减）
-    ├─ AI 精剪分析（词级：卡顿、重说、填充词）
-    ├─ 生成审查页面 → 浏览器打开
+    │  阶段 1: 用户启动
+    │  ├─ 新用户：样本学习 / 结构化提问
+    │  └─ 老用户：一句话确认偏好
     │
-    │   ┌──────────────────────────────────────┐
-    │   │  审查页面（review_enhanced.html）     │
-    │   │                                      │
-    │   │  - 内容删减概览（可折叠表格）        │
-    │   │  - 精剪播放器（实时跳过删除段）      │
-    │   │  - 整句删除/恢复、精剪切换           │
-    │   │  - 手动选中删除（鼠标或 Delete 键） │
-    │   │  - 说话人修正（点击名字）           │
-    │   │  - 撤销、自动保存到 localStorage    │
-    │   │  - 导出剪辑文件 / 导出 AI 反馈      │
-    │   └──────────────────────────────────────┘
+    │  阶段 2: 剪辑分析
+    │  ├─ 转录（阿里云 FunASR，~3 分钟）
+    │  ├─ 说话人识别 + 句子分割
+    │  ├─ AI 粗剪分析（段落级删减）
+    │  └─ AI 精剪分析（词级：卡顿、重说、填充词）
     │
-    ├─ 用户审查 + 导出 delete_segments_edited.json
-    └─ 一键剪辑 → 精剪版 MP3
-
-/podcastcut-质检（可选）
+    │  阶段 3: AI 自审查
+    │  └─ 审查 Agent 检查一致性、误判、安全词
     │
-    ├─ 自动检测剪切点
-    ├─ 信号分析（能量突变、静音异常、频谱跳变等）
-    ├─ AI 听感评估（可选，需 Gemini API Key）
-    └─ 输出质检报告，标记需复听的片段
-
-/podcastcut-后期（可选）
+    │  阶段 4: 用户审核稿
+    │  ├─ 生成审查页面 → 浏览器打开
+    │  │   ┌──────────────────────────────────────┐
+    │  │   │  审查页面（review_enhanced.html）     │
+    │  │   │  - 精剪播放器（实时跳过删除段）      │
+    │  │   │  - 整句删除/恢复、精剪切换           │
+    │  │   │  - 手动选中删除 + AI 反馈导出        │
+    │  │   └──────────────────────────────────────┘
+    │  ├─ 用户审查 + 导出 delete_segments_edited.json
+    │  └─ 反馈学习 → 更新用户偏好/剪辑规则
     │
-    ├─ 推荐高亮片段 → 片头预览
-    ├─ 添加主题曲片头片尾
-    ├─ 生成时间戳章节
-    ├─ 标题建议 + 播客简介
-    └─ 输出发布级成品
+    │  阶段 5: 剪辑执行
+    │  ├─ cut_audio.py（WAV 采样级精确剪辑）
+    │  └─ trim_silences.py（成品静音裁剪）
+    │
+/podcastcut-质检
+    │  阶段 6: AI 质检
+    │  ├─ Phase A: 数据层（删除段正确性）
+    │  ├─ Phase B: 信号层（能量/频谱/静音分析）
+    │  └─ Phase C: 语义层（重转录 LCS 对齐，可选）
+    │
+/podcastcut-后期
+    │  阶段 7: 后期处理
+    │  ├─ 高亮片段 → 片头预览
+    │  ├─ 主题曲片头片尾
+    │  └─ 时间戳章节 + 标题 + 简介
+    │
+    │  阶段 8: 用户终审
+    │  ├─ 终审页面（review_final.html）
+    │  │   质检问题列表 + 可点击时间戳 + 确认/标记
+    │  └─ 反馈学习 → 更新剪辑规则/用户偏好
 ```
 
 ## Skill 清单
@@ -111,10 +118,9 @@ cp .env.example .env
 | Skill | slash 命令 | 功能 |
 |-------|-----------|------|
 | 安装 | `/podcastcut-安装` | 注册 skills、安装依赖、配置 API Key |
-| 剪播客 | `/podcastcut-剪播客` | 转录 + AI 分析 + 审查页面 + 剪辑（核心） |
+| 剪播客 | `/podcastcut-剪播客` | 8 阶段编排器：转录 + 分析 + 审查 + 剪辑 + 终审 |
+| 质检 | `/podcastcut-质检` | 三阶段质检：数据层 + 信号层 + 语义层 |
 | 后期 | `/podcastcut-后期` | 片头预览、主题曲、时间戳、标题、简介 |
-| 质检 | `/podcastcut-质检` | 剪辑质量检测，标记需复听片段 |
-| 自进化 | `/podcastcut-自进化` | 记录反馈，更新方法论和规则 |
 
 ## 目录结构
 
@@ -124,49 +130,59 @@ podcastcut/
 ├── .env.example
 ├── 安装/                  # 环境安装 skill
 │   └── SKILL.md
-├── 剪播客/                # 核心 skill
-│   ├── SKILL.md           # 完整流程文档（9 个步骤）
-│   ├── scripts/           # 脚本
+├── 剪播客/                # 核心 skill（阶段 1-5, 8）
+│   ├── SKILL.md           # 完整流程文档（8 阶段）
+│   ├── scripts/
 │   │   ├── aliyun_funasr_transcribe.sh   # 阿里云转录
 │   │   ├── identify_speakers.js          # 说话人识别
 │   │   ├── generate_subtitles_from_aliyun.js  # 字级别转录
 │   │   ├── generate_sentences.js         # 句子分割
-│   │   ├── generate_review_enhanced.js   # 生成审查页面
+│   │   ├── generate_review_enhanced.js   # 生成审查页面（阶段 4）
+│   │   ├── generate_review_final.js      # 生成终审页面（阶段 8）
+│   │   ├── capture_final_feedback.js     # 终审反馈捕获
 │   │   ├── cut_audio.py                  # WAV 采样级精确剪辑
-│   │   └── merge_fine_edits.js           # 合并精剪编辑
+│   │   ├── trim_silences.py              # 成品静音裁剪
+│   │   ├── merge_llm_fine.js             # 合并精剪编辑
+│   │   └── user_manager.js              # 用户偏好管理
 │   ├── templates/
 │   │   └── review_enhanced.html          # 审查页面模板
-│   └── 用户习惯/          # 精剪规则（可自定义）
-│       ├── README.md              # 规则索引
-│       ├── 1-核心原则.md
-│       ├── 2-填充词检测.md
-│       ├── 3-静音段处理.md
-│       ├── 4-重复句检测.md
-│       ├── 5-卡顿词.md
-│       ├── 6-句内重复检测.md
-│       ├── 7-连续填充词.md
-│       ├── 8-重说纠正.md
-│       ├── 9-残句检测.md
-│       └── 10-内容分析方法论.md   # 步骤5a的分析方法论
-├── 后期/                  # 最终润色 skill
+│   ├── 基础剪辑规则/       # 共享规则（所有用户通用）
+│   │   ├── 1-核心原则.md
+│   │   ├── 2-语气词检测.md
+│   │   ├── ...
+│   │   └── 10-内容分析方法论.md
+│   └── 用户偏好/           # 个人偏好（per-user）
+│       ├── default/
+│       └── <userId>/
+├── 后期/                  # 最终润色 skill（阶段 7）
 │   ├── SKILL.md
 │   └── scripts/
 │       └── mix_highlights_with_music.py
-├── 质检/                  # 剪辑质检 skill
+├── 质检/                  # 质检 skill（阶段 6）
 │   ├── SKILL.md
 │   └── scripts/
-│       ├── signal_analysis.py     # Layer 1: 信号层分析
-│       └── requirements.txt
-├── 自进化/                # 自更新 skill
-│   └── SKILL.md
+│       ├── signal_analysis.py     # 信号层分析
+│       ├── semantic_review.js     # 语义层分析
+│       ├── audit_cut.js           # 数据层审计
+│       └── report_generator.py    # 综合报告
 └── output/                # 输出目录（自动创建）
     └── YYYY-MM-DD_音频名/
         └── 剪播客/
             ├── 1_转录/
             ├── 2_分析/
             ├── 3_成品/
-            └── review_enhanced.html
+            ├── review_enhanced.html
+            └── review_final.html
 ```
+
+## 两层学习架构
+
+| 层 | 目录 | 内容 | 触发 |
+|---|---|---|---|
+| 基础剪辑规则 | `剪播客/基础剪辑规则/` | 检测算法、通用阈值、方法论 | 质检发现的算法缺陷 |
+| 用户偏好 | `剪播客/用户偏好/<userId>/` | 激进度、特定词保留/删除 | 用户审核反馈 |
+
+反馈在阶段 4（用户审核）、阶段 6（AI 质检）、阶段 8（用户终审）三个点捕获，持久化到 skill 文档中，确保跨机器、跨账号可用。
 
 ## 依赖
 
