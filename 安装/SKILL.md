@@ -38,7 +38,6 @@ ln -s "$PODCASTCUT_DIR/安装"    ~/.claude/skills/podcastcut-安装
 ln -s "$PODCASTCUT_DIR/剪播客"  ~/.claude/skills/podcastcut-剪播客
 ln -s "$PODCASTCUT_DIR/后期"    ~/.claude/skills/podcastcut-后期
 ln -s "$PODCASTCUT_DIR/质检"    ~/.claude/skills/podcastcut-质检
-ln -s "$PODCASTCUT_DIR/自进化"  ~/.claude/skills/podcastcut-自进化
 ```
 
 验证：在 Claude Code 中按 `/`，应该能看到 `podcastcut-安装`、`podcastcut-剪播客` 等。

@@ -9,9 +9,9 @@
  *   node generate_rule_overrides.js <learned_patterns.json> [userId]
  *
  * 输出:
- *   用户配置/[userId]/editing_rules/filler_words.yaml
- *   用户配置/[userId]/editing_rules/silence.yaml
- *   用户配置/[userId]/editing_rules/content_analysis.yaml
+ *   用户偏好/[userId]/editing_rules/filler_words.yaml
+ *   用户偏好/[userId]/editing_rules/silence.yaml
+ *   用户偏好/[userId]/editing_rules/content_analysis.yaml
  */
 
 const fs = require('fs');

@@ -9,7 +9,7 @@
  * 退出码: 0 = 已配置, 1 = 需要 onboarding
  *
  * 支持两种格式：
- * - 新版 YAML (用户配置/[userId]/preferences.yaml)
+ * - 新版 YAML (用户偏好/[userId]/preferences.yaml)
  * - 旧版 Markdown (用户偏好.md) — 向后兼容
  */
 
@@ -104,7 +104,7 @@ function checkOldFormat() {
     format: 'markdown',
     checks,
     reason: isConfigured ? '用户偏好已配置（旧格式）' : '用户偏好未完整配置',
-    migrationHint: '建议迁移到新版 YAML 格式（用户配置/）'
+    migrationHint: '建议迁移到新版 YAML 格式（用户偏好/）'
   };
 }
 

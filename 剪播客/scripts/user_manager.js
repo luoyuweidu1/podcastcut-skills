@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * 用户配置管理模块
+ * 用户偏好管理模块
  *
  * 提供 per-user 偏好的 CRUD 操作。
- * 其他 Agent 的脚本通过 require 此模块来读写用户配置。
+ * 其他 Agent 的脚本通过 require 此模块来读写用户偏好。
  *
  * API:
  *   getCurrentUser()                → userId string
@@ -38,9 +38,9 @@ const yaml = require('js-yaml');
 // --- 路径常量 ---
 
 const SKILL_DIR = path.resolve(__dirname, '..');
-const CONFIG_DIR = path.join(SKILL_DIR, '用户配置');
+const CONFIG_DIR = path.join(SKILL_DIR, '用户偏好');
 const DEFAULT_DIR = path.join(CONFIG_DIR, 'default');
-const BASE_RULES_DIR = path.join(SKILL_DIR, '用户习惯');
+const BASE_RULES_DIR = path.join(SKILL_DIR, '基础剪辑规则');
 
 // --- 辅助函数 ---
 
@@ -95,7 +95,7 @@ function getCurrentUser() {
 }
 
 /**
- * 获取用户配置目录的绝对路径
+ * 获取用户偏好目录的绝对路径
  */
 function getUserConfigPath(userId) {
   return path.join(CONFIG_DIR, userId || getCurrentUser());
@@ -187,7 +187,7 @@ function savePodcastProfile(userId, obj) {
  * 返回: { base_rules_dir, user_overrides: { [ruleName]: yamlObj }, merged_summary }
  *
  * 合并逻辑：
- * - 基础规则在 用户习惯/ 目录（10 个 markdown 文件），由 Claude 直接读取
+ * - 基础规则在 基础剪辑规则/ 目录（10 个 markdown 文件），由 Claude 直接读取
  * - 用户覆盖在 editing_rules/ 目录（YAML 文件），存具体参数
  * - 如果用户覆盖存在，优先使用用户覆盖的值
  */

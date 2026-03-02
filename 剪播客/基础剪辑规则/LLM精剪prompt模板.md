@@ -377,16 +377,58 @@ LLM 分析每一句时，必须按以下清单逐项检查。**不是"找问题"
 
 ---
 
+## 规则层结果 Review（v6 新增）
+
+LLM 层现在会收到规则层的 `fine_analysis_rules.json`，其中部分编辑标记了 `needsReview: true`。LLM 需要根据语境做最终判断。
+
+### 为什么需要 Review
+
+规则层做确定性 pattern matching（如连续相同词检测），但以下场景需要语义判断：
+- **单字高频词 2x**（"我我"、"就就"）：大多数是卡顿，少数是自然口语（如"对对"表示认同回应）
+- **高频短语 2x**（"就是就是"、"然后然后"）：大多数是卡顿，少数是修辞（如"怎么怎么做"表示泛指）
+- **后缀匹配**（"在这个"+"这个"）：ASR 分词边界导致，需确认确实是重复
+
+### LLM Review 决策
+
+在每批分析时，如果 `fine_analysis_rules.json` 中有当前批次句子的 `needsReview` 编辑，LLM 需要在输出中增加 `rules_review` 字段：
+
+```json
+{
+  "batch_range": [0, 59],
+  "edits": [...],
+  "rules_review": [
+    {"s": 60, "action": "confirm", "reason": "'在这个这个'确实是卡顿重复"},
+    {"s": 137, "action": "confirm", "reason": "'我我到 door dash'是卡顿"},
+    {"s": 109, "action": "reject", "reason": "'的一个一个'此处'一个一个'是'逐个'的意思，非卡顿"}
+  ],
+  "scan_summary": {...}
+}
+```
+
+### 决策原则
+
+| 场景 | 判断 | 示例 |
+|------|------|------|
+| 代词/副词卡顿 | ✅ confirm（绝大多数情况） | "我我觉得" → 删第一个"我" |
+| 回应性重复 | ❌ reject | "对对，你说得对" → "对对"是认同回应 |
+| "一个一个"逐个义 | ❌ reject | "一个一个地解决" → 强调逐一 |
+| 泛指修辞 | ❌ reject | "怎么怎么做" → 修辞性泛指 |
+| 口语连接词卡顿 | ✅ confirm（大多数） | "就是就是说" → 卡顿 |
+| 后缀匹配真重复 | ✅ confirm | "在这个这个ALL IN" → "这个"确实重复 |
+
+**默认倾向**：如果不确定，confirm（删除）。用户反馈表明 2x 重复绝大多数是卡顿，漏删比误删更影响听感。
+
 ## SKILL.md 集成指引
 
 Step 5b LLM 层执行时：
 
 1. 读取本模板，理解检测清单
 2. 加载用户 editing_rules（如有覆盖参数）
-3. 分批读取 sentences.txt（**50-80 句/批**，不是 150）
-4. 对每批执行检测清单，输出 JSON
-5. 所有批次完成后合并为 `fine_analysis_llm.json`
-6. 运行 `merge_llm_fine.js` 与规则层合并
+3. **读取 `fine_analysis_rules.json`**，了解规则层已 catch 了什么、哪些需要 review
+4. 分批读取 sentences.txt（**50-80 句/批**，不是 150）
+5. 对每批执行检测清单 + review 规则层 needsReview 项，输出 JSON
+6. 所有批次完成后合并为 `fine_analysis_llm.json`
+7. 运行 `merge_llm_fine.js` 与规则层合并（confirmed 的保留，rejected 的移除）
 
 ### 批次大小建议
 

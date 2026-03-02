@@ -152,7 +152,7 @@ async function parsePodcastLink(url, userId) {
   // 设置默认值
   profile.episodes_analyzed = profile.episodes_analyzed || 0;
 
-  // 写入用户配置
+  // 写入用户偏好
   if (userId) {
     UserManager.savePodcastProfile(userId, profile);
     console.error(`✅ 已保存到 ${UserManager.getUserConfigPath(userId)}/podcast_profile.yaml`);
