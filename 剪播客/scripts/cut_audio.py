@@ -408,14 +408,39 @@ def main():
     ]
     subprocess.run(cmd, check=True)
 
-    # 编码为 MP3
-    print("🔧 编码为 MP3...")
+    # 探测源文件编码参数，匹配输出质量
+    probe_result = subprocess.run(
+        ['ffprobe', '-v', 'error', '-select_streams', 'a:0',
+         '-show_entries', 'stream=bit_rate,sample_rate,channels',
+         '-of', 'default=noprint_wrappers=1', audio_file],
+        capture_output=True, text=True
+    )
+    src_bitrate = 128000  # default
+    src_sample_rate = None
+    src_channels = None
+    for line in probe_result.stdout.strip().split('\n'):
+        if line.startswith('bit_rate=') and line.split('=')[1].strip().isdigit():
+            src_bitrate = int(line.split('=')[1].strip())
+        elif line.startswith('sample_rate=') and line.split('=')[1].strip().isdigit():
+            src_sample_rate = int(line.split('=')[1].strip())
+        elif line.startswith('channels=') and line.split('=')[1].strip().isdigit():
+            src_channels = int(line.split('=')[1].strip())
+
+    # MP3 bitrate: at least 128k, cap at 192k
+    out_bitrate = max(src_bitrate // 1000, 128)
+    out_bitrate = min(out_bitrate, 192)
+    print(f"🔧 编码为 MP3 (源: {src_bitrate//1000}kbps {src_sample_rate}Hz {src_channels}ch → 输出: {out_bitrate}kbps)...")
+
     cmd = [
         'ffmpeg', '-v', 'quiet', '-stats',
         '-i', temp_concat,
-        '-c:a', 'libmp3lame', '-b:a', '64k',
-        '-y', output_name
+        '-c:a', 'libmp3lame', '-b:a', f'{out_bitrate}k',
     ]
+    if src_sample_rate and src_sample_rate > 16000:
+        cmd.extend(['-ar', str(src_sample_rate)])
+    if src_channels and src_channels > 1:
+        cmd.extend(['-ac', str(src_channels)])
+    cmd.extend(['-y', output_name])
     subprocess.run(cmd, check=True)
 
     # 清理临时文件

@@ -36,6 +36,11 @@ pos: 阿里云转录 + AI深度理解 + 增强审核 + 自动剪辑
 - 不要尝试自己判断或猜测说话人数量
 - 说话人数量设置错误会导致98.8% → 低准确度
 
+**🚫 CRITICAL: 永远不要 regenerate review_enhanced.html 覆盖用户已审查的文件！**
+- 用户手动编辑存在 HTML 内的 JS/localStorage 状态中，regenerate 会彻底丢失
+- 如果必须更新模板逻辑：只改模板文件（`templates/review_enhanced.html`），让用户自己刷新或重新生成
+- 如果确实需要 regenerate：**必须先备份**（`cp review_enhanced.html review_enhanced.html.bak`）并**明确告知用户手动编辑会丢失，等用户确认**
+
 ## 输出目录结构
 
 ```
@@ -218,19 +223,24 @@ mkdir -p "$BASE_DIR/1_转录" "$BASE_DIR/2_分析" "$BASE_DIR/3_成品"
 ##### 准备音频
 
 ```bash
-# 转换/复制原始音频用于转录
-if [[ "$AUDIO_PATH" == *.mp3 ]]; then
-  cp "$AUDIO_PATH" "$BASE_DIR/1_转录/audio.mp3"
-else
-  ffmpeg -i "file:$AUDIO_PATH" -vn -acodec libmp3lame -ar 16000 -ac 1 -y "$BASE_DIR/1_转录/audio.mp3"
-fi
+# 1) 保留原始高质量音频（剪辑用，保持原格式不转码）
+AUDIO_EXT="${AUDIO_PATH##*.}"
+cp "$AUDIO_PATH" "$BASE_DIR/1_转录/audio_original.$AUDIO_EXT"
 
-# ⚠️ 必须：重编码为 CBR MP3 供审查页面使用（精确 seek）
+# 2) 降采样为 16kHz mono MP3（ASR 转录用，FunASR 需要低采样率）
+ffmpeg -i "file:$AUDIO_PATH" -vn -acodec libmp3lame -ar 16000 -ac 1 -y "$BASE_DIR/1_转录/audio.mp3"
+
+# 3) ⚠️ 必须：重编码为 CBR MP3 供审查页面使用（精确 seek）
 # VBR MP3 在浏览器中 seek 会随位置偏移越来越大，导致点击句子播放错位
 ffmpeg -i "$BASE_DIR/1_转录/audio.mp3" -c:a libmp3lame -b:a 64k -write_xing 1 -y "$BASE_DIR/1_转录/audio_seekable.mp3"
 
-echo "✅ 音频已准备: audio.mp3 (转录用) + audio_seekable.mp3 (审查页面用)"
+echo "✅ 音频已准备:"
+echo "   audio_original.$AUDIO_EXT (剪辑用，原始质量)"
+echo "   audio.mp3 (转录用，16kHz mono)"
+echo "   audio_seekable.mp3 (审查页面用，CBR)"
 ```
+
+> **剪辑时（阶段 5）必须使用 `audio_original.*`** 而非 `audio.mp3`。`audio.mp3` 是 16kHz 降采样版本，用它切出的成品音质会严重下降。
 
 > **审查页面必须使用 `audio_seekable.mp3`**。步骤 6 生成 HTML 时 `--audio` 参数传 `1_转录/audio_seekable.mp3`。
 
@@ -418,55 +428,72 @@ const rules = UserManager.loadEditingRules(userId);
 
 **按优先级依次检测**（规则详见 `基础剪辑规则/README.md`）：
 
-| 优先级 | 类型       | 规则文件       | 说明                                    |
-| ------ | ---------- | -------------- | --------------------------------------- |
-| 1      | 长静音     | 3-静音段处理   | >2s 建议删，>5s 必删                    |
-| 2      | 残句       | 9-残句检测     | 话说一半被打断，整句删                  |
-| 3      | 重复句     | 4-重复句检测   | 相邻句开头≥5字相同，删短的              |
-| 4      | 句内重复   | 6-句内重复检测 | A+填充+A 模式，删前面的A                |
-| 5      | 卡顿词     | 5-卡顿词       | "那个那个"等重复词，删前面（排除叠词+播客自然重复+高频口语词组） |
-| 6      | 重说纠正   | 8-重说纠正     | 说错立刻纠正，删错的                    |
-| 7      | 连续填充词 | 7-连续填充词   | "嗯啊"、"呃啊"，全删                    |
-| 8      | 单个填充词 | 2-填充词检测   | 单个"嗯"/"啊"默认保留（播客保持对话感） |
+| 优先级 | 类型       | 规则文件       | 处理层 | 说明                                    |
+| ------ | ---------- | -------------- | ------ | --------------------------------------- |
+| 0      | 句首填充词 | 2-填充词检测   | 规则✅ | "嗯，"/"对，"/"啊，" 100% recall        |
+| 1      | 长静音     | 3-静音段处理   | 规则✅ | >0.8s cap，>2s 建议删                   |
+| 2      | 卡顿词     | 5-卡顿词       | 规则✅ | 连续相同词+后缀匹配+句中填充音          |
+| 3      | 句内重复   | 6-句内重复检测 | 规则✅ | 短语级重复 "可以去可以去"               |
+| 4      | 连续填充词 | 7-连续填充词   | 规则✅ | "嗯啊"、"呃啊"，全删                    |
+| 5      | 重启信号   | 8-重说纠正     | 规则✅ | "等一下"/"重来" + 重复                  |
+| 6      | 重说纠正   | 8-重说纠正     | **LLM★** | 说错立刻纠正，11种子模式（最高价值）    |
+| 7      | 残句       | 9-残句检测     | LLM    | 话说一半被打断，整句删                  |
+| 8      | 重复句     | 4-重复句检测   | LLM    | 相邻句开头≥5字相同，删短的              |
+| 9      | 录制讨论   | —              | LLM    | 讨论录制本身的对话                      |
 
 **核心原则**（`基础剪辑规则/1-核心原则.md`）：
 - **删前保后**：后说的通常更完整
 - **播客特殊**：思考停顿保留，对话反应时间保留，填充词适度保留
 
-**流程（混合架构：规则层 + LLM 层）**：
+**流程（v6.1 规则先行架构）**：
 
 ```
-Step 5b = 规则层 + LLM 层 → 合并 → fine_analysis.json
+Step 5b = 规则层（高 recall）→ LLM 层（语义补充 + 规则审核）→ 合并
 
 规则层 (run_fine_analysis.js → fine_analysis_rules.json):
-  - 静音检测（需要音频时间戳，LLM 做不了）
-  - 基础卡顿词（连续相同词，确定性 pattern）
+  - 句首填充词 (filler_start) — 100% recall ✅
+  - 静音检测 (silence) — 需要音频时间戳
+  - 连续相同词卡顿 (stutter) — "我我"、"这个这个"
+  - 后缀匹配卡顿 — "在这个"+"这个"
+  - 句中孤立填充词 — "啊/呃/额/对/哦"
+  - 短语级句内重复 — "可以去可以去"
+  - 连续填充词 — "嗯啊"、"呃啊"
+  - 重启信号 — "等一下"/"重来" + 重复
+  ⚠️ 部分编辑标记 needsReview=true → LLM 层审核
 
-LLM 层 (Claude 当前会话 → fine_analysis_llm.json):
-  - 句首填充词（语义判断删/留）
-  - 重说纠正（需要理解语义）⚠️ 漏检率最高的类型，务必仔细检查
-    → 详见 基础剪辑规则/8-重说纠正.md 的 8 种子模式 + LLM 自查清单
-    → 重点关注：粒子结尾 false start、同头扩展、近义重述
-  - 句内重复（A+中间字+A）
-  - 残句检测（判断完整性）
-  - 单句填充词（"嗯。""啊。"等纯填充句）
-  - 连续填充词的语义判断
-  - 录制讨论（production talk）
+LLM 层 (Claude → fine_analysis_llm.json):
+  ★ 重说纠正 (self_correction) — LLM 独有价值，占共同漏检 39%
+  - 残句 / 纯填充句 / 重复句（需语义判断）
+  - 录制讨论 (production_talk)
+  - 规则层 needsReview 审核（confirm/reject）
+  - 规则层补漏（仅 ASR 分词导致遗漏的情况）
 
 合并 (merge_llm_fine.js → fine_analysis.json):
   LLM 文本标记 → 映射回词级时间戳 → 与规则层去重合并
+  rules_review 中 rejected 的编辑从最终结果中移除
 ```
 
 1. **规则层**：运行 `run_fine_analysis.js` → `fine_analysis_rules.json`
-2. **LLM 层**：Claude 分批读取 `sentences.txt`（**50-80句/批**），按检测清单逐句扫描 → `fine_analysis_llm.json`
-   - **⚠️ 必须先读 `基础剪辑规则/LLM精剪prompt模板.md`**，按其中的 8 项检测清单逐句检查
+2. **LLM 层**：Claude 分批读取 `sentences.txt`（**50-80句/批**）+ `fine_analysis_rules.json` → `fine_analysis_llm.json`
+   - **⚠️ 必须先读 `基础剪辑规则/LLM精剪prompt模板.md`**，按其中的检测清单逐句检查
    - 心态：像"校对员"逐字审读，不是像"读者"理解大意
-   - 最高优先级：句首填充词（占历史漏检 67%）和重说纠正（占 54%）
+   - **最高优先级：重说纠正**（self_correction，11 种子模式，占 LLM 独有价值的 39%）
+   - 规则层已处理填充词/卡顿词/短语重复，LLM 不需要重复检测
 3. **合并**：运行 `merge_llm_fine.js` → `fine_analysis.json`（最终合并去重版本）
+4. **边界精修**：运行 `refine_fine_analysis.js` → 用波形 onset detection 精修紧密边界
+   ```bash
+   node "$SKILL_DIR/剪播客/scripts/refine_fine_analysis.js" \
+     --analysis-dir "$BASE_DIR/2_分析" \
+     --audio "$BASE_DIR/1_转录/audio_seekable.mp3"
+   ```
+   - 自动扫描 `fine_analysis.json` 中标记了 `_refinePoints` 的编辑
+   - 调用 `refine_boundaries.py` 在切点附近搜索能量谷底（音节间断点）
+   - 精修后的时间戳覆盖写回 `fine_analysis.json`，原版备份到 `fine_analysis_pre_refine.json`
 
 **LLM 层执行要点**：
 - 批次大小：50-80句（不是150），防止注意力稀释
-- 每句必检 8 项清单（句首填充词、连续填充词、重说纠正、句内重复、残句、纯填充句、录制讨论、卡顿词补充）
+- 每句必检清单（重说纠正★、残句、纯填充句、录制讨论、规则补漏、删后通顺性自检）
+- 对规则层 needsReview 项做 confirm/reject 决策
 - 输出 `scan_summary` 统计各类型数量，用于自查
 
 **LLM 层输出格式**：
@@ -474,8 +501,8 @@ LLM 层 (Claude 当前会话 → fine_analysis_llm.json):
 {
   "batch_range": [0, 59],
   "edits": [
-    {"s": 27, "text": "嗯，", "type": "filler_start", "reason": "句首填充词'嗯'"},
-    {"s": 96, "text": "我，因为我，", "type": "self_correction", "reason": "重说纠正：半截重说"}
+    {"s": 27, "text": "嗯，", "type": "filler_start", "reason": "句首填充词'嗯'", "beforeText": "嗯，我觉得挺重要的。", "afterText": "我觉得挺重要的。"},
+    {"s": 96, "text": "我，因为我，", "type": "self_correction", "reason": "重说纠正：半截重说", "beforeText": "我，因为我，infj是内向的。", "afterText": "infj是内向的。"}
   ],
   "scan_summary": {"total_sentences": 60, "sentences_with_edits": 8}
 }
@@ -565,7 +592,7 @@ LLM 层 (Claude 当前会话 → fine_analysis_llm.json):
 - 批次：按 5a 的 blocks 结构，每块检查
 
 **轮 2：精剪审查（5b 质量）**— 核心轮次
-- 对所有 keep 句子，按检测清单逐句重新扫描（与 5b LLM 层相同的 8 项清单）
+- 对所有 keep 句子，按检测清单逐句重新扫描（与 5b LLM 层相同的 9 项清单）
 - **但重点不同**：不是全面检测，而是**对照 5b 已有标记，找遗漏**
 - 特别关注 5b 历史漏检率最高的类型：
   1. self_correction（50% 漏检率）：同头扩展、磕绊重启、粒子结尾假启动
@@ -934,9 +961,16 @@ node "$SKILL_DIR/剪播客/scripts/append_eval_history.js" \
 ```bash
 cd "$BASE_DIR/2_分析"
 
+# 找到原始音频文件（阶段 1 保存的高质量原始文件）
+ORIGINAL_AUDIO=$(ls "$BASE_DIR/1_转录/audio_original."* 2>/dev/null | head -1)
+if [ -z "$ORIGINAL_AUDIO" ]; then
+  echo "⚠️ 未找到 audio_original.*，回退到 audio.mp3（音质会降低）"
+  ORIGINAL_AUDIO="$BASE_DIR/1_转录/audio.mp3"
+fi
+
 python3 "$SKILL_DIR/剪播客/scripts/cut_audio.py" \
   "$BASE_DIR/3_成品/${AUDIO_NAME}_精剪版_v1.mp3" \
-  "$BASE_DIR/1_转录/audio.mp3" \
+  "$ORIGINAL_AUDIO" \
   delete_segments_edited.json \
   --speakers-json "$BASE_DIR/1_转录/subtitles_words.json" \
   --no-fade
@@ -990,37 +1024,6 @@ python3 "$SKILL_DIR/剪播客/scripts/trim_silences.py" \
 - 独立脚本，不依赖 delete_segments，任何 MP3 都能跑
 - 可迭代：用户不满意可以调参数重跑
 
----
-
-```
-步骤-1: 用户识别 + 偏好确认 🆕v5
-步骤0:  创建目录
-步骤1:  准备音频
-步骤2:  上传URL
-步骤3:  转录+说话人映射 → subtitles_words.json ⭐
-步骤4:  句子分割 → sentences.txt
-步骤5a: 内容分析（段落级）→ semantic_deep_analysis.json ⭐ (用户级规则)
-步骤5b: 精剪分析（词/句级）→ fine_analysis.json ⭐ (基础规则+用户覆盖)
-步骤5c: 审查 Agent (Second Pass) 🆕v5.1 → 补充漏检标记 → 重新 merge
-步骤6:  生成审查界面 → review_enhanced.html ⭐（已包含 5c 结果）
-步骤7:  审查+编辑+导出 → delete_segments_edited.json ⭐
-步骤7c: 反馈学习 🆕v5 → 分层更新 prompt + editing_rules
-步骤7d: 评估指标计算 🆕v5.1 → 自动计算 precision/recall → eval_history.json
-步骤8:  剪辑 → 播客名_精剪版_v1.mp3
-步骤8b: 成品静音裁剪 🆕 → 播客名_精剪版_v1_trimmed.mp3 🎉
-步骤9b: 自动质检 🆕v5（可选）→ QA 报告
-步骤10: 后期处理 🆕v5（可选）→ 片头/时间戳/标题
-步骤11: 最终交付 🆕v5 → episode_history + 汇总
-```
-
-**用户交互点**：
-- 步骤-1：首次使用 Onboarding / 日常确认偏好
-- 步骤3后：确认说话人映射
-- 步骤7：在浏览器中审核 AI 建议（已含 5c 审查 Agent 的补充标记）、手动编辑、导出剪辑文件
-- 步骤7c：确认反馈学习的规则调整建议
-- 步骤8后：试听精剪版，如需调整回到步骤7
-
----
 
 ### 阶段 6: AI 质检 → /podcastcut-质检
 
@@ -1694,6 +1697,35 @@ const charOffset = (preFrag.textContent || '').length;
 - **通用检测改进**（LLM 漏检的具体 pattern）→ 更新 `基础剪辑规则/LLM精剪prompt模板.md`，所有用户受益
 - **个人偏好**（激进度、特定类型的保留/删除偏好）→ 写入 `用户偏好/editing_rules/`
 
+### 陷阱 32: silence_merged 段覆盖用户恢复的句子
+
+**现象**：用户在审查页面取消勾选某些被删句子（恢复），但精剪播放器仍跳过这些句子的时间范围。
+
+**根因**：`merge_llm_fine.js` 的 gap-cleanup 生成的 `silence_merged` 段挂在相邻句上（如 S94），其时间范围覆盖整个删除块（如 269.3s-297.12s）。当用户恢复块内的 S97/S98 时，5a 段被禁用，但 silence_merged 段（属于 S94）仍然 enabled，导致 `collectActiveRanges()` 仍包含该范围。
+
+**修复**：在 `getSkipRanges()` 和 `exportDeleteSegments()` 中，合并跳过范围后增加"打孔"步骤——遍历所有非删除句，将其时间范围从跳过范围中挖除。已同步修复模板文件 `templates/review_enhanced.html`。**已修复**。
+
+### 陷阱 33: punch-holes 误杀精剪编辑（陷阱 32 的回归 bug）
+
+**现象**：所有精剪标记（stutter/filler/self_correction）显示划线但播放时不跳过。
+
+**根因**：陷阱 32 的 punch-holes 修复过于激进——遍历所有 kept 句子，将与之重叠的 skip range 全部移除或裁剪。但精剪编辑（词级删除）产生的 skip range 本身就完全落在 kept 句子的时间范围内（它们是句内的子范围），被 punch 逻辑当作"错误覆盖"而整体丢弃。
+
+**修复**：在 punch 循环中增加判断——如果 range 完全包含在 kept 句子内（`r[0] >= ksStart && r[1] <= ksEnd`），说明是精剪编辑，必须保留：
+```javascript
+if (r[0] >= ksStart && r[1] <= ksEnd) {
+  newRanges.push(r);
+  continue;
+}
+```
+同时修复了 `getSkipRanges()` 和 `exportDeleteSegments()` 两处 punch 逻辑。**已修复**。
+
+**追加修复 1**：`silence_merged` 可以跨句挂载（如 S304 的 silence_merged 覆盖 S307 的时间范围）。修复方案：`merge_llm_fine.js` 生成 silence_merged 时记录 `dependsOn` 数组（引起间隙的编辑 feIdx），`collectActiveRanges()` 检查 `dependsOn` 中任一依赖被 disabled 时自动抑制该 silence_merged。
+
+**追加修复 2（陷阱 34）**：punch-holes 完全移除。当 silence_merged 范围与手动编辑/精剪范围相邻（gap ≤ 50ms），sort-and-merge 会将两者合并为一个大范围。punch-holes 发现合并后的范围跨越 kept 句子边界，将其拆分并丢弃内部部分——手动编辑和精剪 skip range 被误杀。`dependsOn` 已在源头（`collectActiveRanges`）处理了 silence_merged 抑制，punch-holes 完全多余且有害。**已移除 `getSkipRanges()` 和 `exportDeleteSegments()` 中的全部 punch-holes 代码。**
+
+**教训**：(1) 派生数据（silence_merged）应在产生时记录依赖关系，而非消费时用启发式推断。(2) 多层后处理（collect → merge → punch）中，合并步骤会破坏原始 range 的边界语义，后续 punch 无法可靠区分"应该保留的句内编辑"和"不应该保留的跨句溢出"。(3) 正确做法：在数据源头（collectActiveRanges）用精确的依赖关系控制哪些范围有效，不要在下游做粗粒度的几何裁剪。
+
 ### 陷阱 22: 句首停顿标记显示在错误位置
 
 **现象**：静音间隙在 fine_analysis 中被分配给上一句（包含 gap 前最后一个词的句子），但用户听到停顿时看的是下一句开头 → 用户认为"没有识别出来"。
@@ -1714,3 +1746,167 @@ const charOffset = (preFrag.textContent || '').length;
 **根本原因**：`fine_analysis.json` 已有精确的 `deleteStart`/`deleteEnd`，但 merge 脚本没有使用，而是试图重新计算。
 
 **修复**：直接使用 `edit.deleteStart`/`edit.deleteEnd`，保留 0.8s 自然停顿后删除超出部分。**已修复**。
+
+### 陷阱 34: ASR 合词导致删除越界（S188 bug）
+
+**现象**：用户只想删除"就是要"（保留后面的"就是一口答应"），但成品中"就是"也被吃掉了。
+
+**根因**：FunASR 把"就是要就是"合并成一个 ASR 词（时间范围 690.69-692.53s）。`mapTextToTimestamps()` 映射删除文本"就是要"时，取了整个词的 `end=692.53`，实际应在 3/5 处（约 691.79s）。
+
+**修复**：
+1. `merge_llm_fine.js` 的 `mapTextToTimestamps()` 增加 partial-word time interpolation（字符比例插值）作为初步估计
+2. 标记 `_refinePoints` 元数据，在 `refine_fine_analysis.js` 中调用 `refine_boundaries.py` 做波形 onset detection 精修
+3. onset detection 用 RMS 能量包络找音节间谷底，比线性插值更准确（潘潘实测 S188: 691.79→691.88s）
+
+**已修复**。
+
+### 陷阱 35: 波形 onset detection 搜索窗口需选最近谷底
+
+**现象**：`refine_boundaries.py` 初版用"最深谷底"策略，但搜索窗口越大越容易跳到远处的句间静音（46dB drop），偏离目标位置。
+
+**修复**：改为"最近合格谷底"策略 — 找所有 ≥3dB 的局部最小值，选距原始时间点最近的。实测 0.10s/0.15s/0.20s 窗口结果稳定收敛。
+
+**已修复**。
+
+### 陷阱 36: 手动编辑也需要 boundary extension
+
+**现象**：用户在审查页手动删除文字后，成品中出现"又删了又没删"的残音。
+
+**根因**：`collectActiveRanges()` 中手动编辑的时间范围没有像自动精剪一样扩展到相邻词边界。ASR 时间戳有 onset 泄露，不扩展就会留下残音头。
+
+**修复**：start 用 200ms 阈值（同自动精剪），end 用 2.0s 阈值（手动删除的填充词后往往有较长死区间隙）。**已修复**。
+
+### 陷阱 37: review_enhanced.html 注入状态覆盖用户编辑
+
+**现象**：用户在审查页修改后刷新页面，所有修改丢失。
+
+**根因**：`generate_review_enhanced.js` 注入的 `_injectedState` 代码在每次页面加载时无条件覆盖 localStorage，即使 localStorage 中有更新的用户编辑。
+
+**修复**：注入代码增加时间戳比较，仅在 localStorage 没有更新状态时注入。**已修复**。
+
+### 陷阱 38: onset detection 方向搜索必须朝删除区域内部
+
+**现象**：onset detection 精修后，部分保留字被吃掉（如"再比如"的"再"丢失 61%）。
+
+**根因**：收集 delete segment boundary points 时用了 `direction="both"`（双向搜索），算法在保留字的声母/弱音节中找到了假谷底，把边界往外推。人类看波形剪辑时，眼睛只往删除区域里面看，找安静间隙。
+
+**规则**：
+- Delete START → `direction: "right"`（往右搜索，进入删除区域）
+- Delete END → `direction: "left"`（往左搜索，进入删除区域）
+- 安全 clamp 兜底：refined START ≥ original, refined END ≤ original
+
+**涉及文件**：`merge_llm_fine.js`（4 处 direction）、`refine_fine_analysis.js`（clamp）。**已修复**。
+
+### 陷阱 39: Filler 删除 START 必须覆盖完整起始能量
+
+**现象**：删除"嗯/呃"后，filler 起始处残留爆破音（truncated onset fragment）。
+
+**根因**：ASR 词级时间戳标注的 filler 起点比实际声学 onset 晚 100-200ms。filler 发声前有声门准备和呼吸，能量在 ASR 标注时间之前就开始上升。deleteStart 使用 ASR 词起点，导致 100-200ms 的 pre-onset 能量残留，听感为爆破音。
+
+**案例**：277句"嗯，" ASR 标注 [1306.73-1307.13]，但能量从 1306.48 就开始上升。deleteStart=1306.73 留下 250ms 的"嗯"攻击音。
+
+**规则**：filler/stutter 类型编辑的 deleteStart 应扩展到 `prevWord.end + 50ms`，覆盖间隙中的 pre-onset 能量。
+
+**涉及文件**：`merge_llm_fine.js`（filler pre-onset 扩展逻辑）。**已修复**。
+
+### 陷阱 40: 大段删除的 onset 可能推过起始保留词
+
+**现象**：onset direction=right 把大段删除的起点推到了保留词中间，导致保留词被截断（如"然后"只剩"然"）。
+
+**根因**：大段删除（如 200s）的起点附近可能有短弱保留词（如"然后" 280ms）。onset 搜索 direction=right 在保留词内部的弱音节中找到谷底，把起点推过了保留词。
+
+**案例**：223句 Seg 34 [921.59-1122.19]，onset 把起点推到 921.73，跨过了"然后"(921.64-921.92)的起始点，导致"然"泄露。
+
+**规则**：对用户手动导出的 segments 做 onset detection 时，需注意大段删除起点前的保留词。如果保留词时长 < 300ms 且 onset refined 值超过保留词起点，应 clamp 或跳过。
+
+### 陷阱 41: MP3 低质量源音频 + PCM 解码偏移
+
+**现象**：剪后音频"蒙了一层雾"（发闷），对剪后音频做样本级 PCM 修复时，mute 位置与实际听感不对齐，反复扩大范围仍然剪不准。
+
+**根因**：
+1. **音源质量**：`audio.mp3` 是 16kHz/24kbps 的 ASR 降采样版本，频率上限仅 8kHz。必须用 `audio_original.*`（通常 44.1-48kHz）。SKILL.md 已有规定但旧项目可能缺失 `audio_original.*`。
+2. **PCM 偏移**：MP3 LAME 编码器在文件头插入 ~1152 samples（~26ms）的 encoder delay。`ffmpeg -f s16le` 输出的原始 PCM 中 sample 0 ≠ 播放时间 0。对剪后 MP3 做 PCM 级别修复时，这个偏移会导致 mute 位置系统性偏移 20-30ms。
+
+**规则**：
+- **禁止对剪后 MP3 做 PCM 样本级修复**。如需精修，应在 cut_audio.py 之前校准 delete_segments（原始音频时间戳无偏移）。
+- 使用 `waveform_trim.py` 在剪辑前做边界校准，而非在剪后做后期修复。
+- 所有剪辑必须使用 `audio_original.*`，不可使用 `audio.mp3`。
+
+**涉及文件**：`waveform_trim.py`（波形校准）、`cut_audio.py`（音源选择）。
+
+---
+
+## 波形引导边界校准（waveform_trim.py）
+
+在 `refine_boundaries.py`（单点谷底检测）之后、`cut_audio.py` 之前的额外精修步骤。对 delete_segments 中的短段（filler/stutter < 2s）做完整能量包络分析，校准 start/end 到真实声学边界。
+
+### 与 refine_boundaries.py 的区别
+| | refine_boundaries.py | waveform_trim.py |
+|---|---|---|
+| 目标 | 单个时间点附近找谷底 | 整个 delete segment 的 start/end |
+| 视角 | 局部：搜索窗口 150ms | 全局：seg 前后各 500ms |
+| 检测 | 谷底（能量最低点） | 阈值穿越（能量降到底噪×2） |
+| 输出 | 精修后的时间点 | 校准后的 delete_segments JSON |
+| 诊断 | 无 | PNG 波形图（每个校准段） |
+
+### 用法
+```bash
+python3 waveform_trim.py <audio_original> <delete_segments.json> [--output out.json] [--diag-dir dir/]
+```
+
+### 集成流程（完整 pipeline）
+```
+merge_llm_fine.js (标记 _refinePoints)
+     ↓
+refine_fine_analysis.js (收集 + 调用 refine_boundaries.py)
+     ↓
+用户审核 → export delete_segments.json
+     ↓
+【新】waveform_trim.py (波形校准 delete boundaries)
+     ↓
+cut_audio.py (用 audio_original.*)
+```
+
+---
+
+## 波形 onset detection 精修（refine_boundaries.py）
+
+在 `merge_llm_fine.js` 和 `cut_audio.py` 之间的精修步骤。用音频能量分析找到真实音节边界，替代不精确的线性字符插值。
+
+### 原理
+中文音节平均 ~200ms，音节间有 10-30ms 的能量谷底（气息转换点）。即使 ASR 把多字合成一词，波形中这些谷底仍然存在。
+
+### 算法
+1. FFmpeg 解码目标区间为 16kHz mono PCM
+2. 5ms 帧 RMS 能量 + 3 帧滑动平均 → 平滑能量包络
+3. 找所有局部最小值（比两侧邻居都低的帧）
+4. 过滤 ≥3dB below local mean 的合格谷底
+5. 选距原始时间点最近的合格谷底（非最深的）
+6. confidence < 0.5 时 fallback 到原始时间点
+
+### 集成流程
+```
+merge_llm_fine.js (标记 _refinePoints)
+     ↓
+refine_fine_analysis.js (收集 + 调用 Python)
+     ↓
+refine_boundaries.py (波形分析 → 精修时间戳)
+     ↓
+fine_analysis.json (更新后)
+     ↓
+generate_review_enhanced.js / cut_audio.py
+```
+
+### 触发条件
+- **Partial-word 插值**：`mapTextToTimestamps()` 发现删除文本只覆盖 ASR 词的一部分
+- **Filler/stutter 紧密连读**：编辑的 deleteStart/deleteEnd 与相邻词间距 <50ms
+
+### 关键参数
+| 参数 | 值 | 说明 |
+|------|-----|------|
+| SAMPLE_RATE | 16000 | 解码采样率（能量分析足够） |
+| FRAME_MS | 5 | 能量帧长度 |
+| SMOOTH_FRAMES | 3 | 滑动平均窗口（15ms） |
+| MIN_DROP_DB | 3.0 | 谷底最小深度 |
+| search_window | 0.10-0.15s | partial: 0.15s, filler: 0.10s |
+| TIGHT_GAP_MS | 50 | filler 紧密连读阈值 |

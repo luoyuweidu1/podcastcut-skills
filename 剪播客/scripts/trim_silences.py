@@ -182,14 +182,38 @@ def main():
         base, ext = os.path.splitext(output_file)
         temp_output = f"{base}_tmp{ext}"
 
+    # 探测源文件编码参数，匹配输出质量
+    probe = subprocess.run(
+        ['ffprobe', '-v', 'error', '-select_streams', 'a:0',
+         '-show_entries', 'stream=bit_rate,sample_rate,channels',
+         '-of', 'default=noprint_wrappers=1', input_file],
+        capture_output=True, text=True
+    )
+    src_bitrate = 128  # default kbps
+    src_sample_rate = None
+    src_channels = None
+    for line in probe.stdout.strip().split('\n'):
+        key, _, val = line.partition('=')
+        if key == 'bit_rate' and val.strip().isdigit():
+            src_bitrate = max(int(val.strip()) // 1000, 128)
+        elif key == 'sample_rate' and val.strip().isdigit():
+            src_sample_rate = int(val.strip())
+        elif key == 'channels' and val.strip().isdigit():
+            src_channels = int(val.strip())
+    out_bitrate = min(src_bitrate, 192)
+
     cmd = [
         'ffmpeg', '-y',
         '-i', input_file,
         '-filter_complex_script', filter_file,
         '-map', '[out]',
-        '-c:a', 'libmp3lame', '-b:a', '64k',
-        temp_output
+        '-c:a', 'libmp3lame', '-b:a', f'{out_bitrate}k',
     ]
+    if src_sample_rate and src_sample_rate > 16000:
+        cmd.extend(['-ar', str(src_sample_rate)])
+    if src_channels and src_channels > 1:
+        cmd.extend(['-ac', str(src_channels)])
+    cmd.append(temp_output)
     result = subprocess.run(cmd, capture_output=True, text=True)
 
     if result.returncode != 0:

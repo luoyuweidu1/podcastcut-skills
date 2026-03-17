@@ -1,0 +1,12 @@
+# 播客元信息
+# 通过播客链接自动填充，或手动设置
+# 用于后期生成简介、标题、时间戳时参考
+
+link: ""                       # 小宇宙或 Apple Podcasts 链接
+platform: ""                   # xiaoyuzhou / apple / other
+name: ""                       # 播客名称
+description: ""                # 播客简介
+theme: []                      # 主题标签，如 ["科技", "创业", "职场"]
+audience: ""                   # 目标听众描述
+style: ""                      # conversational / interview / narrative / panel
+episodes_analyzed: 0           # 已分析的样本期数

@@ -97,6 +97,73 @@ function getNextSentenceStart(sentIdx) {
   return sentences[sentIdx].endTime;
 }
 
+// === RULE 0: Sentence-start filler detection (句首填充词) ===
+// Catches: 对，/ 嗯，/ 啊，/ 呃，/ 额，/ 哦，/ 噢，/ 对呀，/ 哎，/ 诶，/ 唉，/ 欸，
+// These are the #1 edit type (146 in gold) and 100% deterministic
+const FILLER_START_SINGLES = ['嗯', '啊', '呃', '额', '哦', '噢', '哎', '诶', '唉', '欸', '唔'];
+const FILLER_START_MULTI = ['对呀', '对对对', '嗯嗯嗯', '嗯嗯', '对对', '啊对'];
+// "对" alone needs context check
+const FILLER_START_AMBIGUOUS = ['对'];
+
+for (const sent of sentences) {
+  if (deletedSentences.has(sent.idx)) continue;
+  const words = sent.words;
+  if (words.length < 2) continue; // need filler + real content
+
+  const w0 = words[0].text.replace(/[，。！？、：；]/g, '');
+  if (!w0) continue;
+
+  let fillerWordCount = 0;
+  let fillerText = '';
+  let isAmbiguous = false;
+
+  // Check multi-word fillers first (longer match first)
+  const first2 = words.length >= 2 ? (w0 + words[1].text.replace(/[，。！？、：；]/g, '')) : '';
+  const first3 = words.length >= 3 ? (first2 + words[2].text.replace(/[，。！？、：；]/g, '')) : '';
+
+  if (FILLER_START_MULTI.some(f => first3 === f) && words.length > 3) {
+    fillerWordCount = 3;
+    fillerText = words.slice(0, 3).map(w => w.text).join('');
+  } else if (FILLER_START_MULTI.some(f => first2 === f) && words.length > 2) {
+    fillerWordCount = 2;
+    fillerText = words.slice(0, 2).map(w => w.text).join('');
+  } else if (FILLER_START_SINGLES.includes(w0)) {
+    fillerWordCount = 1;
+    fillerText = words[0].text;
+  } else if (FILLER_START_AMBIGUOUS.includes(w0)) {
+    fillerWordCount = 1;
+    fillerText = words[0].text;
+    isAmbiguous = true;
+  }
+
+  if (fillerWordCount === 0) continue;
+
+  // Check there's real content after the filler
+  const remainingWords = words.slice(fillerWordCount);
+  const remainingText = remainingWords.map(w => w.text.replace(/[，。！？、：；]/g, '')).join('');
+  if (remainingText.length < 2) continue; // too short to be real content
+
+  const deleteWords = words.slice(0, fillerWordCount);
+  const globalStart = sent.wordRange[0];
+  const globalEnd = sent.wordRange[0] + fillerWordCount - 1;
+
+  edits.push({
+    idx: editIdx++,
+    sentenceIdx: sent.idx,
+    type: 'filler_start',
+    rule: '2-填充词(句首)',
+    wordRange: [globalStart, globalEnd],
+    deleteText: fillerText,
+    keepText: '',
+    deleteStart: parseFloat(deleteWords[0].start.toFixed(2)),
+    deleteEnd: parseFloat(deleteWords[deleteWords.length - 1].end.toFixed(2)),
+    reason: `句首填充词"${w0}"，后接实质内容`,
+    needsReview: isAmbiguous,
+    reviewHint: isAmbiguous ? `句首"对"可能是回应也可能是口头禅，请根据上下文判断` : undefined,
+    confidence: isAmbiguous ? 0.8 : 0.95
+  });
+}
+
 // === RULE: Silence detection (>0.8s) ===
 for (const gap of gaps) {
   const duration = gap.end - gap.start;
@@ -170,27 +237,30 @@ for (const sent of sentences) {
         }
       }
 
-      const wordStartIdx = sent.wordRange[0] + i;
-      const wordEndIdx = sent.wordRange[0] + endRepeat - 1; // delete all but last
-
-      const edit = {
-        idx: editIdx++,
-        sentenceIdx: sent.idx,
-        type: 'stutter',
-        rule: '5-卡顿词',
-        wordRange: [wordStartIdx, wordEndIdx],
-        deleteText: curr.repeat(endRepeat - i),
-        keepText: curr,
-        deleteStart: parseFloat(words[i].start.toFixed(2)),
-        deleteEnd: parseFloat(words[endRepeat - 1].end.toFixed(2)),
-        reason: `"${curr}"连续重复${repeatCount}次，保留最后一次`
-      };
-      if (needsReview) {
-        edit.needsReview = true;
-        edit.reviewHint = reviewHint;
-        edit.confidence = 0.7;
+      // Create one edit PER repeated word (not one for all).
+      // This lets users individually toggle each repeat in the review page.
+      // Delete words[i] through words[endRepeat-1], keep words[endRepeat] (last occurrence).
+      for (let j = i; j < endRepeat; j++) {
+        const globalIdx = sent.wordRange[0] + j;
+        const edit = {
+          idx: editIdx++,
+          sentenceIdx: sent.idx,
+          type: 'stutter',
+          rule: '5-卡顿词',
+          wordRange: [globalIdx, globalIdx],
+          deleteText: words[j].text,
+          keepText: curr,
+          deleteStart: parseFloat(words[j].start.toFixed(2)),
+          deleteEnd: parseFloat(words[j].end.toFixed(2)),
+          reason: `"${curr}"连续重复${repeatCount}次，保留最后一次`
+        };
+        if (needsReview) {
+          edit.needsReview = true;
+          edit.reviewHint = reviewHint;
+          edit.confidence = 0.7;
+        }
+        edits.push(edit);
       }
-      edits.push(edit);
 
       i = endRepeat;
     }
@@ -240,6 +310,226 @@ for (const sent of sentences) {
         confidence: 0.8
       });
     }
+  }
+}
+
+// === RULE 3: Mid-sentence filler detection (句中孤立填充词) ===
+// Catches: 啊/呃/额/对/哦 appearing mid-sentence as hesitation fillers
+// Based on 2-填充词检测.md rules
+const MID_FILLERS = new Set(['啊', '呃', '额', '对', '哦']);
+
+for (const sent of sentences) {
+  if (deletedSentences.has(sent.idx)) continue;
+  const words = sent.words;
+  if (words.length < 3) continue; // need prev + filler + next
+
+  for (let i = 1; i < words.length - 1; i++) {
+    const w = words[i].text.replace(/[，。！？、：；]/g, '');
+    if (!MID_FILLERS.has(w)) continue;
+
+    // Skip if word is too long (>0.5s = emphasis/exclamation)
+    const duration = words[i].end - words[i].start;
+    if (duration > 0.5) continue;
+
+    // Skip if already covered by another edit
+    const alreadyCovered = edits.some(e =>
+      e.sentenceIdx === sent.idx &&
+      Math.abs(e.deleteStart - words[i].start) < 0.1
+    );
+    if (alreadyCovered) continue;
+
+    const globalIdx = sent.wordRange[0] + i;
+
+    // "对" needs extra care: skip if sentence is very short (likely a response "对，对")
+    if (w === '对') {
+      const realWords = words.filter(wd => wd.text.replace(/[，。！？、：；]/g, '').length > 0);
+      if (realWords.length <= 3) continue; // short sentence, "对" is likely a response
+    }
+
+    edits.push({
+      idx: editIdx++,
+      sentenceIdx: sent.idx,
+      type: 'stutter',
+      rule: '2-填充词(句中)',
+      wordRange: [globalIdx, globalIdx],
+      deleteText: words[i].text,
+      keepText: '',
+      deleteStart: parseFloat(words[i].start.toFixed(2)),
+      deleteEnd: parseFloat(words[i].end.toFixed(2)),
+      reason: `句中填充词"${w}"，前后有实质内容，犹豫/换气`,
+      needsReview: w === '对', // "对" more ambiguous than 啊/呃
+      reviewHint: w === '对' ? '句中口头禅"对"，请确认不是对话回应' : undefined,
+      confidence: w === '对' ? 0.7 : 0.9
+    });
+  }
+}
+
+// === RULE 4: Phrase-level repeat detection (短语级句内重复) ===
+// Catches: "可以去可以去"、"放到台面来说，放到台面上来说"
+// Based on 6-句内重复检测.md
+//
+// Strategy: catch broadly (≥3 chars), use confidence/needsReview to let LLM decide.
+// Only hard-filter pure function-word phrases (e.g. "的一个") that are always structural.
+const FUNCTION_WORDS_ONLY = /^[的了在是有一个这那些于与和为也到上下中不么什]+$/;
+
+for (const sent of sentences) {
+  if (deletedSentences.has(sent.idx)) continue;
+  const text = sent.text.replace(/[，。！？、：；""''（）\s]/g, '');
+  if (text.length < 8) continue; // need at least 4+4
+
+  let bestMatch = null;
+
+  // Find longest repeating phrase (≥3 chars, search from long to short)
+  for (let len = Math.min(Math.floor(text.length / 2), 20); len >= 3; len--) {
+    for (let start = 0; start <= text.length - len * 2; start++) {
+      const phrase = text.slice(start, start + len);
+
+      // Skip if phrase is all same char (already caught by word-level stutter)
+      if (new Set(phrase).size === 1) continue;
+
+      // Hard filter: pure function-word phrases are always structural, not repeats
+      if (FUNCTION_WORDS_ONLY.test(phrase)) continue;
+
+      const nextPos = text.indexOf(phrase, start + len);
+      if (nextPos < 0) continue;
+
+      // Gap between two occurrences should be small (≤ phrase length * 2)
+      const gap = nextPos - start - len;
+      if (gap > len * 2) continue;
+
+      // Skip if this is a natural pattern (AABB, rhetorical repetition)
+      // e.g. "越来越" is not a stutter
+      if (len <= 3 && gap === 0) continue; // "越来越来" etc handled by word rules
+
+      if (!bestMatch || len > bestMatch.len) {
+        bestMatch = { phrase, start, nextPos, len, gap };
+      }
+    }
+    if (bestMatch) break; // found longest match
+  }
+
+  if (!bestMatch) continue;
+
+  // Map character positions back to word positions
+  // We need to find the words that correspond to the first occurrence
+  const origText = sent.text;
+  let charCount = 0;
+  const cleanToOrig = []; // maps clean-text index to original-text index
+  for (let j = 0; j < origText.length; j++) {
+    const c = origText[j];
+    if (!/[，。！？、：；""''（）\s]/.test(c)) {
+      cleanToOrig[charCount] = j;
+      charCount++;
+    }
+  }
+
+  // Find word indices for the delete range (first occurrence + gap)
+  const deleteOrigStart = cleanToOrig[bestMatch.start] || 0;
+  const deleteOrigEnd = cleanToOrig[bestMatch.nextPos - 1] || origText.length;
+
+  // Find which words fall in the delete range
+  let deleteWordStart = -1, deleteWordEnd = -1;
+  let cumLen = 0;
+  for (let wi = 0; wi < sent.words.length; wi++) {
+    const wText = sent.words[wi].text;
+    const wOrigStart = origText.indexOf(wText, cumLen);
+    cumLen = wOrigStart + wText.length;
+
+    if (wOrigStart <= deleteOrigStart && deleteWordStart < 0) deleteWordStart = wi;
+    if (wOrigStart <= deleteOrigEnd) deleteWordEnd = wi;
+  }
+
+  if (deleteWordStart < 0 || deleteWordEnd < 0 || deleteWordStart >= sent.words.length) continue;
+  // Don't delete if it covers the whole sentence
+  if (deleteWordStart === 0 && deleteWordEnd >= sent.words.length - 1) continue;
+
+  // Check overlap with existing edits
+  const overlapExists = edits.some(e =>
+    e.sentenceIdx === sent.idx && e.type !== 'silence' &&
+    e.deleteStart < sent.words[deleteWordEnd].end &&
+    e.deleteEnd > sent.words[deleteWordStart].start
+  );
+  if (overlapExists) continue;
+
+  const deleteWords = sent.words.slice(deleteWordStart, deleteWordEnd + 1);
+  const deleteTextFull = deleteWords.map(w => w.text).join('');
+
+  // Confidence heuristics:
+  // - Short phrase (3-4 chars) or large gap → more likely natural → lower confidence
+  // - Long phrase (≥5 chars) with small gap → almost certainly oral stutter → higher confidence
+  // - Phrase starting with structural particle (的/了) → likely structural → needsReview
+  const isShort = bestMatch.len <= 4;
+  const isLargeGap = bestMatch.gap > bestMatch.len;
+  const startsWithParticle = ['的', '了'].includes(bestMatch.phrase[0]);
+  const isHighConf = bestMatch.len >= 5 && bestMatch.gap <= 3 && !startsWithParticle;
+
+  edits.push({
+    idx: editIdx++,
+    sentenceIdx: sent.idx,
+    type: 'in_sentence_repeat',
+    rule: '6-句内重复(短语级)',
+    wordRange: [sent.wordRange[0] + deleteWordStart, sent.wordRange[0] + deleteWordEnd],
+    deleteText: deleteTextFull,
+    keepText: bestMatch.phrase,
+    deleteStart: parseFloat(deleteWords[0].start.toFixed(2)),
+    deleteEnd: parseFloat(deleteWords[deleteWords.length - 1].end.toFixed(2)),
+    reason: `短语"${bestMatch.phrase}"重复，删第一次+间隔(${bestMatch.gap}字gap)`,
+    needsReview: !isHighConf,
+    reviewHint: isHighConf ? undefined : `短语"${bestMatch.phrase}"出现两次(${bestMatch.gap}字gap)，可能是口误重复也可能是并列/强调结构，请根据语境判断`,
+    confidence: isHighConf ? 0.9 : (isShort || startsWithParticle ? 0.5 : 0.7)
+  });
+}
+
+// === RULE 5: Consecutive filler detection (连续填充词) ===
+// Catches: "嗯啊"、"呃啊"、"嗯嗯嗯"、"这个这个这个" (≥3 consecutive filler words)
+const CONSEC_FILLERS = new Set(['嗯', '啊', '呃', '额', '哦', '噢', '唔', '这个', '就是', '然后']);
+
+for (const sent of sentences) {
+  if (deletedSentences.has(sent.idx)) continue;
+  const words = sent.words;
+  if (words.length < 2) continue;
+
+  for (let i = 0; i < words.length - 1; i++) {
+    const w1 = words[i].text.replace(/[，。！？、：；]/g, '');
+    const w2 = words[i + 1].text.replace(/[，。！？、：；]/g, '');
+
+    // Both must be filler words and different (same = handled by stutter rule)
+    if (!CONSEC_FILLERS.has(w1) || !CONSEC_FILLERS.has(w2)) continue;
+    if (w1 === w2) continue; // handled by exact-match stutter
+
+    // Extend the run
+    let runEnd = i + 1;
+    while (runEnd + 1 < words.length) {
+      const wn = words[runEnd + 1].text.replace(/[，。！？、：；]/g, '');
+      if (CONSEC_FILLERS.has(wn)) { runEnd++; } else break;
+    }
+
+    // Check no overlap with existing edits
+    const overlapExists = edits.some(e =>
+      e.sentenceIdx === sent.idx && e.type !== 'silence' &&
+      e.deleteStart < words[runEnd].end && e.deleteEnd > words[i].start
+    );
+    if (overlapExists) { i = runEnd; continue; }
+
+    const deleteWords = words.slice(i, runEnd + 1);
+    const deleteText = deleteWords.map(w => w.text).join('');
+
+    edits.push({
+      idx: editIdx++,
+      sentenceIdx: sent.idx,
+      type: 'consecutive_filler',
+      rule: '7-连续填充词',
+      wordRange: [sent.wordRange[0] + i, sent.wordRange[0] + runEnd],
+      deleteText,
+      keepText: '',
+      deleteStart: parseFloat(deleteWords[0].start.toFixed(2)),
+      deleteEnd: parseFloat(deleteWords[deleteWords.length - 1].end.toFixed(2)),
+      reason: `连续填充词"${deleteText}"`,
+      needsReview: false,
+      confidence: 0.95
+    });
+
+    i = runEnd; // skip past this run
   }
 }
 
@@ -316,6 +606,42 @@ for (const sent of sentences) {
         reason: `重启信号"${words.slice(m, m + markerLen).map(w => w.text).join('')}"前后文本相似(${(similarity * 100).toFixed(0)}%)，删第一遍+信号词`
       });
       break; // one restart per sentence
+    }
+  }
+}
+
+// === Boundary extension for non-silence edits ===
+// ASR timestamps have onset leaking (actual sound starts before reported .start)
+// and there's often a gap between filler.end and next_word.start.
+// Extend to [prev_word.end, next_word.start] for clean cuts without plosives.
+// See MEMORY.md: "填充词删除范围必须扩展到相邻词边界"
+const MAX_EXTEND_GAP = 0.20; // only extend if gap < 200ms (avoid eating real pauses)
+
+for (const e of edits) {
+  if (e.type === 'silence') continue; // silence boundaries are already precise
+  if (!e.wordRange) continue;
+
+  const sent = sentences.find(s => s.idx === e.sentenceIdx);
+  if (!sent || !sent.words) continue;
+
+  const localStart = e.wordRange[0] - sent.wordRange[0];
+  const localEnd = e.wordRange[1] - sent.wordRange[0];
+
+  // Extend start: snap to prev word's end (if close enough)
+  if (localStart > 0) {
+    const prevWord = sent.words[localStart - 1];
+    const gap = e.deleteStart - prevWord.end;
+    if (gap >= 0 && gap < MAX_EXTEND_GAP) {
+      e.deleteStart = parseFloat(prevWord.end.toFixed(2));
+    }
+  }
+
+  // Extend end: snap to next word's start (if close enough)
+  if (localEnd < sent.words.length - 1) {
+    const nextWord = sent.words[localEnd + 1];
+    const gap = nextWord.start - e.deleteEnd;
+    if (gap >= 0 && gap < MAX_EXTEND_GAP) {
+      e.deleteEnd = parseFloat(nextWord.start.toFixed(2));
     }
   }
 }

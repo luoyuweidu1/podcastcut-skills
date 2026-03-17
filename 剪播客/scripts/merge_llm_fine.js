@@ -166,6 +166,10 @@ if (fs.existsSync(llmPath)) {
       deleteEnd: result.de,
       reason: edit.reason || ''
     };
+    // 传递 onset detection 精修元数据
+    if (result._refinePoints) {
+      feEntry._refinePoints = result._refinePoints;
+    }
 
     // === KEEPTEXT TRIMMING ===
     // For stutter edits, deleteText often includes the kept portion
@@ -695,6 +699,76 @@ const finalTimeSaved = merged.reduce((sum, e) => {
   return sum + (de - ds);
 }, 0);
 
+// ── 添加 filler/stutter 边界精修点 ──
+// 当编辑的 deleteStart/deleteEnd 与相邻词的时间间距很小（<50ms），
+// 说明是紧密连读，ASR 时间戳可能不够精确，标记为需 onset detection 精修。
+const TIGHT_GAP_MS = 50;  // 紧密连读阈值
+let fillerRefineCount = 0;
+let fillerPreOnsetCount = 0;
+
+const speechWords = allWords.filter(w => !w.isGap && !w.isSpeakerLabel && w.start != null);
+for (const edit of merged) {
+  if (edit.type === 'silence' || edit.type === 'silence_merged') continue;
+  let ds = edit.deleteStart ?? edit.ds ?? 0;
+  const de = edit.deleteEnd ?? edit.de ?? 0;
+  if (!ds || !de) continue;
+
+  // 只对 filler、stutter、self_correction 类型添加精修
+  const needsRefine = ['filler', 'stutter', 'self_correction', 'self_correction_rules',
+                       'single_filler', 'residual_sentence'].includes(edit.type)
+                      || (edit.rule && edit.rule.includes('语气词'));
+  if (!needsRefine) continue;
+
+  if (!edit._refinePoints) edit._refinePoints = [];
+
+  // 查找 deleteStart 前面最近的词
+  let prevWord = null;
+  let nextWord = null;
+  for (const w of speechWords) {
+    if (w.end <= ds + 0.001) prevWord = w;
+    if (w.start >= de - 0.001 && !nextWord) nextWord = w;
+  }
+
+  // ── 陷阱 39: filler pre-onset 扩展 ──
+  // ASR 词起始时间不精确，filler 声学 onset 可能比词时间戳早 100-200ms
+  // 扩展 deleteStart 到 prevWord.end + 50ms，覆盖间隙中的呼吸/声门准备
+  if (prevWord && (ds - prevWord.end) > 0.05) {
+    const extendedStart = parseFloat((prevWord.end + 0.05).toFixed(4));
+    if (extendedStart < ds) {
+      edit.ds = extendedStart;
+      if (edit.deleteStart != null) edit.deleteStart = extendedStart;
+      ds = extendedStart;
+      fillerPreOnsetCount++;
+    }
+  }
+
+  // deleteStart 与前一个词的间距
+  if (prevWord && (ds - prevWord.end) * 1000 < TIGHT_GAP_MS) {
+    // 已有 partial_start 精修点则不重复添加
+    if (!edit._refinePoints.some(p => p.type === 'partial_start')) {
+      edit._refinePoints.push({ time: ds, type: 'filler_start', searchWindow: 0.10, direction: 'right' });
+      fillerRefineCount++;
+    }
+  }
+
+  // deleteEnd 与后一个词的间距
+  if (nextWord && (nextWord.start - de) * 1000 < TIGHT_GAP_MS) {
+    if (!edit._refinePoints.some(p => p.type === 'partial_end')) {
+      edit._refinePoints.push({ time: de, type: 'filler_end', searchWindow: 0.10, direction: 'left' });
+      fillerRefineCount++;
+    }
+  }
+
+  // 清理空数组
+  if (edit._refinePoints.length === 0) delete edit._refinePoints;
+}
+if (fillerPreOnsetCount > 0) {
+  console.log(`🔊 扩展 ${fillerPreOnsetCount} 个 filler/stutter deleteStart（pre-onset 覆盖）`);
+}
+if (fillerRefineCount > 0) {
+  console.log(`🔍 标记 ${fillerRefineCount} 个 filler/stutter 紧密边界需 onset detection 精修`);
+}
+
 const result = {
   edits: merged,
   summary: {
@@ -760,9 +834,48 @@ function mapTextToTimestamps(sent, deleteText) {
   const startWord = words[startWordIdx];
   const endWord = words[endWordIdx];
 
-  return {
-    ds: parseFloat(startWord.start.toFixed(2)),
-    de: parseFloat(endWord.end.toFixed(2)),
+  // --- Partial-word time interpolation ---
+  // When ASR merges adjacent sounds into one word (e.g. "就是要就是" as a single word),
+  // the delete text may only cover a prefix/suffix of the word. Using the full word's
+  // time range would delete the uncovered portion too (S188 bug: deleting "就是要" from
+  // combined word "就是要就是" ate the kept "就是").
+  // Fix: interpolate time proportionally for partial coverage.
+  const puncRe = /[，。！？、：；""''（）\s]/g;
+
+  let ds = parseFloat(startWord.start.toFixed(2));
+  const refinePoints = [];  // 收集需要 onset detection 精修的时间点
+
+  // Check if delete text starts mid-word
+  const startWordClean = startWord.text.replace(puncRe, '');
+  const charsBeforeInStartWord = matchIdx - (charToWord.indexOf(startWordIdx));
+  if (charsBeforeInStartWord > 0 && startWordClean.length > 0) {
+    const ratio = charsBeforeInStartWord / startWordClean.length;
+    ds = parseFloat((startWord.start + (startWord.end - startWord.start) * ratio).toFixed(2));
+    refinePoints.push({ time: ds, type: 'partial_start', searchWindow: 0.15, direction: 'right' });
+    console.log(`      🔪 Partial-word interpolation (start): "${cleanDelete}" starts at char ${charsBeforeInStartWord}/${startWordClean.length} of ASR word "${startWordClean}" → ds=${ds} [needs refine]`);
+  }
+
+  let de = parseFloat(endWord.end.toFixed(2));
+  // Check if delete text ends mid-word
+  const endWordClean = endWord.text.replace(puncRe, '');
+  // Count how many chars of the end word are covered by the delete text
+  const endWordFirstCharPos = charToWord.indexOf(endWordIdx);
+  const coveredCharsInEndWord = (endCharIdx - endWordFirstCharPos) + 1;
+  if (coveredCharsInEndWord < endWordClean.length && endWordClean.length > 0) {
+    const origDe = de;
+    const ratio = coveredCharsInEndWord / endWordClean.length;
+    de = parseFloat((endWord.start + (endWord.end - endWord.start) * ratio).toFixed(2));
+    refinePoints.push({ time: de, type: 'partial_end', searchWindow: 0.15, direction: 'left' });
+    console.log(`      🔪 Partial-word interpolation (end): "${cleanDelete}" covers ${coveredCharsInEndWord}/${endWordClean.length} chars of ASR word "${endWordClean}" → de ${origDe}→${de} [needs refine]`);
+  }
+
+  const result = {
+    ds: ds,
+    de: de,
     wordRange: [sent.wordRange[0] + startWordIdx, sent.wordRange[0] + endWordIdx]
   };
+  if (refinePoints.length > 0) {
+    result._refinePoints = refinePoints;
+  }
+  return result;
 }

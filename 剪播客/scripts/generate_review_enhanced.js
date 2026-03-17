@@ -224,6 +224,11 @@ for (let i = 0; i < sentences.length; i++) {
       }
     }
 
+    // Pass through dependsOn for silence_merged dependency tracking
+    if (fe.dependsOn) {
+      feEntry.dependsOn = fe.dependsOn;
+    }
+
     return feEntry;
   }
 

@@ -1,0 +1,628 @@
+{
+  "edits": [
+    {
+      "s": 1,
+      "text": "对",
+      "type": "filler_start",
+      "reason": "Sentence-start filler response",
+      "beforeText": "对，没事，我觉得",
+      "afterText": "没事，我觉得"
+    },
+    {
+      "s": 2,
+      "text": "但但",
+      "type": "stutter",
+      "reason": "Word stutter at sentence start",
+      "beforeText": "但但我先我先",
+      "afterText": "但我先"
+    },
+    {
+      "s": 2,
+      "text": "我先我先",
+      "type": "in_sentence_repeat",
+      "reason": "Phrase repetition - keep one",
+      "beforeText": "但我先我先大概",
+      "afterText": "但我先大概"
+    },
+    {
+      "s": 3,
+      "text": "对",
+      "type": "filler_start",
+      "reason": "Sentence-start filler",
+      "beforeText": "对，然后但最后最后",
+      "afterText": "然后但最后最后"
+    },
+    {
+      "s": 3,
+      "text": "这是一个但这但这个",
+      "type": "self_correction",
+      "reason": "Self-correction with false restart",
+      "beforeText": "当上产品经理啊，这是一个但这但这个是",
+      "afterText": "当上产品经理啊，这个是"
+    },
+    {
+      "s": 4,
+      "text": "就然后",
+      "type": "self_correction",
+      "reason": "Incomplete starter particle",
+      "beforeText": "就然后故事就来到了",
+      "afterText": "故事就来到了"
+    },
+    {
+      "s": 4,
+      "text": "呃",
+      "type": "filler_start",
+      "reason": "In-sentence filler",
+      "beforeText": "工作，然后呃这也是",
+      "afterText": "工作，然后这也是"
+    },
+    {
+      "s": 5,
+      "text": "那个HR特别特特特别",
+      "type": "in_sentence_repeat",
+      "reason": "Excessive 4x '特' - keep normal form",
+      "beforeText": "那个HR特别特特特别干脆",
+      "afterText": "那个HR特别干脆"
+    },
+    {
+      "s": 6,
+      "text": "但是",
+      "type": "filler_start",
+      "reason": "Conjunction at start of complex sentence",
+      "beforeText": "但是我还是那种",
+      "afterText": "我还是那种"
+    },
+    {
+      "s": 7,
+      "text": "啊",
+      "type": "filler_start",
+      "reason": "In-sentence filler after verb",
+      "beforeText": "后来啊后来我那个",
+      "afterText": "后来我那个"
+    },
+    {
+      "s": 7,
+      "text": "后来我那个老板跟我说，他说看我这个 ppt 一看就知道我狗屁不懂，但是这是他见过做的最认真的 ppt",
+      "type": "residual_sentence",
+      "reason": "Sentence contains double negation and informal structure - fragment after deletion",
+      "beforeText": "后来啊后来我那个老板跟我说",
+      "afterText": "后来我那个老板跟我说"
+    },
+    {
+      "s": 8,
+      "text": "一有一有",
+      "type": "stutter",
+      "reason": "Word stutter - keep one",
+      "beforeText": "有一有有一部分",
+      "afterText": "有一部分"
+    },
+    {
+      "s": 9,
+      "text": "他很需、他很需要",
+      "type": "in_sentence_repeat",
+      "reason": "Phrase repetition with self-correction",
+      "beforeText": "他很需、他很需要、很认真",
+      "afterText": "他很需要、很认真"
+    },
+    {
+      "s": 10,
+      "text": "他就跟我，他就跟我",
+      "type": "in_sentence_repeat",
+      "reason": "Complete phrase repeat - keep one",
+      "beforeText": "他就跟我，他就跟我一通说",
+      "afterText": "他就跟我一通说"
+    },
+    {
+      "s": 11,
+      "text": "他就因为他当他当时",
+      "type": "stutter",
+      "reason": "Double pronoun start with false restart",
+      "beforeText": "他就因为他当他当时帮我",
+      "afterText": "他当时帮我"
+    },
+    {
+      "s": 12,
+      "text": "然后就然后",
+      "type": "in_sentence_repeat",
+      "reason": "Partial phrase repeat",
+      "beforeText": "然后就然后又表示",
+      "afterText": "然后又表示"
+    },
+    {
+      "s": 13,
+      "text": "我我",
+      "type": "stutter",
+      "reason": "Pronoun stutter",
+      "beforeText": "就是我我也是",
+      "afterText": "就是我也是"
+    },
+    {
+      "s": 14,
+      "text": "又又又",
+      "type": "in_sentence_repeat",
+      "reason": "Triple repeat of '又' - excessive",
+      "beforeText": "21年的时候呢，又是双减，然后我那个公司又又又快不行了",
+      "afterText": "21年的时候呢，又是双减，然后我那个公司又快不行了"
+    },
+    {
+      "s": 15,
+      "text": "有一个很很很很很",
+      "type": "in_sentence_repeat",
+      "reason": "Excessive 5x '很' - keep one",
+      "beforeText": "就有一个奇很很很很很有意思",
+      "afterText": "就有一个奇有意思"
+    },
+    {
+      "s": 16,
+      "text": "有有有",
+      "type": "stutter",
+      "reason": "Triple word stutter - keep one",
+      "beforeText": "我有有有一个老板",
+      "afterText": "我有一个老板"
+    },
+    {
+      "s": 18,
+      "text": "我就我",
+      "type": "stutter",
+      "reason": "Pronoun repeat with connector",
+      "beforeText": "转头我就提离职了，我就我相当于",
+      "afterText": "转头我就提离职了，我相当于"
+    },
+    {
+      "s": 19,
+      "text": "很很",
+      "type": "in_sentence_repeat",
+      "reason": "Double intensifier",
+      "beforeText": "这个行业又是很很吃人",
+      "afterText": "这个行业又是很吃人"
+    },
+    {
+      "s": 19,
+      "text": "就就",
+      "type": "stutter",
+      "reason": "Connector stutter",
+      "beforeText": "就不行了。",
+      "afterText": "不行了。"
+    },
+    {
+      "s": 21,
+      "text": "他他",
+      "type": "stutter",
+      "reason": "Pronoun stutter",
+      "beforeText": "他要他他我那时候",
+      "afterText": "他要我那时候"
+    },
+    {
+      "s": 22,
+      "text": "很、很、很",
+      "type": "consecutive_filler",
+      "reason": "Triple intensifier with punctuation - stylistic over-emphasis",
+      "beforeText": "这事很、很、很吓人",
+      "afterText": "这事很吓人"
+    },
+    {
+      "s": 22,
+      "text": "房房贷",
+      "type": "stutter",
+      "reason": "Compound word with stutter on first character",
+      "beforeText": "因为我那时候已经买房了，房房贷",
+      "afterText": "因为我那时候已经买房了，房贷"
+    },
+    {
+      "s": 23,
+      "text": "就是你你",
+      "type": "stutter",
+      "reason": "Pronoun stutter - keep one",
+      "beforeText": "就是你你现在给我",
+      "afterText": "就是你现在给我"
+    },
+    {
+      "s": 24,
+      "text": "25年年24年年",
+      "type": "stutter",
+      "reason": "Compound number stutter - appears to be production error",
+      "beforeText": "所以呢，25年年24年年底我就开始",
+      "afterText": "所以呢，24年年底我就开始"
+    },
+    {
+      "s": 24,
+      "text": "25年年初",
+      "type": "self_correction",
+      "reason": "Correction of year reference - keep more complete version",
+      "beforeText": "25年年底我就开始做自媒体，25年年初跑通",
+      "afterText": "24年年底我就开始做自媒体，25年年初跑通"
+    },
+    {
+      "s": 25,
+      "text": "但是然后",
+      "type": "self_correction",
+      "reason": "Connector redundancy",
+      "beforeText": "对，然后但是然后包括到此刻",
+      "afterText": "对，然后包括到此刻"
+    },
+    {
+      "s": 25,
+      "text": "在创造",
+      "type": "residual_sentence",
+      "reason": "Fragment - requires full context (missing object clarification)",
+      "beforeText": "如果我不是在创造，我可能",
+      "afterText": "我可能"
+    },
+    {
+      "s": 26,
+      "text": "所以呢",
+      "type": "filler_start",
+      "reason": "Opening filler particle sequence",
+      "beforeText": "所以呢，早期我是觉得呃",
+      "afterText": "早期我是觉得呃"
+    },
+    {
+      "s": 26,
+      "text": "呃",
+      "type": "consecutive_filler",
+      "reason": "In-sentence filler",
+      "beforeText": "我是觉得呃，解决问题",
+      "afterText": "我是觉得，解决问题"
+    },
+    {
+      "s": 28,
+      "text": "就是",
+      "type": "filler_start",
+      "reason": "Opening particle phrase",
+      "beforeText": "就是我们刚好也彼此认识",
+      "afterText": "我们刚好也彼此认识"
+    },
+    {
+      "s": 29,
+      "text": "呃",
+      "type": "filler_start",
+      "reason": "In-sentence filler",
+      "beforeText": "有几个呃词嘛",
+      "afterText": "有几个词嘛"
+    },
+    {
+      "s": 30,
+      "text": "然后",
+      "type": "filler_start",
+      "reason": "Opening filler at start of thought",
+      "beforeText": "然后。",
+      "afterText": "。"
+    },
+    {
+      "s": 30,
+      "text": "呃呃",
+      "type": "consecutive_filler",
+      "reason": "Double filler",
+      "beforeText": "点都是嗯，就是刚才让我听完之后也是很感动，然后。",
+      "afterText": "点都是嗯，就是刚才让我听完之后也是很感动。"
+    },
+    {
+      "s": 30,
+      "text": "嗯",
+      "type": "filler_start",
+      "reason": "In-sentence filler in explanation",
+      "beforeText": "也是很感动，然后。",
+      "afterText": "也是很感动。"
+    },
+    {
+      "s": 30,
+      "text": "很有亮光的几个点，呃呃，后面你说的包括",
+      "type": "in_sentence_repeat",
+      "reason": "Double filler 'ah ah' between clauses",
+      "beforeText": "很有亮光的几个点，呃呃，后面",
+      "afterText": "很有亮光的几个点，后面"
+    },
+    {
+      "s": 30,
+      "text": "嗯",
+      "type": "in_sentence_repeat",
+      "reason": "In-sentence filler",
+      "beforeText": "大于努力，那这些可能嗯也是",
+      "afterText": "大于努力，那这些可能也是"
+    },
+    {
+      "s": 30,
+      "text": "就就",
+      "type": "stutter",
+      "reason": "Connector stutter",
+      "beforeText": "我觉得这几个词和这些印象就就能够去",
+      "afterText": "我觉得这几个词和这些印象就能够去"
+    },
+    {
+      "s": 31,
+      "text": "然后呃",
+      "type": "consecutive_filler",
+      "reason": "Opening filler sequence",
+      "beforeText": "然后呃，真的还是",
+      "afterText": "真的还是"
+    },
+    {
+      "s": 32,
+      "text": "那那那",
+      "type": "stutter",
+      "reason": "Triple word stutter - keep one",
+      "beforeText": "那那那在这个过程",
+      "afterText": "那在这个过程"
+    },
+    {
+      "s": 33,
+      "text": "呃",
+      "type": "filler_start",
+      "reason": "In-sentence filler",
+      "beforeText": "一个比较呃对于创造",
+      "afterText": "一个比较对于创造"
+    },
+    {
+      "s": 34,
+      "text": "呃",
+      "type": "filler_start",
+      "reason": "In-sentence filler",
+      "beforeText": "喜欢的事情。",
+      "afterText": "喜欢的事情。"
+    },
+    {
+      "s": 35,
+      "text": "对我",
+      "type": "filler_start",
+      "reason": "Opening filler response",
+      "beforeText": "对我，首先我是",
+      "afterText": "首先我是"
+    },
+    {
+      "s": 36,
+      "text": "非常非常",
+      "type": "in_sentence_repeat",
+      "reason": "Double intensifier",
+      "beforeText": "是一个非常非常超级",
+      "afterText": "是一个非常超级"
+    },
+    {
+      "s": 36,
+      "text": "我我",
+      "type": "stutter",
+      "reason": "Pronoun stutter",
+      "beforeText": "非常超级，我我是首先",
+      "afterText": "非常超级，我是首先"
+    },
+    {
+      "s": 37,
+      "text": "对你很懂，别人很多时候你就会很、你会很",
+      "type": "in_sentence_repeat",
+      "reason": "Phrase repetition with filler punctuation",
+      "beforeText": "就会很、你会很在意别人",
+      "afterText": "就会很在意别人"
+    },
+    {
+      "s": 38,
+      "text": "举个举个",
+      "type": "in_sentence_repeat",
+      "reason": "Phrase repeat - keep one",
+      "beforeText": "举个举个例子",
+      "afterText": "举个例子"
+    },
+    {
+      "s": 38,
+      "text": "我我",
+      "type": "stutter",
+      "reason": "Pronoun stutter",
+      "beforeText": "就是我我历史",
+      "afterText": "就是我历史"
+    },
+    {
+      "s": 39,
+      "text": "啊",
+      "type": "filler_start",
+      "reason": "In-sentence filler after '办法'",
+      "beforeText": "但是没有办法，啊，完完蛋也得干",
+      "afterText": "但是没有办法，完完蛋也得干"
+    },
+    {
+      "s": 39,
+      "text": "完完蛋",
+      "type": "stutter",
+      "reason": "Compound word with stutter - keep one",
+      "beforeText": "也得干",
+      "afterText": "完蛋也得干"
+    },
+    {
+      "s": 40,
+      "text": "所以所以呢",
+      "type": "in_sentence_repeat",
+      "reason": "Redundant connector sequence",
+      "beforeText": "所以所以呢，所以我在",
+      "afterText": "所以我在"
+    },
+    {
+      "s": 41,
+      "text": "我靠",
+      "type": "production_talk",
+      "reason": "Casual exclamation - may be edited for professionalism",
+      "beforeText": "我靠，人家100",
+      "afterText": "人家100"
+    },
+    {
+      "s": 41,
+      "text": "百万",
+      "type": "self_correction",
+      "reason": "Redundant translation of number",
+      "beforeText": "100百万粉丝",
+      "afterText": "100万粉丝"
+    },
+    {
+      "s": 42,
+      "text": "哎",
+      "type": "filler_start",
+      "reason": "In-sentence filler at start of quote",
+      "beforeText": "我就说，哎，我最近",
+      "afterText": "我就说，我最近"
+    },
+    {
+      "s": 42,
+      "text": "哎",
+      "type": "filler_start",
+      "reason": "Opening filler in speech",
+      "beforeText": "人是我哥们儿，他就说：哎，你别客气了",
+      "afterText": "人是我哥们儿，他就说：你别客气了"
+    },
+    {
+      "s": 43,
+      "text": "呃",
+      "type": "filler_start",
+      "reason": "In-sentence filler",
+      "beforeText": "然后呃，他就想",
+      "afterText": "然后他就想"
+    },
+    {
+      "s": 43,
+      "text": "我我我",
+      "type": "stutter",
+      "reason": "Triple pronoun stutter - keep one",
+      "beforeText": "然后我我我也很",
+      "afterText": "然后我也很"
+    },
+    {
+      "s": 45,
+      "text": "对",
+      "type": "filler_start",
+      "reason": "Opening response filler",
+      "beforeText": "对，然后到了此刻，我才",
+      "afterText": "然后到了此刻，我才"
+    },
+    {
+      "s": 46,
+      "text": "你你你你",
+      "type": "stutter",
+      "reason": "Quadruple pronoun stutter - keep one",
+      "beforeText": "你站在这个地方，你你你你举目四望",
+      "afterText": "你站在这个地方，你举目四望"
+    },
+    {
+      "s": 46,
+      "text": "你都",
+      "type": "residual_sentence",
+      "reason": "Phrase fragment - incomplete structure",
+      "beforeText": "你都不知道有哪些问题是你要解决的",
+      "afterText": "你不知道有哪些问题是你要解决的"
+    },
+    {
+      "s": 48,
+      "text": "然后呢",
+      "type": "filler_start",
+      "reason": "Opening filler phrase",
+      "beforeText": "然后呢，我就一直",
+      "afterText": "我就一直"
+    },
+    {
+      "s": 49,
+      "text": "反而是",
+      "type": "self_correction",
+      "reason": "Contradictory opening - delete for clarity",
+      "beforeText": "反而是因为参加了朋友",
+      "afterText": "因为参加了朋友"
+    },
+    {
+      "s": 49,
+      "text": "又然后又",
+      "type": "self_correction",
+      "reason": "Redundant connector repetition",
+      "beforeText": "跟酒馆建立了合作，然后又然后又自己办",
+      "afterText": "跟酒馆建立了合作，然后自己办"
+    },
+    {
+      "s": 50,
+      "text": "对",
+      "type": "filler_start",
+      "reason": "Opening filler",
+      "beforeText": "对，所以反而我现在",
+      "afterText": "所以反而我现在"
+    },
+    {
+      "s": 50,
+      "text": "可能",
+      "type": "residual_sentence",
+      "reason": "Incomplete modal phrase",
+      "beforeText": "你可能不能出去看一看，哪怕哪有时间出去看一看",
+      "afterText": "你不能出去看一看，哪怕有时间出去看一看"
+    },
+    {
+      "s": 52,
+      "text": "对",
+      "type": "filler_start",
+      "reason": "Opening response filler",
+      "beforeText": "对，所以我觉得",
+      "afterText": "所以我觉得"
+    },
+    {
+      "s": 53,
+      "text": "呃",
+      "type": "filler_start",
+      "reason": "Opening filler",
+      "beforeText": "呃，对应的",
+      "afterText": "对应的"
+    },
+    {
+      "s": 54,
+      "text": "你你你",
+      "type": "stutter",
+      "reason": "Triple pronoun stutter - keep one",
+      "beforeText": "我看过你之前写的一个文章，你说你你你描述",
+      "afterText": "我看过你之前写的一个文章，你说你描述"
+    },
+    {
+      "s": 56,
+      "text": "对",
+      "type": "filler_start",
+      "reason": "Opening response filler",
+      "beforeText": "对，我还是有",
+      "afterText": "我还是有"
+    },
+    {
+      "s": 57,
+      "text": "对对",
+      "type": "consecutive_filler",
+      "reason": "Double response filler",
+      "beforeText": "对对，那这两条",
+      "afterText": "那这两条"
+    },
+    {
+      "s": 58,
+      "text": "我我",
+      "type": "stutter",
+      "reason": "Pronoun stutter",
+      "beforeText": "所以也是那个点，我我因为我是",
+      "afterText": "所以也是那个点，我因为我是"
+    },
+    {
+      "s": 58,
+      "text": "呃",
+      "type": "filler_start",
+      "reason": "In-sentence filler",
+      "beforeText": "那个点，我因为我是这样，虽然我没有做过产品经理，呃，我指的是",
+      "afterText": "那个点，我因为我是这样，虽然我没有做过产品经理，我指的是"
+    },
+    {
+      "s": 59,
+      "text": "就我",
+      "type": "self_correction",
+      "reason": "Incomplete connector before 'I'",
+      "beforeText": "就我有一套自己的方法流",
+      "afterText": "我有一套自己的方法流"
+    },
+    {
+      "s": 60,
+      "text": "然后呢",
+      "type": "filler_start",
+      "reason": "Opening filler phrase",
+      "beforeText": "然后呢，走完以后呢",
+      "afterText": "走完以后呢"
+    },
+    {
+      "s": 60,
+      "text": "呢",
+      "type": "in_sentence_repeat",
+      "reason": "Repeated modal particle",
+      "beforeText": "以后呢，他就把",
+      "afterText": "以后，他就把"
+    }
+  ]
+}

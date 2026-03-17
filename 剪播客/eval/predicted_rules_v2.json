@@ -1,0 +1,3179 @@
+{
+  "edits": [
+    {
+      "s": 15,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 15,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 15,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 15,
+      "text": "多一点",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"多一点\""
+    },
+    {
+      "s": 18,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 18,
+      "text": "大学的老师",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"大学的老师\""
+    },
+    {
+      "s": 32,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 38,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 38,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 39,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 39,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 62,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 62,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 62,
+      "text": "我也要",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"我也要\""
+    },
+    {
+      "s": 63,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 63,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 65,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 70,
+      "text": "哦，",
+      "type": "filler_start",
+      "reason": "句首填充词\"哦\""
+    },
+    {
+      "s": 70,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 71,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 71,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 79,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 79,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 79,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 79,
+      "text": "哦，",
+      "type": "stutter",
+      "reason": "句中填充词\"哦\""
+    },
+    {
+      "s": 83,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 83,
+      "text": "自己的一些",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"自己的一些\""
+    },
+    {
+      "s": 94,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 100,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 100,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 106,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 107,
+      "text": "一年以后",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"一年以后\""
+    },
+    {
+      "s": 112,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 113,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 113,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 113,
+      "text": "哦，",
+      "type": "stutter",
+      "reason": "句中填充词\"哦\""
+    },
+    {
+      "s": 113,
+      "text": "是有很多",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"是有很多\""
+    },
+    {
+      "s": 116,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 119,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 123,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 123,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 135,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 135,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 145,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 145,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 149,
+      "text": "都没有特别的",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"都没有特别的\""
+    },
+    {
+      "s": 159,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 160,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 166,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 166,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 166,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 175,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 175,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 194,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 203,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 203,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 232,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 232,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 232,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 250,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 255,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 255,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 262,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 263,
+      "text": "ONE",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"ONE\""
+    },
+    {
+      "s": 266,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 266,
+      "text": "改变我的",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"改变我的\""
+    },
+    {
+      "s": 271,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 271,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 325,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 325,
+      "text": "research",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"research\""
+    },
+    {
+      "s": 332,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 332,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 332,
+      "text": "对于一个",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"对于一个\""
+    },
+    {
+      "s": 347,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 347,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 347,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 347,
+      "text": "可能还不是",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"可能还不是\""
+    },
+    {
+      "s": 349,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 349,
+      "text": "很感兴趣的一个",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"很感兴趣的一个\""
+    },
+    {
+      "s": 354,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 354,
+      "text": "这个FLEXIBILITY",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"这个FLEXIBILITY\""
+    },
+    {
+      "s": 376,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 381,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 381,
+      "text": "没有被",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"没有被\""
+    },
+    {
+      "s": 398,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 398,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 398,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 404,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 409,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 447,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 461,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 468,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 468,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 482,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 482,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 482,
+      "text": "啊可以去一些",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"啊可以去一些\""
+    },
+    {
+      "s": 505,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 528,
+      "text": "诶，",
+      "type": "filler_start",
+      "reason": "句首填充词\"诶\""
+    },
+    {
+      "s": 528,
+      "text": "年之后",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"年之后\""
+    },
+    {
+      "s": 26,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 27,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 33,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 35,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 58,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 60,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 60,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 71,
+      "text": "一些小",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"一些小\""
+    },
+    {
+      "s": 99,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 103,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 116,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 127,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 129,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 129,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 164,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 165,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 171,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 173,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 177,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 217,
+      "text": "下一页全选投递",
+      "type": "stutter",
+      "reason": "连续重复\"下一页全选投递\""
+    },
+    {
+      "s": 217,
+      "text": "一页全选投递下",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"一页全选投递下\""
+    },
+    {
+      "s": 222,
+      "text": "那种那",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"那种那\""
+    },
+    {
+      "s": 287,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 297,
+      "text": "那个公司",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"那个公司\""
+    },
+    {
+      "s": 316,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 336,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 337,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 337,
+      "text": "我好像聊跑题了",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"我好像聊跑题了\""
+    },
+    {
+      "s": 338,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 358,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 358,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 406,
+      "text": "是那种",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"是那种\""
+    },
+    {
+      "s": 422,
+      "text": "他就跟我",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"他就跟我\""
+    },
+    {
+      "s": 450,
+      "text": "年的时候",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"年的时候\""
+    },
+    {
+      "s": 456,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 456,
+      "text": "一直在北京",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"一直在北京\""
+    },
+    {
+      "s": 468,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 469,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 508,
+      "text": "然后就",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"然后就\""
+    },
+    {
+      "s": 517,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 518,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 518,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 528,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 539,
+      "text": "呃",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 539,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 541,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 541,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 542,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 545,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 546,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 556,
+      "text": "很在意别人的",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"很在意别人的\""
+    },
+    {
+      "s": 564,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 605,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 618,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 618,
+      "text": "次分享",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"次分享\""
+    },
+    {
+      "s": 620,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 629,
+      "text": "哎，",
+      "type": "filler_start",
+      "reason": "句首填充词\"哎\""
+    },
+    {
+      "s": 629,
+      "text": "也是问题",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"也是问题\""
+    },
+    {
+      "s": 641,
+      "text": "然后又",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"然后又\""
+    },
+    {
+      "s": 643,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 643,
+      "text": "出去看一看",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"出去看一看\""
+    },
+    {
+      "s": 644,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 646,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 649,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 649,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 661,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 661,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 666,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 677,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 677,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 689,
+      "text": "流就是",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"流就是\""
+    },
+    {
+      "s": 718,
+      "text": "浅浅的",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"浅浅的\""
+    },
+    {
+      "s": 720,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 723,
+      "text": "我说我",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"我说我\""
+    },
+    {
+      "s": 739,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 781,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 781,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 782,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 783,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 805,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 815,
+      "text": "还是个英",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"还是个英\""
+    },
+    {
+      "s": 834,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 834,
+      "text": "一个截图",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"一个截图\""
+    },
+    {
+      "s": 870,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 902,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 902,
+      "text": "我会回撤",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"我会回撤\""
+    },
+    {
+      "s": 932,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 936,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 944,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 951,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 969,
+      "text": "这么多钱",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"这么多钱\""
+    },
+    {
+      "s": 984,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 984,
+      "text": "我愿意",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"我愿意\""
+    },
+    {
+      "s": 1019,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 1019,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 1026,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 1026,
+      "text": "O级别的",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"O级别的\""
+    },
+    {
+      "s": 1105,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 1156,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 1156,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 1156,
+      "text": "我现在",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"我现在\""
+    },
+    {
+      "s": 1168,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 1168,
+      "text": "过年后",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"过年后\""
+    },
+    {
+      "s": 1169,
+      "text": "没问题",
+      "type": "stutter",
+      "reason": "连续重复\"没问题\""
+    },
+    {
+      "s": 1175,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 21,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 21,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 31,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 40,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 40,
+      "text": "啊、",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 40,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 40,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 44,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 50,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 57,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 57,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 57,
+      "text": "嗯，呃，",
+      "type": "consecutive_filler",
+      "reason": "连续填充词\"嗯呃\""
+    },
+    {
+      "s": 58,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 61,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 61,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 77,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 77,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 82,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 85,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 111,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 114,
+      "text": "做规划",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"做规划\""
+    },
+    {
+      "s": 115,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 117,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 117,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 117,
+      "text": "就是这个",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"就是这个\""
+    },
+    {
+      "s": 120,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 120,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 122,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 123,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 127,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 127,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 128,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 128,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 129,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 134,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 136,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 141,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 142,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 142,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 142,
+      "text": "有10",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"有10\""
+    },
+    {
+      "s": 147,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 147,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 148,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 152,
+      "text": "我觉得这",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"我觉得这\""
+    },
+    {
+      "s": 157,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 157,
+      "text": "比较大的一个",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"比较大的一个\""
+    },
+    {
+      "s": 158,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 167,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 167,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 167,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 168,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 171,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 173,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 173,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 176,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 176,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 179,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 179,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 179,
+      "text": "嗯，啊，",
+      "type": "consecutive_filler",
+      "reason": "连续填充词\"嗯啊\""
+    },
+    {
+      "s": 180,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 180,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 183,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 184,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 184,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 187,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 190,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 194,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 194,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 194,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 195,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 199,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 200,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 200,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 200,
+      "text": "高的一些工作",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"高的一些工作\""
+    },
+    {
+      "s": 202,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 203,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 203,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 203,
+      "text": "这个智能",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"这个智能\""
+    },
+    {
+      "s": 218,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 222,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 226,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 231,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 231,
+      "text": "呃，这个 ",
+      "type": "consecutive_filler",
+      "reason": "连续填充词\"呃这个\""
+    },
+    {
+      "s": 234,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 239,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 240,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 240,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 242,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 245,
+      "text": "呃",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 245,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 247,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 247,
+      "text": "trump",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"trump\""
+    },
+    {
+      "s": 249,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 250,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 250,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 250,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 251,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 254,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 254,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 256,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 256,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 259,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 263,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 265,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 265,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 265,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 266,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 266,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 270,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 270,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 272,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 272,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 274,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 287,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 287,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 287,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 289,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 290,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 290,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 295,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 300,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 300,
+      "text": "模型的",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"模型的\""
+    },
+    {
+      "s": 304,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 305,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 312,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 316,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 320,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 321,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 323,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 323,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 326,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 326,
+      "text": "research",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"research\""
+    },
+    {
+      "s": 329,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 330,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 333,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 333,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 333,
+      "text": "对于一个",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"对于一个\""
+    },
+    {
+      "s": 337,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 338,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 338,
+      "text": "特别有",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"特别有\""
+    },
+    {
+      "s": 341,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 341,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 344,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 346,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 347,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 348,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 348,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 348,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 348,
+      "text": "可能还不是",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"可能还不是\""
+    },
+    {
+      "s": 351,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 351,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 351,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 352,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 355,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 355,
+      "text": "这个FLEXIBILITY",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"这个FLEXIBILITY\""
+    },
+    {
+      "s": 357,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 381,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 383,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 384,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 385,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 385,
+      "text": "domain",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"domain\""
+    },
+    {
+      "s": 389,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 394,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 394,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 399,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 399,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 399,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 405,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 408,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 408,
+      "text": "在领英我",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"在领英我\""
+    },
+    {
+      "s": 409,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 409,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 409,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 414,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 414,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 422,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 429,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 429,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 431,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 431,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 431,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 431,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 431,
+      "text": "我觉得是",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"我觉得是\""
+    },
+    {
+      "s": 436,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 437,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 439,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 448,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 449,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 449,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 451,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 469,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 469,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 470,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 470,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 471,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 490,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 495,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 512,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 514,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 527,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 527,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 527,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 529,
+      "text": "诶，",
+      "type": "filler_start",
+      "reason": "句首填充词\"诶\""
+    },
+    {
+      "s": 529,
+      "text": "年之后",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"年之后\""
+    },
+    {
+      "s": 20,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 24,
+      "text": "和大家都很关心的",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"和大家都很关心的\""
+    },
+    {
+      "s": 35,
+      "text": "呃",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 35,
+      "text": "放到台面",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"放到台面\""
+    },
+    {
+      "s": 38,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 44,
+      "text": "growthanalyst",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"growthanalyst\""
+    },
+    {
+      "s": 90,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 90,
+      "text": "介绍一下",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"介绍一下\""
+    },
+    {
+      "s": 104,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 144,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 146,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 146,
+      "text": "业问题",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"业问题\""
+    },
+    {
+      "s": 148,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 148,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 148,
+      "text": "burnout",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"burnout\""
+    },
+    {
+      "s": 149,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 166,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 166,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 171,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 171,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 177,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 182,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 182,
+      "text": "比如说是",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"比如说是\""
+    },
+    {
+      "s": 187,
+      "text": "裁了之",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"裁了之\""
+    },
+    {
+      "s": 191,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 206,
+      "text": "的那些工作",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"的那些工作\""
+    },
+    {
+      "s": 207,
+      "text": "自己的",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"自己的\""
+    },
+    {
+      "s": 214,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 216,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 238,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 250,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 274,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 274,
+      "text": "当一个",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"当一个\""
+    },
+    {
+      "s": 276,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 281,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 283,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 285,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 293,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 293,
+      "text": "我需要多少",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"我需要多少\""
+    },
+    {
+      "s": 295,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 311,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 312,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 317,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 334,
+      "text": "呃，",
+      "type": "stutter",
+      "reason": "句中填充词\"呃\""
+    },
+    {
+      "s": 334,
+      "text": "我知道",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"我知道\""
+    },
+    {
+      "s": 337,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 342,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 343,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 343,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 343,
+      "text": "大家都好努力",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"大家都好努力\""
+    },
+    {
+      "s": 344,
+      "text": "三个小时",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"三个小时\""
+    },
+    {
+      "s": 349,
+      "text": "年轻人好像",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"年轻人好像\""
+    },
+    {
+      "s": 404,
+      "text": "换一个话题",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"换一个话题\""
+    },
+    {
+      "s": 479,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 484,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 485,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 502,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 502,
+      "text": "说他的这",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"说他的这\""
+    },
+    {
+      "s": 503,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 510,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 600,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 604,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 605,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 627,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 627,
+      "text": "的东西",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"的东西\""
+    },
+    {
+      "s": 641,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 642,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 642,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 645,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 645,
+      "text": "的教育",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"的教育\""
+    },
+    {
+      "s": 650,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 651,
+      "text": "这个东西",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"这个东西\""
+    },
+    {
+      "s": 659,
+      "text": "哎，",
+      "type": "filler_start",
+      "reason": "句首填充词\"哎\""
+    },
+    {
+      "s": 659,
+      "text": "我刚想说",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"我刚想说\""
+    },
+    {
+      "s": 664,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 694,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 695,
+      "text": "我觉得",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"我觉得\""
+    },
+    {
+      "s": 699,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 861,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 861,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 861,
+      "text": "里坐在你的",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"里坐在你的\""
+    },
+    {
+      "s": 866,
+      "text": "不工作了",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"不工作了\""
+    },
+    {
+      "s": 903,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 940,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 940,
+      "text": "积极心理学",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"积极心理学\""
+    },
+    {
+      "s": 952,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 955,
+      "text": "100万",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"100万\""
+    },
+    {
+      "s": 997,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 997,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 997,
+      "text": "你而言",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"你而言\""
+    },
+    {
+      "s": 1027,
+      "text": "就是不是为了赚钱",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"就是不是为了赚钱\""
+    },
+    {
+      "s": 1049,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 1062,
+      "text": "啊",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 1062,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 1062,
+      "text": "对",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    },
+    {
+      "s": 1066,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 1121,
+      "text": "争口气",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"争口气\""
+    },
+    {
+      "s": 1205,
+      "text": "听到这个节目的",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"听到这个节目的\""
+    },
+    {
+      "s": 4,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 4,
+      "text": "hello",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"hello\""
+    },
+    {
+      "s": 10,
+      "text": "呃，",
+      "type": "filler_start",
+      "reason": "句首填充词\"呃\""
+    },
+    {
+      "s": 10,
+      "text": "上一期",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"上一期\""
+    },
+    {
+      "s": 13,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 30,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 31,
+      "text": "是一个底层",
+      "type": "stutter",
+      "reason": "后缀匹配：\"它是一个底层\"末尾与\"是一个底层\"重复"
+    },
+    {
+      "s": 31,
+      "text": "啊，",
+      "type": "stutter",
+      "reason": "句中填充词\"啊\""
+    },
+    {
+      "s": 31,
+      "text": "这个长期压力",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"这个长期压力\""
+    },
+    {
+      "s": 54,
+      "text": "对，",
+      "type": "filler_start",
+      "reason": "句首填充词\"对\""
+    },
+    {
+      "s": 85,
+      "text": "嗯，",
+      "type": "filler_start",
+      "reason": "句首填充词\"嗯\""
+    },
+    {
+      "s": 116,
+      "text": "但其实",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"但其实\""
+    },
+    {
+      "s": 129,
+      "text": "比较慢",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"比较慢\""
+    },
+    {
+      "s": 139,
+      "text": "中枢神经系统",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"中枢神经系统\""
+    },
+    {
+      "s": 165,
+      "text": "的压力我就只激活",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"的压力我就只激活\""
+    },
+    {
+      "s": 174,
+      "text": "啊，",
+      "type": "filler_start",
+      "reason": "句首填充词\"啊\""
+    },
+    {
+      "s": 174,
+      "text": "分不了那么",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"分不了那么\""
+    },
+    {
+      "s": 179,
+      "text": "更",
+      "type": "stutter",
+      "reason": "连续重复\"更\""
+    },
+    {
+      "s": 179,
+      "text": "交感神经",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"交感神经\""
+    },
+    {
+      "s": 302,
+      "text": "还是要谨慎的",
+      "type": "stutter",
+      "reason": "后缀匹配：\"那还是还是要谨慎的\"末尾与\"还是要谨慎的\"重复"
+    },
+    {
+      "s": 302,
+      "text": "还是要谨慎的",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"还是要谨慎的\""
+    },
+    {
+      "s": 354,
+      "text": "扛个锄头",
+      "type": "in_sentence_repeat",
+      "reason": "短语重复\"扛个锄头\""
+    },
+    {
+      "s": 359,
+      "text": "对，",
+      "type": "stutter",
+      "reason": "句中填充词\"对\""
+    }
+  ],
+  "total_edits": 529
+}

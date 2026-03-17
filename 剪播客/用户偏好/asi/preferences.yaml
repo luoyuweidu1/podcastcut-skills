@@ -1,0 +1,66 @@
+audience: "大众听众，年轻人为主"
+purpose: "播客节目，访谈类，保留笑声和梗"
+duration:
+  target_minutes: 60
+  flexibility_percent: 15
+  aggressiveness: moderate
+content_analysis:
+  enabled: true
+  detect_types:
+    pre_show: true
+    tech_debug: true
+    chit_chat: true
+    privacy: true
+    repeated_content: true
+    production_talk: true
+  special_instructions:
+    - "前期关于'介绍大学专业人类学'和'档案管理的工作'较为冗长，需精简（保留精华，删除啰嗦展开）"
+    - "去掉中间主播和嘉宾商量录制进度和计划的部分"
+    - "保留笑声、梗、抓人的部分"
+technical:
+  enabled: true
+  filler_words:
+    detection: true
+    aggressiveness: moderate
+    common_fillers:
+      - 嗯
+      - 呃
+      - 额
+      - 啊
+      - 嗯嗯
+      - 就是
+      - 然后
+      - 这个
+      - 那个
+      - 对对
+      - 对对对
+    preserve:
+      - 哇
+      - 哦
+      - 哈哈
+      - 哈哈哈
+  speech_errors:
+    detection: true
+    handling: auto_delete
+  repeated_sentences:
+    detection: true
+    handling: keep_first
+  silence:
+    remove_long: true
+    threshold_seconds: 0.8
+    keep_interval: 0.8
+speakers:
+  hosts:
+    - 阿司
+    - 雨林
+  guest_history:
+    - 潘潘
+workflow_automation:
+  auto_qa_enabled: true
+  auto_post_production: false
+  prompt_for_feedback: true
+meta:
+  created_at: "2026-03-07"
+  last_updated: "2026-03-07"
+  usage_count: 0
+  version: "2.0"

@@ -1236,7 +1236,8 @@ sentencesData.forEach(s => {
       deleteText: fe.deleteText || '',
       keepText: fe.keepText || '',
       reason: fe.reason || '',
-      charOffset: fe.charOffset
+      charOffset: fe.charOffset,
+      dependsOn: fe.dependsOn || undefined
     };
     segments.push(seg);
     segmentById[seg.id] = seg;
@@ -1259,7 +1260,8 @@ sentencesData.forEach(s => {
         deleteText: ef.deleteText || '',
         keepText: ef.keepText || '',
         reason: ef.reason || '',
-        charOffset: ef.charOffset
+        charOffset: ef.charOffset,
+        dependsOn: ef.dependsOn || undefined
       };
       segments.push(seg);
       segmentById[seg.id] = seg;
@@ -1279,7 +1281,8 @@ sentencesData.forEach(s => {
         scope: 'partial',
         enabled: true,
         isOriginal: true,
-        feIdx: es.idx
+        feIdx: es.idx,
+        dependsOn: es.dependsOn || undefined
       };
       segments.push(seg);
       segmentById[seg.id] = seg;
@@ -1404,8 +1407,6 @@ function buildTranscript() {
     if (s.fineEdit) {
       const fe = s.fineEdit;
       const feDisabled = fineEditsDisabled.has(fe.idx);
-      const feClass = feDisabled ? 'fine-tag disabled' : 'fine-tag';
-      const delClass = feDisabled ? 'fine-delete disabled' : 'fine-delete';
 
       if (fe.type === 'silence') {
         const dur = (fe.de || 0) - (fe.ds || 0);
@@ -1414,16 +1415,6 @@ function buildTranscript() {
         textHtml += escapeHtml(s.text);
         textHtml += ` <span class="${pauseClass}" data-fine-idx="${fe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="静音${dur.toFixed(1)}s → 保留0.8s，删${deleteDur.toFixed(1)}s — 点击切换">-${deleteDur.toFixed(1)}s</span>`;
       } else {
-        textHtml += `<span class="${feClass}" data-fine-idx="${fe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="${escapeHtml(fe.reason)}">${escapeHtml(fe.type)}</span>`;
-        // Extra fine edit tags
-        if (s.extraFineEdits && s.extraFineEdits.length > 0) {
-          for (const efe of s.extraFineEdits) {
-            const efeDisabled = fineEditsDisabled.has(efe.idx);
-            const efeClass = efeDisabled ? 'fine-tag disabled' : 'fine-tag';
-            textHtml += `<span class="${efeClass}" data-fine-idx="${efe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${efe.idx})" title="${escapeHtml(efe.reason || '')}">${escapeHtml(efe.type)}</span>`;
-          }
-        }
-
         // Show text with deletion marked (clickable to toggle)
         // 优先用 charOffset（精确），回退到 indexOf（可能误匹配同字）
         if (fe.deleteText) {
@@ -1756,8 +1747,35 @@ function toggleDeletion(idx) {
   const hasWholeSegment = segs.some(s => s.scope === 'whole');
 
   if (!hasWholeSegment) {
-    // No whole-scope segment — create one for whole-sentence deletion
-    // (may have partial segments like silence_merged or filler_start)
+    // No whole-scope segment exists.
+    // If there are enabled partial segments → toggle them OFF (restore sentence).
+    // If there are NO enabled segments → create a whole-sentence deletion.
+    const hasEnabledPartials = segs.some(s => s.enabled);
+    if (hasEnabledPartials) {
+      // User wants to restore — disable all partial fine edits
+      undoStack.push({
+        type: 'segmentBatch',
+        changes: segs.map(s => ({ id: s.id, wasEnabled: s.enabled }))
+      });
+      segs.forEach(s => { s.enabled = false; });
+      syncLegacySets();
+      updateRowVisual(idx);
+      const sent = sentencesData.find(s => s.idx === idx);
+      if (sent) rebuildRowText(sent);
+      updateStats();
+      autoSave();
+      const _tdAudio2 = document.getElementById('audio-original');
+      if (cutMode && _tdAudio2 && !_tdAudio2.paused) { skipIfNeeded(); }
+      if (sent) {
+        showRestorePanel({
+          editType: 'sentence',
+          sentenceIdx: idx,
+          text: sent.text
+        });
+      }
+      return;
+    }
+    // No enabled segments at all — create whole-sentence deletion
     const s = sentencesData.find(s => s.idx === idx);
     if (s) {
       const seg = {
@@ -1814,6 +1832,12 @@ function toggleDeletion(idx) {
   updateStats();
   autoSave();
 
+  // If cut-mode is playing, reschedule skip to reflect the change immediately
+  const _tdAudio = document.getElementById('audio-original');
+  if (cutMode && _tdAudio && !_tdAudio.paused) {
+    skipIfNeeded();
+  }
+
   if (anyEnabled) {
     showRestorePanel({
       editType: 'sentence',
@@ -1850,28 +1874,40 @@ function toggleFineEdit(feIdx) {
   const sel = window.getSelection();
   if (sel && !sel.isCollapsed && sel.toString().trim().length > 0) return;
 
-  // Find segment by feIdx
-  const seg = segments.find(s => s.feIdx === feIdx);
-  if (!seg) return;
+  // Find ALL segments matching this feIdx (could be multiple if same idx used)
+  const matchingSegs = segments.filter(s => s.feIdx === feIdx);
+  if (matchingSegs.length === 0) return;
+
+  const newEnabled = !matchingSegs[0].enabled;
 
   undoStack.push({
     type: 'segmentBatch',
-    changes: [{ id: seg.id, wasEnabled: seg.enabled }]
+    changes: matchingSegs.map(seg => ({ id: seg.id, wasEnabled: seg.enabled }))
   });
 
-  seg.enabled = !seg.enabled;
+  matchingSegs.forEach(seg => { seg.enabled = newEnabled; });
   syncLegacySets();
   invalidateSkipRanges();
 
-  const s = sentencesData.find(s => s.idx === seg.sentenceIdx);
-  if (s) {
-    rebuildRowText(s);
+  // If cut-mode is playing, reschedule skip to reflect the change immediately
+  const _feAudio = document.getElementById('audio-original');
+  if (cutMode && _feAudio && !_feAudio.paused) {
+    skipIfNeeded();
+  }
+
+  // Rebuild all affected sentences
+  const affectedSentIdxs = new Set(matchingSegs.map(seg => seg.sentenceIdx));
+  for (const sIdx of affectedSentIdxs) {
+    const s = sentencesData.find(s => s.idx === sIdx);
+    if (s) rebuildRowText(s);
   }
   updateStats();
   autoSave();
 
   // Show restore feedback when disabling a fine edit (= restoring deleted content)
-  if (!seg.enabled && s) {
+  const firstSeg = matchingSegs[0];
+  const s = sentencesData.find(s => s.idx === firstSeg.sentenceIdx);
+  if (!newEnabled && s) {
     let feText = '';
     if (s.fineEdit && s.fineEdit.idx === feIdx) feText = s.fineEdit.deleteText || s.fineEdit.type;
     else if (s.extraFineEdits) {
@@ -1894,35 +1930,57 @@ function rebuildRowText(s) {
   const row = document.getElementById('row-' + s.idx);
   if (!row) return;
   const textEl = row.querySelector('.s-text');
-  if (!textEl || !s.fineEdit) return;
+  if (!textEl) return;
 
-  const fe = s.fineEdit;
-  const feDisabled = fineEditsDisabled.has(fe.idx);
+  // No fine edits at all — just show plain text
+  if (!s.fineEdit && (!s.extraFineEdits || s.extraFineEdits.length === 0) &&
+      (!s.extraSilences || s.extraSilences.length === 0)) {
+    textEl.innerHTML = escapeHtml(s.text);
+    return;
+  }
 
   let textHtml = '';
-  const feClass = feDisabled ? 'fine-tag disabled' : 'fine-tag';
-  const delClass = feDisabled ? 'fine-delete disabled' : 'fine-delete';
+  const fe = s.fineEdit;
 
-  if (fe.type === 'silence') {
+  // Handle primary silence type
+  if (fe && fe.type === 'silence') {
+    const feDisabled = fineEditsDisabled.has(fe.idx);
     const dur = (fe.de || 0) - (fe.ds || 0);
     const deleteDur = Math.max(0, dur - 0.8);
     const pauseClass = feDisabled ? 'silence-pause disabled' : 'silence-pause';
     textHtml += escapeHtml(s.text);
     textHtml += ` <span class="${pauseClass}" data-fine-idx="${fe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="静音${dur.toFixed(1)}s → 保留0.8s，删${deleteDur.toFixed(1)}s — 点击切换">-${deleteDur.toFixed(1)}s</span>`;
   } else {
-    textHtml += `<span class="${feClass}" data-fine-idx="${fe.idx}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="${escapeHtml(fe.reason)}">${escapeHtml(fe.type)}</span>`;
-
-    if (fe.deleteText) {
-      const escapedText = escapeHtml(s.text);
-      const escapedDel = escapeHtml(fe.deleteText);
-      const pos = (fe.charOffset !== undefined) ? fe.charOffset : escapedText.indexOf(escapedDel);
-      if (pos >= 0 && pos + escapedDel.length <= escapedText.length) {
-        textHtml += escapedText.substring(0, pos);
-        textHtml += `<span class="${delClass}" onclick="event.stopPropagation(); toggleFineEdit(${fe.idx})" title="点击切换保留/删除">${escapedDel}</span>`;
-        textHtml += escapedText.substring(pos + escapedDel.length);
-      } else {
-        textHtml += escapedText;
+    // Collect ALL text deletions (primary + extra) for unified rendering
+    const allTextDels = [];
+    if (fe && fe.deleteText) {
+      const pos = (fe.charOffset !== undefined) ? fe.charOffset : s.text.indexOf(fe.deleteText);
+      if (pos >= 0 && pos + fe.deleteText.length <= s.text.length) {
+        allTextDels.push({ start: pos, end: pos + fe.deleteText.length, feIdx: fe.idx, disabled: fineEditsDisabled.has(fe.idx) });
       }
+    }
+    if (s.extraFineEdits && s.extraFineEdits.length > 0) {
+      for (const efe of s.extraFineEdits) {
+        if (!efe.deleteText) continue;
+        const efePos = (efe.charOffset !== undefined) ? efe.charOffset : s.text.indexOf(efe.deleteText);
+        if (efePos >= 0 && efePos + efe.deleteText.length <= s.text.length) {
+          allTextDels.push({ start: efePos, end: efePos + efe.deleteText.length, feIdx: efe.idx, disabled: fineEditsDisabled.has(efe.idx) });
+        }
+      }
+    }
+
+    if (allTextDels.length > 0) {
+      allTextDels.sort((a, b) => a.start - b.start);
+      const escapedText = escapeHtml(s.text);
+      let lastPos = 0;
+      for (const d of allTextDels) {
+        if (d.start < lastPos) continue; // skip overlapping
+        textHtml += escapedText.substring(lastPos, d.start);
+        const dClass = d.disabled ? 'fine-delete disabled' : 'fine-delete';
+        textHtml += `<span class="${dClass}" onclick="event.stopPropagation(); toggleFineEdit(${d.feIdx})" title="点击切换保留/删除">${escapedText.substring(d.start, d.end)}</span>`;
+        lastPos = d.end;
+      }
+      textHtml += escapedText.substring(lastPos);
     } else {
       textHtml += escapeHtml(s.text);
     }
@@ -2297,6 +2355,12 @@ function toggleBlockDeletion(blockId, checked) {
   // Update header checkbox
   updateSummaryCheckAll();
   updateStats();
+
+  // If cut-mode is playing, reschedule skip to reflect the change immediately
+  const _tbAudio = document.getElementById('audio-original');
+  if (cutMode && _tbAudio && !_tbAudio.paused) {
+    skipIfNeeded();
+  }
 }
 
 function toggleAllBlocks(checked) {
@@ -2447,6 +2511,12 @@ function undo() {
   updateStats();
   autoSave();
   showUndoToast();
+
+  // If cut-mode is playing, reschedule skip to reflect the undo immediately
+  const _undoAudio = document.getElementById('audio-original');
+  if (cutMode && _undoAudio && !_undoAudio.paused) {
+    skipIfNeeded();
+  }
 }
 
 function rederiveUserMods() {
@@ -2564,16 +2634,49 @@ function collectActiveRanges(opts) {
   const silenceKeep = opts && opts.silenceKeep; // For player: keep 0.8s of silence
   const ranges = [];
 
+  // Build feIdx→enabled lookup for dependsOn checks
+  const feIdxEnabled = {};
+  segments.forEach(seg => {
+    if (seg.feIdx !== undefined) feIdxEnabled[seg.feIdx] = seg.enabled;
+  });
+
+  // Collect disabled content edit ranges for fallback containment check.
+  // dependsOn idx values may be stale (merge_llm_fine.js re-indexing bug),
+  // so we also suppress silence segments that fall entirely within a disabled edit.
+  const disabledContentRanges = [];
+  segments.forEach(seg => {
+    if (seg.enabled) return;
+    if (seg.type === 'silence' || seg.type === 'silence_merged') return;
+    if (seg.start !== undefined && seg.end !== undefined) {
+      disabledContentRanges.push([seg.start, seg.end]);
+    }
+  });
+
   segments.forEach(seg => {
     if (!seg.enabled) return;
     if (seg.start === undefined || seg.end === undefined) return;
 
-    if (seg.type === 'silence' && silenceKeep) {
+    // Suppress silence/silence_merged if ANY of its dependencies have been restored (disabled)
+    if (seg.dependsOn && seg.dependsOn.length > 0) {
+      if (seg.dependsOn.some(depIdx => feIdxEnabled[depIdx] === false)) {
+        return; // suppressed: a dependent edit was restored by user
+      }
+    }
+
+    // Fallback: suppress silence/silence_merged if entirely contained within a disabled content edit
+    if (seg.type === 'silence' || seg.type === 'silence_merged') {
+      const contained = disabledContentRanges.some(([ds, de]) =>
+        ds <= seg.start + 0.1 && de >= seg.end - 0.1
+      );
+      if (contained) return;
+    }
+
+    if ((seg.type === 'silence' || seg.type === 'silence_merged') && silenceKeep) {
       // Player mode: keep natural pause, only delete excess
       if (seg.end - seg.start > silenceKeep) {
         ranges.push([seg.start + silenceKeep, seg.end, 0, 'sil']);
       }
-    } else if (seg.type === 'silence') {
+    } else if (seg.type === 'silence' || seg.type === 'silence_merged') {
       // Export mode: tag silence ranges so nudge logic can skip them
       ranges.push([seg.start, seg.end, 0, 'sil']);
     } else {
@@ -2616,17 +2719,86 @@ function collectActiveRanges(opts) {
       // Interpolate time within partial ASR words
       const sw = s.words[startW];
       const ew = s.words[endW];
-      const startTime = (startCharOffset > 0 && wordTexts[startW].length > 0)
+      let startTime = (startCharOffset > 0 && wordTexts[startW].length > 0)
         ? sw.s + (sw.e - sw.s) * (startCharOffset / wordTexts[startW].length)
         : sw.s;
-      const endTime = (endCharOffset > 0 && wordTexts[endW].length > 0)
+      let endTime = (endCharOffset > 0 && wordTexts[endW].length > 0)
         ? ew.e - (ew.e - ew.s) * (endCharOffset / wordTexts[endW].length)
         : ew.e;
+      // Boundary extension for manual edits: cover dead-air gaps around deleted words.
+      // Without this, deleting a mid-sentence filler leaves its trailing reverberation audible.
+      if (startCharOffset === 0 && startW > 0) {
+        const prevW = s.words[startW - 1];
+        const gapBefore = startTime - prevW.e;
+        if (gapBefore >= 0 && gapBefore < 0.20) startTime = prevW.e;
+      }
+      if (endCharOffset === 0 && endW < s.words.length - 1) {
+        const nextW = s.words[endW + 1];
+        const gapAfter = nextW.s - endTime;
+        if (gapAfter >= 0 && gapAfter < 2.0) endTime = nextW.s;
+      }
       ranges.push([startTime, endTime]);
     }
   });
 
   return ranges;
+}
+
+// Shared nudge logic for both playback and export — ensures consistency
+// Adjusts deletion range boundaries to compensate for ASR onset lag and
+// align with natural word/sentence boundaries.
+// merged: [[start, end], ...], mergedIsSilence: [bool, ...]
+function applyBoundaryNudge(merged, mergedIsSilence) {
+  for (let i = 0; i < merged.length; i++) {
+    const s = merged[i][0], e = merged[i][1];
+
+    // Skip nudge for pure-silence ranges — their boundaries are already precise
+    // and nudging would eat into adjacent kept words
+    if (mergedIsSilence[i]) continue;
+
+    // --- Range start: nudge for tight gaps ---
+    if (s > 0) {
+      let closestPrevEnd = 0;
+      for (const sent of sentencesData) {
+        if (currentDeletedSet.has(sent.idx)) continue;
+        if (sent.startTime > s + 1) break;
+        if (!sent.words) continue;
+        for (const w of sent.words) {
+          if (w.e <= s && w.e > closestPrevEnd) closestPrevEnd = w.e;
+        }
+      }
+      const gapBefore = s - closestPrevEnd;
+      // Pull back range start to cover ASR onset lag (~30-90ms).
+      // Zero-gap (word boundary): 100ms to cover tail consonant + onset.
+      // Small gap (<300ms): pullback clamped to half the gap.
+      // Large gap (>=300ms): always pull back 50ms minimum for onset coverage.
+      if (gapBefore < 0.02 && s > 0.10) {
+        merged[i][0] = Math.max(0, s - 0.10);
+      } else if (gapBefore < 0.30 && s > 0.05) {
+        const pullback = Math.min(0.10, gapBefore / 2);
+        merged[i][0] = Math.max(0, s - pullback);
+      } else if (s > 0.05) {
+        const pullback = Math.min(0.05, gapBefore / 2);
+        merged[i][0] = Math.max(0, s - pullback);
+      }
+    }
+
+    // --- Range end: align with next kept content ---
+    // Only snap for ranges that end at/near a sentence boundary (whole-sentence
+    // deletions). Do NOT snap when range end falls inside a kept sentence
+    // (mid-sentence fine edit) — that would eat the sentence's remaining words.
+    const containingSent = sentencesData.find(ns =>
+      !currentDeletedSet.has(ns.idx) && ns.startTime < e - 0.1 && ns.endTime > e + 0.1
+    );
+    if (!containingSent) {
+      const nextKept = sentencesData.find(ns =>
+        !currentDeletedSet.has(ns.idx) && ns.startTime >= e - 0.1
+      );
+      if (nextKept && nextKept.startTime <= e + 0.5) {
+        merged[i][1] = nextKept.startTime;
+      }
+    }
+  }
 }
 
 function exportDeleteSegments() {
@@ -2655,68 +2827,16 @@ function exportDeleteSegments() {
     merged[0][0] = 0;
   }
 
-  // Align export ranges with HTML player behavior for consistent results.
-  // Two adjustments (speech ranges only — silence ranges must NOT be nudged
-  // to avoid eating into adjacent kept words):
-  // 1. Range start: nudge 50ms earlier for tight gaps (ASR timestamps lag
-  //    behind actual sound onset by ~30-50ms, e.g. "放" onset before ASR mark)
-  // 2. Range end: snap to next kept sentence/word start (same as HTML player's
-  //    seekTarget logic, prevents eating into next word like "对")
-  for (let i = 0; i < merged.length; i++) {
-    const s = merged[i][0], e = merged[i][1];
-
-    // Skip nudge for pure-silence ranges — their boundaries are already precise
-    // and nudging would eat into adjacent kept words
-    if (mergedIsSilence[i]) continue;
-
-    // --- Range start: nudge for tight gaps ---
-    if (s > 0) {
-      let closestPrevEnd = 0;
-      for (const sent of sentencesData) {
-        if (currentDeletedSet.has(sent.idx)) continue;
-        if (sent.startTime > s + 1) break;
-        if (!sent.words) continue;
-        for (const w of sent.words) {
-          if (w.e <= s && w.e > closestPrevEnd) closestPrevEnd = w.e;
-        }
-      }
-      const gapBefore = s - closestPrevEnd;
-      // Pull back range start to cover ASR onset lag (~30-90ms).
-      // ASR timestamps always lag behind actual sound onset, regardless of gap size.
-      // Zero-gap (word boundary): 100ms to cover tail consonant + onset.
-      // Small gap (<300ms): pullback clamped to half the gap.
-      // Large gap (>=300ms): always pull back 50ms minimum for onset coverage.
-      if (gapBefore < 0.02 && s > 0.10) {
-        merged[i][0] = Math.max(0, s - 0.10);
-      } else if (gapBefore < 0.30 && s > 0.05) {
-        // Clamp pullback to half the gap so we don't eat prev word's tail
-        const pullback = Math.min(0.10, gapBefore / 2);
-        merged[i][0] = Math.max(0, s - pullback);
-      } else if (s > 0.05) {
-        // Large gap: still need onset pullback, clamp to min(50ms, gap/2)
-        const pullback = Math.min(0.05, gapBefore / 2);
-        merged[i][0] = Math.max(0, s - pullback);
-      }
-    }
-
-    // --- Range end: align with next kept content (seekTarget logic) ---
-    // Only snap for ranges that end at/near a sentence boundary (whole-sentence
-    // deletions). Do NOT snap when range end falls inside a kept sentence
-    // (mid-sentence fine edit) — that would eat the sentence's remaining words.
-    const containingSent = sentencesData.find(ns =>
-      !currentDeletedSet.has(ns.idx) && ns.startTime < e - 0.1 && ns.endTime > e + 0.1
-    );
-    if (!containingSent) {
-      // Range end is NOT inside a kept sentence → safe to snap
-      const nextKept = sentencesData.find(ns =>
-        !currentDeletedSet.has(ns.idx) && ns.startTime >= e - 0.1
-      );
-      if (nextKept && nextKept.startTime <= e + 0.5) {
-        // Snap end to next kept sentence's start — exactly where playback resumes
-        merged[i][1] = nextKept.startTime;
-      }
+  // Filter tiny fragments < 50ms
+  for (let i = merged.length - 1; i >= 0; i--) {
+    if (merged[i][1] - merged[i][0] < 0.05) {
+      merged.splice(i, 1);
+      mergedIsSilence.splice(i, 1);
     }
   }
+
+  // Apply shared boundary nudge (same as playback path for consistency)
+  applyBoundaryNudge(merged, mergedIsSilence);
 
   // Convert to delete_segments.json format
   const deletedSegments = merged.map(([start, end]) => ({
@@ -2981,6 +3101,20 @@ function markSelectionDeleted() {
   // Re-render the sentence
   rebuildRowWithManualEdits(sentenceIdx);
   updateStats();
+
+  // If cut-mode is playing, reschedule skip to pick up the new range immediately
+  const _meAudio = document.getElementById('audio-original');
+  if (cutMode && _meAudio && !_meAudio.paused) {
+    skipIfNeeded();
+  }
+
+  // Debug: verify the manual edit produces a skip range
+  const _dbgRanges = getSkipRanges();
+  const s = sentencesData.find(s => s.idx === sentenceIdx);
+  if (s) {
+    const inRange = _dbgRanges.filter(r => r[0] < s.endTime && r[1] > s.startTime);
+    console.log('[manual-edit] S' + sentenceIdx + ' "' + selectedText.substring(0, 15) + '..." → ' + inRange.length + ' skip ranges in this sentence, total: ' + _dbgRanges.length);
+  }
 }
 
 function toggleManualEdit(editId) {
@@ -3078,13 +3212,6 @@ function rebuildRowWithManualEdits(sentenceIdx) {
   const fullCoverEdit = deletions.find(d => d.type === 'manual' && !d.disabled && d.start === 0 && d.end >= fullText.length);
   if (fullCoverEdit) {
     let html = '';
-    if (s.fineEdit) {
-      const feDisabled = fineEditsDisabled.has(s.fineEdit.idx);
-      if (s.fineEdit.type !== 'silence') {
-        const feClass = feDisabled ? 'fine-tag disabled' : 'fine-tag';
-        html += '<span class="' + feClass + '" data-fine-idx="' + s.fineEdit.idx + '" onclick="event.stopPropagation(); toggleFineEdit(' + s.fineEdit.idx + ')" title="' + escapeHtml(s.fineEdit.reason || '') + '">' + escapeHtml(s.fineEdit.type) + '</span>';
-      }
-    }
     for (const me of sentManual) {
       const tagClass = me.disabled ? 'manual-tag disabled' : 'manual-tag';
       html += '<span class="' + tagClass + '">手动</span>';
@@ -3146,18 +3273,6 @@ function rebuildRowWithManualEdits(sentenceIdx) {
       const deleteDur = Math.max(0, dur - 0.8);
       const pauseClass = feDisabled ? 'silence-pause disabled' : 'silence-pause';
       silenceSuffix = ' <span class="' + pauseClass + '" data-fine-idx="' + s.fineEdit.idx + '" onclick="event.stopPropagation(); toggleFineEdit(' + s.fineEdit.idx + ')" title="静音' + dur.toFixed(1) + 's → 保留0.8s，删' + deleteDur.toFixed(1) + 's — 点击切换">-' + deleteDur.toFixed(1) + 's</span>';
-    } else {
-      const feClass = feDisabled ? 'fine-tag disabled' : 'fine-tag';
-      html += '<span class="' + feClass + '" data-fine-idx="' + s.fineEdit.idx + '" onclick="event.stopPropagation(); toggleFineEdit(' + s.fineEdit.idx + ')" title="' + escapeHtml(s.fineEdit.reason || '') + '">' + escapeHtml(s.fineEdit.type) + '</span>';
-    }
-  }
-
-  // Add extra fine edit tags
-  if (s.extraFineEdits && s.extraFineEdits.length > 0) {
-    for (const efe of s.extraFineEdits) {
-      const efeDisabled = fineEditsDisabled.has(efe.idx);
-      const efeClass = efeDisabled ? 'fine-tag disabled' : 'fine-tag';
-      html += '<span class="' + efeClass + '" data-fine-idx="' + efe.idx + '" onclick="event.stopPropagation(); toggleFineEdit(' + efe.idx + ')" title="' + escapeHtml(efe.reason || '') + '">' + escapeHtml(efe.type) + '</span>';
     }
   }
 
@@ -3200,22 +3315,30 @@ let _skipRangesDirty = true;
 
 
 // Mark skip ranges dirty whenever edits change
-function invalidateSkipRanges() { _skipRangesDirty = true; }
+function invalidateSkipRanges() {
+  _skipRangesDirty = true;
+  // Cancel any stale scheduled skip computed from old ranges
+  if (_skipScheduled) { clearTimeout(_skipScheduled); _skipScheduled = null; }
+}
 
 // Compute delete time ranges from current edit state
 function getSkipRanges() {
   if (!_skipRangesDirty && _skipRangesCache) return _skipRangesCache;
 
   const ranges = collectActiveRanges({ silenceKeep: 0.8 });
-  
-  // Sort and merge overlapping ranges
+
+  // Sort and merge overlapping ranges, tracking silence vs speech
   ranges.sort((a, b) => a[0] - b[0]);
   const merged = [];
+  const mergedIsSilence = [];
   for (const r of ranges) {
+    const isSil = r[3] === 'sil';
     if (merged.length > 0 && r[0] <= merged[merged.length - 1][1] + 0.05) {
       merged[merged.length - 1][1] = Math.max(merged[merged.length - 1][1], r[1]);
+      if (!isSil) mergedIsSilence[merged.length - 1] = false;
     } else {
-      merged.push([...r]);
+      merged.push([r[0], r[1]]);
+      mergedIsSilence.push(isSil);
     }
   }
 
@@ -3224,11 +3347,19 @@ function getSkipRanges() {
     merged[0][0] = 0;
   }
 
+  // Filter tiny fragments < 50ms
+  for (let i = merged.length - 1; i >= 0; i--) {
+    if (merged[i][1] - merged[i][0] < 0.05) {
+      merged.splice(i, 1);
+      mergedIsSilence.splice(i, 1);
+    }
+  }
+
+  // Apply shared boundary nudge (same as export path for consistency)
+  applyBoundaryNudge(merged, mergedIsSilence);
+
   // Compute adaptive lookahead for each range: [start, end, lookahead]
-  // Based on gap to closest preceding kept word. Sentence gaps are large (~1s),
-  // fine edit gaps are tiny (~0ms). Lookahead capped at 50ms-300ms.
-  // For tight gaps (< 100ms), also nudge range start earlier by 50ms so that
-  // even with JS timer jitter (~50ms), deleted content can't leak through.
+  // Based on gap to closest preceding kept word after nudge.
   for (let i = 0; i < merged.length; i++) {
     const s = merged[i][0];
     let closestPrevEnd = 0;
@@ -3239,17 +3370,6 @@ function getSkipRanges() {
       for (const w of sent.words) {
         if (w.e <= s && w.e > closestPrevEnd) closestPrevEnd = w.e;
       }
-    }
-    const gap = s - closestPrevEnd;
-    // For tight gaps: extend range start back for safety buffer
-    // JS timer jitter is ~50-80ms; for zero-gap fine edits (stutter at word
-    // boundary), we need more aggressive buffering to prevent onset leaking.
-    if (gap < 0.02 && merged[i][0] > 0.10) {
-      // Zero gap (word boundary): pull back 100ms — the previous word's
-      // tail consonant is usually done by then
-      merged[i][0] = Math.max(0, merged[i][0] - 0.10);
-    } else if (gap < 0.10 && merged[i][0] > 0.05) {
-      merged[i][0] = Math.max(0, merged[i][0] - 0.05);
     }
     const adjustedGap = merged[i][0] - closestPrevEnd;
     merged[i][2] = Math.min(0.30, Math.max(0.05, adjustedGap));
@@ -3615,6 +3735,30 @@ document.getElementById('stat-final-delete').textContent = currentDeletedSet.siz
 buildSummaryTable();
 buildTranscript();
 restoreState();
+
+// Debug exports
+window._debug = {
+  manualEdits, segments, sentencesData, getSkipRanges, collectActiveRanges,
+  currentDeletedSet, segmentById, invalidateSkipRanges, cutMode: () => cutMode,
+  // Quick check: does sentence N have skip ranges?
+  checkSent: function(idx) {
+    const s = sentencesData.find(s => s.idx === idx);
+    if (!s) return 'Sentence not found';
+    const ranges = getSkipRanges();
+    const inRange = ranges.filter(r => r[0] < s.endTime && r[1] > s.startTime);
+    const segs = segments.filter(sg => sg.sentenceIdx === idx);
+    const me = manualEdits.filter(m => m.sentenceIdx === idx);
+    return {
+      sentence: s.text?.substring(0, 40),
+      timeRange: [s.startTime, s.endTime],
+      isDeleted: currentDeletedSet.has(idx),
+      segments: segs.map(sg => ({id: sg.id, type: sg.type, enabled: sg.enabled, range: [sg.start, sg.end]})),
+      manualEdits: me.map(m => ({text: m.deleteText?.substring(0, 20), disabled: m.disabled})),
+      skipRangesInSent: inRange.map(r => [+r[0].toFixed(2), +r[1].toFixed(2)]),
+      totalSkipRanges: ranges.length
+    };
+  }
+};
 buildSpeakerPanel();
 requestAnimationFrame(updateProgress);
 
