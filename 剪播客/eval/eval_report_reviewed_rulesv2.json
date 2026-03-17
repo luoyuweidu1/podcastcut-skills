@@ -1,0 +1,3560 @@
+{
+  "generated_at": "2026-03-06T03:28:17.695Z",
+  "goldFile": "eval/eval_gold_reviewed.json",
+  "predictedFile": "eval/predicted_rules_v2.json",
+  "summary": {
+    "recall": {
+      "rate": 54.4,
+      "total": 741,
+      "caught": 403,
+      "missed": 338,
+      "partial": 112
+    },
+    "precision": {
+      "rate": 56.3,
+      "total": 544,
+      "matched": 306,
+      "unmatched": 238
+    },
+    "boundaryAccuracy": {
+      "rate": 72.2,
+      "total": 403,
+      "exact": 291,
+      "partial": 112
+    },
+    "fpAvoidance": {
+      "rate": 77.3,
+      "total": 66,
+      "avoided": 51,
+      "repeated": 15
+    },
+    "coverage": {
+      "potential": 380,
+      "total": 741
+    }
+  },
+  "byType": {
+    "self_correction": {
+      "total": 170,
+      "caught": 65,
+      "missed": 105,
+      "partial": 56
+    },
+    "stutter": {
+      "total": 253,
+      "caught": 136,
+      "missed": 117,
+      "partial": 19
+    },
+    "consecutive_filler": {
+      "total": 51,
+      "caught": 18,
+      "missed": 33,
+      "partial": 6
+    },
+    "production_talk": {
+      "total": 20,
+      "caught": 9,
+      "missed": 11,
+      "partial": 9
+    },
+    "in_sentence_repeat": {
+      "total": 77,
+      "caught": 19,
+      "missed": 58,
+      "partial": 13
+    },
+    "filler_start": {
+      "total": 146,
+      "caught": 146,
+      "missed": 0,
+      "partial": 0
+    },
+    "chit_chat": {
+      "total": 4,
+      "caught": 3,
+      "missed": 1,
+      "partial": 3
+    },
+    "other": {
+      "total": 8,
+      "caught": 4,
+      "missed": 4,
+      "partial": 4
+    },
+    "repeated_sentence": {
+      "total": 9,
+      "caught": 3,
+      "missed": 6,
+      "partial": 2
+    },
+    "residual_sentence": {
+      "total": 3,
+      "caught": 0,
+      "missed": 3,
+      "partial": 0
+    }
+  },
+  "missedDetails": [
+    {
+      "sentenceIdx": 5,
+      "speaker": "",
+      "text": "嗯，hello，",
+      "type": "self_correction",
+      "fullSentence": ""
+    },
+    {
+      "sentenceIdx": 15,
+      "speaker": "清扬",
+      "text": "这个",
+      "type": "consecutive_filler",
+      "fullSentence": "对，呃，我想先介绍一下我自己的啊这个这个经历啊，然后我其实呃这个可以从比较早开始介绍给大家多一点，这个多一点铺垫吧。"
+    },
+    {
+      "sentenceIdx": 30,
+      "speaker": "清扬",
+      "text": "我",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "那我反而觉得是不是学物理或者学一些啊更加叫第一性原理，就FIRST PRINCIPLE啊THINKING，可能对我长期的职业可能更有帮助。"
+    },
+    {
+      "sentenceIdx": 30,
+      "speaker": "清扬",
+      "text": "是",
+      "type": "consecutive_filler",
+      "fullSentence": "那我反而觉得是不是学物理或者学一些啊更加叫第一性原理，就FIRST PRINCIPLE啊THINKING，可能对我长期的职业可能更有帮助。"
+    },
+    {
+      "sentenceIdx": 32,
+      "speaker": "清扬",
+      "text": "一些",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "所以我当时的本科的时候，反而就没有特别多的去接触AI，我上了一些啊几门课，对，基本上是这样子。"
+    },
+    {
+      "sentenceIdx": 32,
+      "speaker": "清扬",
+      "text": "啊",
+      "type": "stutter",
+      "fullSentence": "所以我当时的本科的时候，反而就没有特别多的去接触AI，我上了一些啊几门课，对，基本上是这样子。"
+    },
+    {
+      "sentenceIdx": 45,
+      "speaker": "清扬",
+      "text": "然后我是2022年毕业的，是这个博士毕业",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "然后我是2022年毕业的，是这个博士毕业。"
+    },
+    {
+      "sentenceIdx": 62,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "然后呢，当时其实我的学长学姐每一年都有大概呃大几十个人出国的啊，但是我当时并没有很坚定的去说啊，我也要这样，我也要考考到美国的前十或者什么样的学校啊。"
+    },
+    {
+      "sentenceIdx": 63,
+      "speaker": "清扬",
+      "text": "呃在",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "其实我是呃在加入了这个高中，上高中以后呢，我其实呃试图的去参加一些，就是比如说以前申请的哈佛、耶鲁的学长学姐啊，那我他们参加过一些什么学生活动啊，或者他们有一些什么路径啊。"
+    },
+    {
+      "sentenceIdx": 63,
+      "speaker": "清扬",
+      "text": "加入了这个高中，",
+      "type": "self_correction",
+      "fullSentence": "其实我是呃在加入了这个高中，上高中以后呢，我其实呃试图的去参加一些，就是比如说以前申请的哈佛、耶鲁的学长学姐啊，那我他们参加过一些什么学生活动啊，或者他们有一些什么路径啊。"
+    },
+    {
+      "sentenceIdx": 63,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "其实我是呃在加入了这个高中，上高中以后呢，我其实呃试图的去参加一些，就是比如说以前申请的哈佛、耶鲁的学长学姐啊，那我他们参加过一些什么学生活动啊，或者他们有一些什么路径啊。"
+    },
+    {
+      "sentenceIdx": 65,
+      "speaker": "清扬",
+      "text": "啊",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "对，但并不是说我从小，就是说啊这个这个，以后未来一定要在美国。"
+    },
+    {
+      "sentenceIdx": 65,
+      "speaker": "清扬",
+      "text": "这个",
+      "type": "consecutive_filler",
+      "fullSentence": "对，但并不是说我从小，就是说啊这个这个，以后未来一定要在美国。"
+    },
+    {
+      "sentenceIdx": 70,
+      "speaker": "清扬",
+      "text": "它",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "哦，对。"
+    },
+    {
+      "sentenceIdx": 71,
+      "speaker": "清扬",
+      "text": "这种",
+      "type": "consecutive_filler",
+      "typeLabel": "连续填充词",
+      "fullSentence": "嗯，对，是这样的。"
+    },
+    {
+      "sentenceIdx": 71,
+      "speaker": "清扬",
+      "text": "这种",
+      "type": "in_sentence_repeat",
+      "fullSentence": "嗯，对，是这样的。"
+    },
+    {
+      "sentenceIdx": 83,
+      "speaker": "清扬",
+      "text": "呃呃",
+      "type": "stutter",
+      "fullSentence": "所以这个可能也是对我最终决定去美国一个蛮大的影响，就是说它的一个呃呃大学的一个所谓LIBERAL ARTS比较注重呃每一个学生自主性，然后呢有自己自自己的一些思思维啊，或者包括自己的一些。"
+    },
+    {
+      "sentenceIdx": 83,
+      "speaker": "清扬",
+      "text": "思",
+      "type": "consecutive_filler",
+      "fullSentence": "所以这个可能也是对我最终决定去美国一个蛮大的影响，就是说它的一个呃呃大学的一个所谓LIBERAL ARTS比较注重呃每一个学生自主性，然后呢有自己自自己的一些思思维啊，或者包括自己的一些。"
+    },
+    {
+      "sentenceIdx": 84,
+      "speaker": "清扬",
+      "text": "有",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "想法他会非常鼓励学生有比较比较有主见，相当于说。"
+    },
+    {
+      "sentenceIdx": 84,
+      "speaker": "清扬",
+      "text": "比较",
+      "type": "in_sentence_repeat",
+      "fullSentence": "想法他会非常鼓励学生有比较比较有主见，相当于说。"
+    },
+    {
+      "sentenceIdx": 94,
+      "speaker": "响歌歌",
+      "text": "有一段",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "那我们可以再聊聊，就是你从 mit 毕业之后，你有一段，有几段工作经验吧，对吧？"
+    },
+    {
+      "sentenceIdx": 94,
+      "speaker": "响歌歌",
+      "text": "你",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "那我们可以再聊聊，就是你从 mit 毕业之后，你有一段，有几段工作经验吧，对吧？"
+    },
+    {
+      "sentenceIdx": 100,
+      "speaker": "清扬",
+      "text": "这个",
+      "type": "consecutive_filler",
+      "fullSentence": "嗯，对，我可以这个介绍一下我工作的一几段经验。"
+    },
+    {
+      "sentenceIdx": 106,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "对，但是呢，这是我呃第一个没有想到的一个规划之外的一个事情。"
+    },
+    {
+      "sentenceIdx": 107,
+      "speaker": "清扬",
+      "text": "拿",
+      "type": "in_sentence_repeat",
+      "fullSentence": "是我在2022年，就是我一年以后毕业了，一年以后或者拿拿到OFFER一年以后，我入职的2022年年底。"
+    },
+    {
+      "sentenceIdx": 112,
+      "speaker": "清扬",
+      "text": "都都都都",
+      "type": "consecutive_filler",
+      "fullSentence": "对，然后呢这个裁员我印象很深，大概是裁了百分之十几的这个员工，是一个大范围的这个裁员，而且是把跟我和我同时入职的小伙伴们都一起都都都都都被 lay off. "
+    },
+    {
+      "sentenceIdx": 113,
+      "speaker": "清扬",
+      "text": "一个一个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "对，所以这个呢其实是给我蛮大的一个呃个人经历上的一个一个一个震撼也好，啊，我就觉得，哦，原来这么大的公司也可以 scrup，也可以就是说啊就是有很多的战略性啊，或者是有很多这个问题。"
+    },
+    {
+      "sentenceIdx": 113,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "对，所以这个呢其实是给我蛮大的一个呃个人经历上的一个一个一个震撼也好，啊，我就觉得，哦，原来这么大的公司也可以 scrup，也可以就是说啊就是有很多的战略性啊，或者是有很多这个问题。"
+    },
+    {
+      "sentenceIdx": 119,
+      "speaker": "清扬",
+      "text": "一个工作的经历",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "对，这是一个工作的经历，我或者我第一份工作的这个经历。"
+    },
+    {
+      "sentenceIdx": 119,
+      "speaker": "清扬",
+      "text": "，我或者",
+      "type": "self_correction",
+      "fullSentence": "对，这是一个工作的经历，我或者我第一份工作的这个经历。"
+    },
+    {
+      "sentenceIdx": 131,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "但是在那边的话，我可能能够接触到一些这个呃比较STATE OF THE ART的FOUNDATION MODEL。"
+    },
+    {
+      "sentenceIdx": 133,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "然后呢，我还是觉得呃这不是我特别感兴趣的一个领域，就虽然我觉得工作本身我是能够胜任的。"
+    },
+    {
+      "sentenceIdx": 139,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "这个是也是一个 ai 的一个比较传统的一个业务。"
+    },
+    {
+      "sentenceIdx": 159,
+      "speaker": "响歌歌",
+      "text": "能够在",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "嗯，让你意识到哎，A I好像能够在能够在一个很大规模的情况下，嗯，而且能够做一些更更。"
+    },
+    {
+      "sentenceIdx": 159,
+      "speaker": "响歌歌",
+      "text": "更",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "嗯，让你意识到哎，A I好像能够在能够在一个很大规模的情况下，嗯，而且能够做一些更更。"
+    },
+    {
+      "sentenceIdx": 160,
+      "speaker": "响歌歌",
+      "text": "经",
+      "type": "self_correction",
+      "fullSentence": "嗯，超越对话的一些经有经济价值的一些任务。"
+    },
+    {
+      "sentenceIdx": 175,
+      "speaker": "清扬",
+      "text": "哎",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "嗯，对，主要是这样，而且我真的是觉得agent的话，它是能够在不同的领域真正的去啊做到一个质变的这样的一个一个一个新的技术。"
+    },
+    {
+      "sentenceIdx": 203,
+      "speaker": "响歌歌",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "嗯，对。"
+    },
+    {
+      "sentenceIdx": 206,
+      "speaker": "响歌歌",
+      "text": "嗯，",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "我在跟你合作HACKSON的时候，就我跟青阳最近一起做了一个HACKSON嘛。"
+    },
+    {
+      "sentenceIdx": 206,
+      "speaker": "响歌歌",
+      "text": "五年之",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "我在跟你合作HACKSON的时候，就我跟青阳最近一起做了一个HACKSON嘛。"
+    },
+    {
+      "sentenceIdx": 252,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "然后呢，在现在的这个呃就业市场，比如说我想要在我现在的公司继续工作的话呢。"
+    },
+    {
+      "sentenceIdx": 266,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "但是呢，我并没有这个觉得他最近一段时间能够改变我的改变我的这个这个情况啊。"
+    },
+    {
+      "sentenceIdx": 325,
+      "speaker": "响歌歌",
+      "text": "比是，",
+      "type": "self_correction",
+      "fullSentence": "呃，听上去你好像比是，你是不是会更倾向于做 research 方面的工作，就是有一些底层 research 然后更长远。"
+    },
+    {
+      "sentenceIdx": 354,
+      "speaker": "清扬",
+      "text": "我",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "对，然后我觉得这个其实这个 FLEXIBILITY可能给我呃会给我更多的这个 FLEXIBILITY，然后呢可能会到一个比较成熟的时间，我会去考虑创业，或者说呃如果真的能够遇到一个靠谱的团队啊什么，我觉得也是啊也是可以的。"
+    },
+    {
+      "sentenceIdx": 376,
+      "speaker": "清扬",
+      "text": "去",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "啊，就我觉得还是有一些所谓的 low hanging fruit 是可以去可以去做的。"
+    },
+    {
+      "sentenceIdx": 376,
+      "speaker": "清扬",
+      "text": "可以",
+      "type": "self_correction",
+      "fullSentence": "啊，就我觉得还是有一些所谓的 low hanging fruit 是可以去可以去做的。"
+    },
+    {
+      "sentenceIdx": 377,
+      "speaker": "清扬",
+      "text": "啊",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "然后我觉得这个其实是要 involve 不仅是 AI 或者是 Infra 就是各种啊更更更偏向于这个 SaaS 的技术。"
+    },
+    {
+      "sentenceIdx": 377,
+      "speaker": "清扬",
+      "text": "更更",
+      "type": "in_sentence_repeat",
+      "fullSentence": "然后我觉得这个其实是要 involve 不仅是 AI 或者是 Infra 就是各种啊更更更偏向于这个 SaaS 的技术。"
+    },
+    {
+      "sentenceIdx": 415,
+      "speaker": "清扬",
+      "text": "你刚想问什么来着，我又忘了。",
+      "type": "production_talk",
+      "typeLabel": "录制讨论",
+      "fullSentence": "这个博客啊等等是能够得到蛮多的蛮多的这个信息。"
+    },
+    {
+      "sentenceIdx": 446,
+      "speaker": "清扬",
+      "text": "这里",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "我这里我这里只能在网上看看一些这个看剧啊什么的。"
+    },
+    {
+      "sentenceIdx": 446,
+      "speaker": "清扬",
+      "text": "我",
+      "type": "self_correction",
+      "fullSentence": "我这里我这里只能在网上看看一些这个看剧啊什么的。"
+    },
+    {
+      "sentenceIdx": 447,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "对，那我觉得这就是一个呃我离开美国之后的一个福利吧。"
+    },
+    {
+      "sentenceIdx": 468,
+      "speaker": "清扬",
+      "text": "很",
+      "type": "in_sentence_repeat",
+      "fullSentence": "就是世，就是这个有很广阔的这个天地，啊，然后不管是这个美景也好啊，或者是不同地方的人文风俗也好啊。"
+    },
+    {
+      "sentenceIdx": 482,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "然后我晚上可以去看个剧啊，可以去一些文化活动啊，可以去一些这个别的一些跟工作无关的一些呃个人的生活，这个反而能够帮助我在工作中更加的 focused 啊。"
+    },
+    {
+      "sentenceIdx": 518,
+      "speaker": "响歌歌",
+      "text": "我会觉得会更高一点。 嗯嗯，明白好的，那我们收个尾吧。",
+      "type": "production_talk",
+      "typeLabel": "录制讨论",
+      "fullSentence": "嗯嗯，明白好的，那我们收个尾吧。"
+    },
+    {
+      "sentenceIdx": 26,
+      "speaker": "Dexter",
+      "text": "OK",
+      "type": "production_talk",
+      "typeLabel": "录制讨论",
+      "fullSentence": "OK 啊，那我们就开始今天的这个播客。"
+    },
+    {
+      "sentenceIdx": 27,
+      "speaker": "Dexter",
+      "text": "然后",
+      "type": "other",
+      "typeLabel": "其他",
+      "fullSentence": "然后非常欢迎啊，这个汉森能够来我们加速学习。"
+    },
+    {
+      "sentenceIdx": 71,
+      "speaker": "汉森",
+      "text": "这种",
+      "type": "consecutive_filler",
+      "typeLabel": "连续填充词",
+      "fullSentence": "就作为产品经理这种这种这种做一些小没用的一些小东西。"
+    },
+    {
+      "sentenceIdx": 71,
+      "speaker": "汉森",
+      "text": "这种",
+      "type": "in_sentence_repeat",
+      "fullSentence": "就作为产品经理这种这种这种做一些小没用的一些小东西。"
+    },
+    {
+      "sentenceIdx": 89,
+      "speaker": "Dexter",
+      "text": "嗯嗯嗯，",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "嗯嗯嗯，ok 关于 web coding 这个这一 part 呢，我们会到后面再进一步去聊，因为呃不管是我个人，我还是还相信，就是今天的播客听众们都对于。"
+    },
+    {
+      "sentenceIdx": 89,
+      "speaker": "Dexter",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "嗯嗯嗯，ok 关于 web coding 这个这一 part 呢，我们会到后面再进一步去聊，因为呃不管是我个人，我还是还相信，就是今天的播客听众们都对于。"
+    },
+    {
+      "sentenceIdx": 96,
+      "speaker": "汉森",
+      "text": "我，因为我，infj 是一个",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "我，因为我，infj 是一个，我是，我还是比较典型的 infj，就是一个平时不爱出去玩。"
+    },
+    {
+      "sentenceIdx": 96,
+      "speaker": "汉森",
+      "text": "我是",
+      "type": "self_correction",
+      "fullSentence": "我，因为我，infj 是一个，我是，我还是比较典型的 infj，就是一个平时不爱出去玩。"
+    },
+    {
+      "sentenceIdx": 99,
+      "speaker": "汉森",
+      "text": "所以比如说那天你找我打，找，",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "所以比如说那天你找我打，找，对你那天咱俩见面的时候，你找我打招呼，对吧？"
+    },
+    {
+      "sentenceIdx": 103,
+      "speaker": "汉森",
+      "text": "这",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "对，这这么这么一个人吧。"
+    },
+    {
+      "sentenceIdx": 103,
+      "speaker": "汉森",
+      "text": "这么",
+      "type": "consecutive_filler",
+      "fullSentence": "对，这这么这么一个人吧。"
+    },
+    {
+      "sentenceIdx": 129,
+      "speaker": "汉森",
+      "text": "一个一个",
+      "type": "consecutive_filler",
+      "fullSentence": "嗯，对，创造的原因是因为其实我在。"
+    },
+    {
+      "sentenceIdx": 165,
+      "speaker": "Dexter",
+      "text": "这个这个这个",
+      "type": "consecutive_filler",
+      "typeLabel": "连续填充词",
+      "fullSentence": "呃，那其实通过这个这一part呢，其实我觉得也很清晰地了解了现在你在做一些事情和你感兴趣的一些东西。"
+    },
+    {
+      "sentenceIdx": 171,
+      "speaker": "Dexter",
+      "text": "这个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "呃，那你从这一段职业的经历当中，你觉得你学到了什么，或者对你来说你受益的是什么？"
+    },
+    {
+      "sentenceIdx": 172,
+      "speaker": "汉森",
+      "text": "嗯",
+      "type": "other",
+      "typeLabel": "其他",
+      "fullSentence": "嗯。"
+    },
+    {
+      "sentenceIdx": 217,
+      "speaker": "汉森",
+      "text": "就是很很很那个啥，就是那个时候用智",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "然后当时我要去对非常的奇葩，然后所以当时我投简历的时候呢，就是很很很那个啥，就是那个时候用智，那个时候用智联，你不知道你知不知道智联，然后呢每一页有50个岗位，就是点开这一页全选投递，下一页全选投递，下一页全选投递，就这么投投了一个多礼拜，然后投出了一家公司愿意面试我。"
+    },
+    {
+      "sentenceIdx": 239,
+      "speaker": "汉森",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "他他那个工资比我第二份工资还要少500，就是他基本上就是3500的工资就已经到底了。"
+    },
+    {
+      "sentenceIdx": 246,
+      "speaker": "汉森",
+      "text": "因为",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "那段时间我租了个房子，因为因为我跟我老婆，我老婆是这样，她复读了一年这个研究生，然后她第二年来来跟我一起来了北京。"
+    },
+    {
+      "sentenceIdx": 287,
+      "speaker": "汉森",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "所以呢，你看我跳到第四份工作的时候，我我这套东西啊，在我后来面试的时候，我跟任何一个HR去聊，他们都很感动。"
+    },
+    {
+      "sentenceIdx": 294,
+      "speaker": "汉森",
+      "text": "嗯，",
+      "type": "in_sentence_repeat",
+      "typeLabel": "句内重复",
+      "fullSentence": "’嗯，然后干了两年以后呢，我特别特别辛苦，然后我每天都工作很，就是很卷。"
+    },
+    {
+      "sentenceIdx": 298,
+      "speaker": "汉森",
+      "text": "就是他们，我就就直接说了，他们刚",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "就是他们，我就就直接说了，他们刚他们当时有个避税的操作，就如果你的工资超过了呃7500还是8000来着，我忘了，就是如果你超过这个数，你是两张卡这样，你可以避税。"
+    },
+    {
+      "sentenceIdx": 313,
+      "speaker": "汉森",
+      "text": "就直接就、就、就",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "我们那公司做幼儿园的嘛，所以就直接就、就、就就要没了。"
+    },
+    {
+      "sentenceIdx": 316,
+      "speaker": "汉森",
+      "text": "关于继续",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "呃，给你涨薪了哎。"
+    },
+    {
+      "sentenceIdx": 336,
+      "speaker": "汉森",
+      "text": "我",
+      "type": "consecutive_filler",
+      "fullSentence": "我我想的就是一个东西，就是把目标达成啊，就是我想的就是这个。"
+    },
+    {
+      "sentenceIdx": 337,
+      "speaker": "汉森",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "我好像聊跑题了，你问我这个几几个关键词，我好像聊跑题了啊。"
+    },
+    {
+      "sentenceIdx": 343,
+      "speaker": "汉森",
+      "text": "我我",
+      "type": "in_sentence_repeat",
+      "fullSentence": "但但我先我先大概总结一下吧，反正第一个就是我职场早期，我我我信奉的一个东西就是办法总比问题多。"
+    },
+    {
+      "sentenceIdx": 343,
+      "speaker": "汉森",
+      "text": "但",
+      "type": "consecutive_filler",
+      "fullSentence": "但但我先我先大概总结一下吧，反正第一个就是我职场早期，我我我信奉的一个东西就是办法总比问题多。"
+    },
+    {
+      "sentenceIdx": 358,
+      "speaker": "汉森",
+      "text": "最后",
+      "type": "in_sentence_repeat",
+      "fullSentence": "对，然后但最后最后其实我也没当上产品经理啊，这是一个但这但这个是有原因的了。"
+    },
+    {
+      "sentenceIdx": 358,
+      "speaker": "汉森",
+      "text": "这是一个但这",
+      "type": "self_correction",
+      "fullSentence": "对，然后但最后最后其实我也没当上产品经理啊，这是一个但这但这个是有原因的了。"
+    },
+    {
+      "sentenceIdx": 387,
+      "speaker": "汉森",
+      "text": "特别特特",
+      "type": "self_correction",
+      "fullSentence": "那个HR特别特特特别干脆，就是上来以后就喂，是汉森吗？"
+    },
+    {
+      "sentenceIdx": 421,
+      "speaker": "汉森",
+      "text": "他很需、",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "然后所以他当时也对这个业务很自信，他说他很需、他很需要、很认真的人。"
+    },
+    {
+      "sentenceIdx": 424,
+      "speaker": "汉森",
+      "text": "他就因为他当",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "他就因为他当他当时帮我做职业规划，你知道吗？"
+    },
+    {
+      "sentenceIdx": 427,
+      "speaker": "汉森",
+      "text": "然后就",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "然后就然后又表示这种很真挚的这种需要感。"
+    },
+    {
+      "sentenceIdx": 450,
+      "speaker": "汉森",
+      "text": "又又",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "所以你看我2019年的时候，就是因为那个幼儿园那个政策就垮了；2020年的时候，21年的时候呢，又是双减，然后我那个公司又又又快不行了。"
+    },
+    {
+      "sentenceIdx": 451,
+      "speaker": "汉森",
+      "text": "奇很很很很",
+      "type": "self_correction",
+      "fullSentence": "然后这段时间呢，就有一个奇很很很很很有意思的经历。"
+    },
+    {
+      "sentenceIdx": 453,
+      "speaker": "汉森",
+      "text": "有有",
+      "type": "in_sentence_repeat",
+      "fullSentence": "然后当时呢，我有有有一个老板，他是做音乐剧的，然后他当时就很需要一个运营总监，他很认可我能力，就说要不你来我这儿吧。"
+    },
+    {
+      "sentenceIdx": 468,
+      "speaker": "汉森",
+      "text": "很",
+      "type": "in_sentence_repeat",
+      "fullSentence": "嗯，音乐剧这个行业又是很很吃人的，就是我们40个演员一起过去，一个人不是绿码，就整个演出就就不行了。"
+    },
+    {
+      "sentenceIdx": 469,
+      "speaker": "汉森",
+      "text": "就是世，",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "嗯，所以呢，当时就有这么个情况。"
+    },
+    {
+      "sentenceIdx": 478,
+      "speaker": "汉森",
+      "text": "他要他他",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "他要他他我那时候工资已经三万多差不多，然后他的降薪逻辑是他不是按比例，他是全员降到一万。"
+    },
+    {
+      "sentenceIdx": 498,
+      "speaker": "汉森",
+      "text": "你",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "就是我是个特别闲不住的人，就是你你现在给我一个盘子让我守着。"
+    },
+    {
+      "sentenceIdx": 508,
+      "speaker": "汉森",
+      "text": "25年年",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "但那个时候我真是等不了了，所以呢，25年年24年年底我就开始做自媒体，25年年初跑通，然后就提离职，然后就来了杭州。"
+    },
+    {
+      "sentenceIdx": 518,
+      "speaker": "汉森",
+      "text": "我会觉得会更高一点。 嗯嗯，明白好的，那我们收个尾吧。",
+      "type": "production_talk",
+      "typeLabel": "录制讨论",
+      "fullSentence": "对，所以呢，早期我是觉得呃，解决问题一定是最重要的。"
+    },
+    {
+      "sentenceIdx": 534,
+      "speaker": "Dexter",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "但是其实里面有几个呃词嘛，都在我的脑海里一直在转。"
+    },
+    {
+      "sentenceIdx": 538,
+      "speaker": "Dexter",
+      "text": "嗯",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "我觉得这些点都是嗯，就是刚才让我听完之后也是很感动，然后。"
+    },
+    {
+      "sentenceIdx": 542,
+      "speaker": "Dexter",
+      "text": "那那",
+      "type": "in_sentence_repeat",
+      "fullSentence": "然后其实那那那在这个过程当中呢，我刚才也听了你很长的一段这个介绍啊。"
+    },
+    {
+      "sentenceIdx": 545,
+      "speaker": "Dexter",
+      "text": "你",
+      "type": "in_sentence_repeat",
+      "fullSentence": "因为我想啊，你你是一个比较呃对于创造这么敏感的人，其实或许你也是一个比较敏感的人。"
+    },
+    {
+      "sentenceIdx": 545,
+      "speaker": "Dexter",
+      "text": "比较呃",
+      "type": "consecutive_filler",
+      "fullSentence": "因为我想啊，你你是一个比较呃对于创造这么敏感的人，其实或许你也是一个比较敏感的人。"
+    },
+    {
+      "sentenceIdx": 552,
+      "speaker": "汉森",
+      "text": "对我",
+      "type": "consecutive_filler",
+      "typeLabel": "连续填充词",
+      "fullSentence": "对我，首先我是一个顶级内耗的人。"
+    },
+    {
+      "sentenceIdx": 553,
+      "speaker": "汉森",
+      "text": "就是我是一个非常非常超级，我",
+      "type": "repeated_sentence",
+      "fullSentence": "就是我是一个非常非常超级，我我是首先我是一个超级敏感的人，就是我是敏感拉满了的，就是同理心是我的最强技能之一。"
+    },
+    {
+      "sentenceIdx": 556,
+      "speaker": "汉森",
+      "text": "对你很懂",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "对你很懂，别人很多时候你就会很、你会很在意别人的这种看法，或者是很在意别人的评价。"
+    },
+    {
+      "sentenceIdx": 556,
+      "speaker": "汉森",
+      "text": "你就会很、",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "对你很懂，别人很多时候你就会很、你会很在意别人的这种看法，或者是很在意别人的评价。"
+    },
+    {
+      "sentenceIdx": 558,
+      "speaker": "汉森",
+      "text": "就举个",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "就举个举个例子，就是我我历史的这些履历当中，我每一次跳槽之前我都觉得自己完蛋了。"
+    },
+    {
+      "sentenceIdx": 564,
+      "speaker": "汉森",
+      "text": "完",
+      "type": "in_sentence_repeat",
+      "fullSentence": "但是没有办法，啊，完完蛋也得干，就是必须要去解决问题。"
+    },
+    {
+      "sentenceIdx": 565,
+      "speaker": "汉森",
+      "text": "所以呢，",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "所以所以呢，所以我在职场的，就是我，包括我去第五家公司的时候，我给自己的签名就叫做办法总比问题多。"
+    },
+    {
+      "sentenceIdx": 565,
+      "speaker": "汉森",
+      "text": "所以",
+      "type": "in_sentence_repeat",
+      "fullSentence": "所以所以呢，所以我在职场的，就是我，包括我去第五家公司的时候，我给自己的签名就叫做办法总比问题多。"
+    },
+    {
+      "sentenceIdx": 627,
+      "speaker": "汉森",
+      "text": "无论",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "就是你站在这个地方，你你你你举目四望，你都你都不知道有哪些问题是你要解决的。"
+    },
+    {
+      "sentenceIdx": 627,
+      "speaker": "汉森",
+      "text": "无论",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "就是你站在这个地方，你你你你举目四望，你都你都不知道有哪些问题是你要解决的。"
+    },
+    {
+      "sentenceIdx": 637,
+      "speaker": "汉森",
+      "text": "然后呢，",
+      "type": "repeated_sentence",
+      "typeLabel": "重复句",
+      "fullSentence": "然后呢，我就一直让他保持客观中立，然后甚至批评的态度，然后不断的CHALLENGE我。"
+    },
+    {
+      "sentenceIdx": 661,
+      "speaker": "Dexter",
+      "text": "你你",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "嗯，那对于web coding来说，呃，我看过你之前写的一个文章，你说你你你描述了两条曲线。"
+    },
+    {
+      "sentenceIdx": 677,
+      "speaker": "汉森",
+      "text": "我我",
+      "type": "in_sentence_repeat",
+      "typeLabel": "句内重复",
+      "fullSentence": "所以也是那个点，我我因为我是这样，虽然我没有做过产品经理，呃，我指的是严格意义上，但我认为我自己还是个不错的产品啊。"
+    },
+    {
+      "sentenceIdx": 707,
+      "speaker": "汉森",
+      "text": "也也也就",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "然后然后我们那个群里也也也就也很炸裂，因为我有一个WEB CODING的一个分享群，大家就很炸裂，大家都在讨论说这原来这就是你说的就是IP和AI的结合。"
+    },
+    {
+      "sentenceIdx": 720,
+      "speaker": "汉森",
+      "text": "能能能能",
+      "type": "in_sentence_repeat",
+      "fullSentence": "就说哎，怎么能能能能能做到，对吧？"
+    },
+    {
+      "sentenceIdx": 723,
+      "speaker": "汉森",
+      "text": "我我我",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "就是后来我俩就私聊，我我我我对他说，我说我我我说我特别感谢你能做出这个东西来。"
+    },
+    {
+      "sentenceIdx": 726,
+      "speaker": "汉森",
+      "text": "就就就很那个啥，",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "然后又要过年了，就就就很那个啥，因为刚离职嘛，要过年回家见这个家人什么的。"
+    },
+    {
+      "sentenceIdx": 767,
+      "speaker": "汉森",
+      "text": "就是他",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "就是他他即便辐射到他身边的人，我们平时卖一些东西也很难说，比如说我一个人可能周边三十个人的圈子一下爆出来五六个人全买，其实可能性也不是很高。"
+    },
+    {
+      "sentenceIdx": 768,
+      "speaker": "汉森",
+      "text": "然后反而是但但就但是这种思路你知道吧，",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "所以呢，他其实也没什么好传播的，然后反而是但但就但是这种思路你知道吧，就这个思路是很重要的，就是你可以通过这个卖出去一万单、两万单、三万单都是有，都是有可能的。"
+    },
+    {
+      "sentenceIdx": 778,
+      "speaker": "汉森",
+      "text": "嗯。",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "嗯。"
+    },
+    {
+      "sentenceIdx": 781,
+      "speaker": "Dexter",
+      "text": "其",
+      "type": "stutter",
+      "fullSentence": "呃，然后其其实这个关于聊 WEB CODING 啊，其实也挺有意思，因为我自己也会有在尝试做 WEB CODING 嘛。"
+    },
+    {
+      "sentenceIdx": 818,
+      "speaker": "Dexter",
+      "text": "啊。",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "啊。"
+    },
+    {
+      "sentenceIdx": 834,
+      "speaker": "汉森",
+      "text": "我",
+      "type": "in_sentence_repeat",
+      "fullSentence": "对，就是有一天有一个人在，就我我发我一个跟 ai 沟通的一个群，就是一个截图一个截图发到一个群里面，他，有一个女生说，哎，你居然还会夸 ai，就因为 ai 在帮我做一个东西。"
+    },
+    {
+      "sentenceIdx": 894,
+      "speaker": "汉森",
+      "text": "但他但他",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "跑不通，这这他他可能听得懂，但他但他但他不知道怎么解决。"
+    },
+    {
+      "sentenceIdx": 902,
+      "speaker": "汉森",
+      "text": "对我，",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "对我，所以我现在跟AI交互的时候，如果AI没达到我的诉求，我第一反应就是首先我会回撤，我会回撤回去，然后我会想是不是自己没说清楚，就是我没让AI理解我的意思啊。"
+    },
+    {
+      "sentenceIdx": 944,
+      "speaker": "汉森",
+      "text": "他",
+      "type": "in_sentence_repeat",
+      "fullSentence": "啊，他他可能我做的用东西他都喜欢用，他就一起都付费。"
+    },
+    {
+      "sentenceIdx": 951,
+      "speaker": "汉森",
+      "text": "不要框",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "我靠，一个app打开20个20个金刚位，对吧？"
+    },
+    {
+      "sentenceIdx": 969,
+      "speaker": "汉森",
+      "text": "我靠，",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "我靠，天天直播赚这么多钱，我一个人搞这么多钱太厉害了，我要出来割韭菜。"
+    },
+    {
+      "sentenceIdx": 1025,
+      "speaker": "汉森",
+      "text": "你知道我像像。",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "勇敢的原因是因为你知道我像像。"
+    },
+    {
+      "sentenceIdx": 1067,
+      "speaker": "汉森",
+      "text": "商业是很、很、很……",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "商业是很、很、很……其实人们在愿意为你付钱的时候，这个事儿如果你愿意创造对等价值，甚至更高的价值，这是个好事。"
+    },
+    {
+      "sentenceIdx": 1105,
+      "speaker": "Dexter",
+      "text": "你你你你要么你。",
+      "type": "residual_sentence",
+      "typeLabel": "残句",
+      "fullSentence": "呃，那其实对于我们加速学习来说，我们一直想做的一件事情就是点燃潜力，加速学习，就是找到每个人喜欢又擅长的事情。"
+    },
+    {
+      "sentenceIdx": 1115,
+      "speaker": "汉森",
+      "text": "它",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "它它甚至比体验和自由还要重要。"
+    },
+    {
+      "sentenceIdx": 1166,
+      "speaker": "Dexter",
+      "text": "哈哈，然后然后在后面如果有机会的话，等到呃后面，然后因为可能要等到，你过年会回去吗？",
+      "type": "production_talk",
+      "typeLabel": "录制讨论",
+      "fullSentence": "哈哈，然后然后在后面如果有机会的话，等到呃后面，然后因为可能要等到，你过年会回去吗？"
+    },
+    {
+      "sentenceIdx": 1167,
+      "speaker": "汉森",
+      "text": "会回去",
+      "type": "production_talk",
+      "typeLabel": "录制讨论",
+      "fullSentence": "会回去。"
+    },
+    {
+      "sentenceIdx": 1170,
+      "speaker": "Dexter",
+      "text": "嗯。",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "嗯。"
+    },
+    {
+      "sentenceIdx": 1174,
+      "speaker": "汉森",
+      "text": "嗯。",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "嗯。"
+    },
+    {
+      "sentenceIdx": 15,
+      "speaker": "清扬",
+      "text": "这个",
+      "type": "consecutive_filler",
+      "fullSentence": "对，呃，我想先介绍一下我自己的啊这个这个经历啊，然后我其实呃这个可以从比较早开始介绍给大家多一点这个多一点铺垫吧。"
+    },
+    {
+      "sentenceIdx": 44,
+      "speaker": "清扬",
+      "text": "第一",
+      "type": "repeated_sentence",
+      "typeLabel": "重复句",
+      "fullSentence": "对，这个是我主要的一个学习的经历吧。"
+    },
+    {
+      "sentenceIdx": 45,
+      "speaker": "清扬",
+      "text": "然后我是2022年毕业的，是这个博士毕业",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "然后我是2022年毕业的，是这个博士毕业。"
+    },
+    {
+      "sentenceIdx": 46,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "我是2022年的上半年呃博士毕业。"
+    },
+    {
+      "sentenceIdx": 51,
+      "speaker": "清扬",
+      "text": "都没有",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "在我看来，其实很多人都没有之前没有预想到这样一个领域。"
+    },
+    {
+      "sentenceIdx": 61,
+      "speaker": "清扬",
+      "text": "咳咳",
+      "type": "stutter",
+      "fullSentence": "对，其实我的我可以呃就是分享一下，当时我在呃高中的时候，因为我上的这个学校，它本身可能出国率就比较高啊。"
+    },
+    {
+      "sentenceIdx": 62,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "然后呢，当时其实我的学长学姐每一年都有大概呃大几十个人出国的啊，但是我当时并没有很坚定的去说啊，我也要这样，我也要考考到美国的前十或者什么样的学校啊。"
+    },
+    {
+      "sentenceIdx": 63,
+      "speaker": "清扬",
+      "text": "呃在",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "其实我是呃在加入了这个高中，上高中以后呢，我其实呃试图的去参加一些，就是比如说以前申请的哈佛、耶鲁的学长学姐啊，那我他们参加过一些什么学生活动啊，或者他们有一些什么路径啊。"
+    },
+    {
+      "sentenceIdx": 63,
+      "speaker": "清扬",
+      "text": "加入了这个高中，",
+      "type": "self_correction",
+      "fullSentence": "其实我是呃在加入了这个高中，上高中以后呢，我其实呃试图的去参加一些，就是比如说以前申请的哈佛、耶鲁的学长学姐啊，那我他们参加过一些什么学生活动啊，或者他们有一些什么路径啊。"
+    },
+    {
+      "sentenceIdx": 63,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "其实我是呃在加入了这个高中，上高中以后呢，我其实呃试图的去参加一些，就是比如说以前申请的哈佛、耶鲁的学长学姐啊，那我他们参加过一些什么学生活动啊，或者他们有一些什么路径啊。"
+    },
+    {
+      "sentenceIdx": 65,
+      "speaker": "清扬",
+      "text": "啊",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "对，但并不是说我从小，就是说啊这个这个，以后未来一定要在美国。"
+    },
+    {
+      "sentenceIdx": 65,
+      "speaker": "清扬",
+      "text": "这个",
+      "type": "consecutive_filler",
+      "fullSentence": "对，但并不是说我从小，就是说啊这个这个，以后未来一定要在美国。"
+    },
+    {
+      "sentenceIdx": 82,
+      "speaker": "清扬",
+      "text": "啊",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "呃，美国高中是没有教材的，就是读文学经典或者是非常OPEN ENDED的一些讨论啊等等。"
+    },
+    {
+      "sentenceIdx": 83,
+      "speaker": "清扬",
+      "text": "呃呃",
+      "type": "stutter",
+      "fullSentence": "所以这个可能也是对我最终决定去美国一个蛮大的影响，就是说它的一个呃呃大学的一个所谓LIBERAL ARTS比较注重呃每一个学生自主性，然后呢有自己自自己的一些思思维啊，或者包括自己的一些。"
+    },
+    {
+      "sentenceIdx": 83,
+      "speaker": "清扬",
+      "text": "思",
+      "type": "consecutive_filler",
+      "fullSentence": "所以这个可能也是对我最终决定去美国一个蛮大的影响，就是说它的一个呃呃大学的一个所谓LIBERAL ARTS比较注重呃每一个学生自主性，然后呢有自己自自己的一些思思维啊，或者包括自己的一些。"
+    },
+    {
+      "sentenceIdx": 91,
+      "speaker": "响歌歌",
+      "text": "怎么说",
+      "type": "consecutive_filler",
+      "typeLabel": "连续填充词",
+      "fullSentence": "Awareness就已经是一件啊非常厉害的事情，而且能看出你是怎么说很听自己内心的想法了，就是不会说太去看周围人都在做些什么，包括可能后来做了回国的这个决定，也跟大部分人在硅谷的路径是不一样的嘛。"
+    },
+    {
+      "sentenceIdx": 94,
+      "speaker": "响歌歌",
+      "text": "有一段",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "那我们可以再聊聊，就是你从 mit 毕业之后，你有一段，有几段工作经验吧，对吧？"
+    },
+    {
+      "sentenceIdx": 94,
+      "speaker": "响歌歌",
+      "text": "你",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "那我们可以再聊聊，就是你从 mit 毕业之后，你有一段，有几段工作经验吧，对吧？"
+    },
+    {
+      "sentenceIdx": 100,
+      "speaker": "清扬",
+      "text": "这个",
+      "type": "consecutive_filler",
+      "fullSentence": "嗯，对，我可以这个介绍一下我工作的一几段经验。"
+    },
+    {
+      "sentenceIdx": 107,
+      "speaker": "清扬",
+      "text": "拿",
+      "type": "in_sentence_repeat",
+      "fullSentence": "是我在2022年，就是我一年以后毕业了，一年以后或者拿拿到OFFER一年以后，我入职的2022年年底。"
+    },
+    {
+      "sentenceIdx": 112,
+      "speaker": "清扬",
+      "text": "都都都都",
+      "type": "consecutive_filler",
+      "fullSentence": "对，然后呢这个裁员我印象很深，大概是裁了百分之十几的这个员工，是一个大范围的这个裁员，而且是把跟我和我同时入职的小伙伴们都一起都都都都都被 lay off. "
+    },
+    {
+      "sentenceIdx": 113,
+      "speaker": "清扬",
+      "text": "一个一个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "对，所以这个呢其实是给我蛮大的一个呃个人经历上的一个一个一个震撼也好，啊，我就觉得，哦，原来这么大的公司也可以 scrup，也可以就是说啊就是有很多的战略性啊，或者是有很多这个问题。"
+    },
+    {
+      "sentenceIdx": 113,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "对，所以这个呢其实是给我蛮大的一个呃个人经历上的一个一个一个震撼也好，啊，我就觉得，哦，原来这么大的公司也可以 scrup，也可以就是说啊就是有很多的战略性啊，或者是有很多这个问题。"
+    },
+    {
+      "sentenceIdx": 114,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "第二，我从我个人角度来说，我觉得呃你做规划当然要做规划，但是规划也很难完全避免这种不确定性，就是你 out of your control 的一些不确定性。"
+    },
+    {
+      "sentenceIdx": 120,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "OK，然后在这个之后呢，我其实呃因为是作为这个学生签证啊，所以说他就对你的这个失业期有一定的要求啊。"
+    },
+    {
+      "sentenceIdx": 121,
+      "speaker": "清扬",
+      "text": "不在",
+      "type": "in_sentence_repeat",
+      "typeLabel": "句内重复",
+      "fullSentence": "然后你也可能也知道，就是我是10月份才入职嘛，所以我之前其实用掉了很多我的这个所谓的失业期，在回国探亲或者是就是不在不在美国。"
+    },
+    {
+      "sentenceIdx": 122,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "对，所以当时其实那段时间我印象很深，压力也蛮大，因为这个呃所有你几乎认识的大厂基本上都是不招人的。"
+    },
+    {
+      "sentenceIdx": 129,
+      "speaker": "清扬",
+      "text": "一个一个",
+      "type": "consecutive_filler",
+      "fullSentence": "这个经验啊，因为以前我做的还是DOMAIN SPECIFIC的小模型。"
+    },
+    {
+      "sentenceIdx": 132,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "然后呢，我还是觉得呃这不是我特别感兴趣的一个领域，就虽然我觉得工作本身我是能够胜任的。"
+    },
+    {
+      "sentenceIdx": 139,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "这个是也是一个 ai 的一个比较传统的一个业务。"
+    },
+    {
+      "sentenceIdx": 152,
+      "speaker": "清扬",
+      "text": "一个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "但是有了 dp，有了这些这个新的创新以后，我觉得这个，其实我觉得这可可能真的是一个未来的新的一个一个范式，新的 business model 都出现。"
+    },
+    {
+      "sentenceIdx": 158,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "对，这是我在呃最后一段主要的经历。"
+    },
+    {
+      "sentenceIdx": 158,
+      "speaker": "清扬",
+      "text": "在呃",
+      "type": "self_correction",
+      "fullSentence": "对，这是我在呃最后一段主要的经历。"
+    },
+    {
+      "sentenceIdx": 168,
+      "speaker": "清扬",
+      "text": "一些",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "因为有了 AI agent 之后呢，我我觉得这个 LM 它本身不是一个 chatbot 它是一个程序的一部分，它其实本质上就是说我把原来的程序人为设计的 program 它的一部分变成了一个 LM 它让它来做决定，去选择什么 tool 啊，或者去做一些这个这个别的一些。"
+    },
+    {
+      "sentenceIdx": 168,
+      "speaker": "清扬",
+      "text": "我",
+      "type": "in_sentence_repeat",
+      "fullSentence": "因为有了 AI agent 之后呢，我我觉得这个 LM 它本身不是一个 chatbot 它是一个程序的一部分，它其实本质上就是说我把原来的程序人为设计的 program 它的一部分变成了一个 LM 它让它来做决定，去选择什么 tool 啊，或者去做一些这个这个别的一些。"
+    },
+    {
+      "sentenceIdx": 168,
+      "speaker": "清扬",
+      "text": "这个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "因为有了 AI agent 之后呢，我我觉得这个 LM 它本身不是一个 chatbot 它是一个程序的一部分，它其实本质上就是说我把原来的程序人为设计的 program 它的一部分变成了一个 LM 它让它来做决定，去选择什么 tool 啊，或者去做一些这个这个别的一些。"
+    },
+    {
+      "sentenceIdx": 171,
+      "speaker": "清扬",
+      "text": "这个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "对，所以这两个也恰恰是在2025年左右吧，就有了一个比较大的一个一个一个breakthrough。"
+    },
+    {
+      "sentenceIdx": 175,
+      "speaker": "响歌歌",
+      "text": "哎",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "嗯，然后连带着 agent 有了这个 reasoning 之后，在去年也开始开始爆发了，或者说今年应该也会是 agent 大爆发年，就是相当于这个契机让你开始思考说，哎，我应该有一些新的改变，是吗。"
+    },
+    {
+      "sentenceIdx": 176,
+      "speaker": "清扬",
+      "text": "啊",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "嗯，对，主要是这样，而且我真的是觉得agent的话，它是能够在不同的领域真正的去啊做到一个质变的这样的一个一个一个新的技术。"
+    },
+    {
+      "sentenceIdx": 180,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "对，所以也是我当时觉得啊，这个没有特别的 impress 觉得他们其实就是在这个呃在他们的已有的模型里面去生成这个。"
+    },
+    {
+      "sentenceIdx": 185,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "它就是真正能够有一个实时性，然后能够做一些比较呃比较深入的reasoning或者是analysis。"
+    },
+    {
+      "sentenceIdx": 190,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "这也是我比较啊比较 excited 的一个地方，就是它不仅仅是语言或者是这个 coding，对，它其实很多时候它是跟这个影像和这个图片啊相关的，这个叫叫 vision language model，这个这个我觉得也是一个，我认为会之后比较有。"
+    },
+    {
+      "sentenceIdx": 202,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "对，但是我自己其实一直没有很充足的时间去这个深入的探索这样的一个呃一个领域。"
+    },
+    {
+      "sentenceIdx": 202,
+      "speaker": "清扬",
+      "text": "一个",
+      "type": "in_sentence_repeat",
+      "typeLabel": "句内重复",
+      "fullSentence": "对，但是我自己其实一直没有很充足的时间去这个深入的探索这样的一个呃一个领域。"
+    },
+    {
+      "sentenceIdx": 203,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "对，所以这也是我为什么想要用接下来的这一段时间，可能我会先去这个呃了解一下这个 ai agent 或者是跟一些这个智能体啊，或者这个智能制造啊，或者跟一些这种机器人相关的一些新的领域。"
+    },
+    {
+      "sentenceIdx": 211,
+      "speaker": "响歌歌",
+      "text": "回到归后来，",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "那为什么就是嗯因为其实在去年二月份你就有这样子的。"
+    },
+    {
+      "sentenceIdx": 211,
+      "speaker": "响歌歌",
+      "text": "我",
+      "type": "in_sentence_repeat",
+      "fullSentence": "那为什么就是嗯因为其实在去年二月份你就有这样子的。"
+    },
+    {
+      "sentenceIdx": 215,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "这个我先就clarify，去年2月份我觉得是呃要离开一个我很熟悉的doorash的环境，去进进入一个我不不太熟悉的公司去做lm。"
+    },
+    {
+      "sentenceIdx": 239,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "对，这个其实就是我觉得呃就更加的，既有 personal 的一些因素，它又有一些这个工作上的因素。"
+    },
+    {
+      "sentenceIdx": 253,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "然后呢，在现在的这个呃就业市场，比如说我想要在我现在的公司继续工作的话呢。"
+    },
+    {
+      "sentenceIdx": 256,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "对，所以这个其实是我的一个呃很重要的一个想法，就是认为我一直生活在这种不能自由出行，啊，然后因为我有很多想要去旅游啊，想要回国啊探亲啊，都是不可以的这样一个啊环境下。"
+    },
+    {
+      "sentenceIdx": 260,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "那我觉得it's finally the time，我就觉得可以去做这样一个呃决定。"
+    },
+    {
+      "sentenceIdx": 266,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "对，所以说这个其实我都是呃已经是这个，不仅是探索过，其实我都申请过，对，然后也拿到。"
+    },
+    {
+      "sentenceIdx": 287,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "嗯，对，就是说我是呃最近一段时间确实是呃在看国内的一些这个机会啊。"
+    },
+    {
+      "sentenceIdx": 289,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "对，然后我目前的话呢，有几个给我呃印象比较深的一些事情。"
+    },
+    {
+      "sentenceIdx": 300,
+      "speaker": "清扬",
+      "text": "更",
+      "type": "in_sentence_repeat",
+      "fullSentence": "但是同样的话，它的这个AI的模型的整个的架构、模型的这个其实是更更好，或者是对这个是我的第一个感觉啊。"
+    },
+    {
+      "sentenceIdx": 316,
+      "speaker": "清扬",
+      "text": "关于继续",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "但是呢，在国内给我的感觉，很多时候是比如说这个PUBLIC SECTOR它扶持的一些项目，其实反而能够做一些没有那么快短期回报的一些创新啊。"
+    },
+    {
+      "sentenceIdx": 323,
+      "speaker": "响歌歌",
+      "text": "很多于",
+      "type": "in_sentence_repeat",
+      "typeLabel": "句内重复",
+      "fullSentence": "嗯，听，对，我觉得听上去确实国内跟美国的环境还有优势，还是有很，有一些 differentiation 的。"
+    },
+    {
+      "sentenceIdx": 326,
+      "speaker": "响歌歌",
+      "text": "听上去你好像比是，",
+      "type": "consecutive_filler",
+      "typeLabel": "连续填充词",
+      "fullSentence": "呃，听上去你好像比是，你是不是会更倾向于做 research 方面的工作，就是有一些底层 research 然后更长远。"
+    },
+    {
+      "sentenceIdx": 329,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "啊，就是说我其实是呃真正，或者说我真正的愿望是用 ai 做一些有 impact 的事情。"
+    },
+    {
+      "sentenceIdx": 329,
+      "speaker": "清扬",
+      "text": "真正",
+      "type": "self_correction",
+      "fullSentence": "啊，就是说我其实是呃真正，或者说我真正的愿望是用 ai 做一些有 impact 的事情。"
+    },
+    {
+      "sentenceIdx": 330,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "啊，就是是很抽象，但是这确实是我自己的想法。"
+    },
+    {
+      "sentenceIdx": 330,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "啊，就是是很抽象，但是这确实是我自己的想法。"
+    },
+    {
+      "sentenceIdx": 333,
+      "speaker": "清扬",
+      "text": "更更",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "啊，去做的对，只不过我觉得不仅是research，还是一个对于一个产品或者对于一个新的领域，有足够多的耐心，让他去慢慢的试错，或者有一定的这样的一个这个比较长周期的一些投资research也好，或者是产品也好，这个可能跟我的这个preference会更更更align一点。"
+    },
+    {
+      "sentenceIdx": 337,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "然后医疗领域的话也有有不同的一些落地的，比如说是诊断也好，对吧？"
+    },
+    {
+      "sentenceIdx": 339,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "另外比如说跟这个制造，就是跟一些 manufacturing 这个东西也好，我觉得是呃如果是有一个比较呃比较成熟的一个领域，比如说医疗是一个很成熟的领域。"
+    },
+    {
+      "sentenceIdx": 340,
+      "speaker": "清扬",
+      "text": "一个",
+      "type": "in_sentence_repeat",
+      "typeLabel": "句内重复",
+      "fullSentence": "但是呢，它在 ai agent 这一块恰恰又是刚刚起步的，或者说这个没有那么多的渗透，这个可能是我更感兴趣的一个一个切入点吧。"
+    },
+    {
+      "sentenceIdx": 341,
+      "speaker": "清扬",
+      "text": "你看的",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "啊，或者说比如说有一些，我也接触到一些传统的 saas 公司，对吧？"
+    },
+    {
+      "sentenceIdx": 341,
+      "speaker": "清扬",
+      "text": "你",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "啊，或者说比如说有一些，我也接触到一些传统的 saas 公司，对吧？"
+    },
+    {
+      "sentenceIdx": 343,
+      "speaker": "清扬",
+      "text": "我我",
+      "type": "in_sentence_repeat",
+      "fullSentence": "但是呢，他能够仍然能够用 ai agent 来替他呃这个迭代掉原来的一部分业务。"
+    },
+    {
+      "sentenceIdx": 343,
+      "speaker": "清扬",
+      "text": "但",
+      "type": "consecutive_filler",
+      "fullSentence": "但是呢，他能够仍然能够用 ai agent 来替他呃这个迭代掉原来的一部分业务。"
+    },
+    {
+      "sentenceIdx": 344,
+      "speaker": "清扬",
+      "text": "一个一个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "对，这也是我觉得比较呃比较好的一个一个一个机会，而不是说我自己一定要从0到1去呃搞一个新的 company 或者说我觉得在一个已有的。"
+    },
+    {
+      "sentenceIdx": 344,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "对，这也是我觉得比较呃比较好的一个一个一个机会，而不是说我自己一定要从0到1去呃搞一个新的 company 或者说我觉得在一个已有的。"
+    },
+    {
+      "sentenceIdx": 345,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "环境下，然后帮他们从0到1 skill 一个 AI 的这样的一个呃部门或者是 AI 的一个产品，我觉得也是对我来说很感兴趣。"
+    },
+    {
+      "sentenceIdx": 348,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "对，这个是我的一个感觉，因为我说实话，对国内的创业的氛围可能还不是，或者创业的环境嘛，啊，可能还不是特别了解，因为我主要的呃认识的朋友啊，什么，还是主要在硅谷这边比较多一点。"
+    },
+    {
+      "sentenceIdx": 355,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "对，然后我觉得这个其实这个 FLEXIBILITY可能给我呃会给我更多的这个 FLEXIBILITY，然后呢可能会到一个比较成熟的时间，我会去考虑创业，或者说呃如果真的能够遇到一个靠谱的团队啊什么，我觉得也是啊也是可以的。"
+    },
+    {
+      "sentenceIdx": 358,
+      "speaker": "响歌歌",
+      "text": "最后",
+      "type": "in_sentence_repeat",
+      "fullSentence": "我刚才脑袋里就有一个问题嘛，最近sars不是大股价大跌。"
+    },
+    {
+      "sentenceIdx": 358,
+      "speaker": "响歌歌",
+      "text": "这是一个但这",
+      "type": "self_correction",
+      "fullSentence": "我刚才脑袋里就有一个问题嘛，最近sars不是大股价大跌。"
+    },
+    {
+      "sentenceIdx": 365,
+      "speaker": "响歌歌",
+      "text": "那那你觉得这个方向就",
+      "type": "consecutive_filler",
+      "typeLabel": "连续填充词",
+      "fullSentence": "那那你觉得这个方向就这种一条路，就是一个很强大模型，然后加上一些domain的workflow skill knowledge plug in这些versus你去自己搞一个vertical agent. "
+    },
+    {
+      "sentenceIdx": 380,
+      "speaker": "清扬",
+      "text": "就比如说你要是一个半个吧，",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "就比如说你要是一个半个吧，你是半个这个 medical expert 或者是你是半个这个智能制造，一些这个 expert 加上你的 AI 的这个，才能真正的去。"
+    },
+    {
+      "sentenceIdx": 394,
+      "speaker": "响歌歌",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "嗯，那如果说现在有的朋友他也想探索回国这条路啊，他听了我们的播客，觉得这个庆阳你呃你描绘的场景非常的非常的有潜力，就是国内有很多领域其实都很有优势。"
+    },
+    {
+      "sentenceIdx": 394,
+      "speaker": "响歌歌",
+      "text": "非常的",
+      "type": "in_sentence_repeat",
+      "typeLabel": "句内重复",
+      "fullSentence": "嗯，那如果说现在有的朋友他也想探索回国这条路啊，他听了我们的播客，觉得这个庆阳你呃你描绘的场景非常的非常的有潜力，就是国内有很多领域其实都很有优势。"
+    },
+    {
+      "sentenceIdx": 408,
+      "speaker": "清扬",
+      "text": "这个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "然后我在领英我们也可以打个广告，在领英我上面我也其实收到过很多国内的猎头啊，一些这个这个比较AGGRESSIVE的REACH OUT。"
+    },
+    {
+      "sentenceIdx": 436,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "所以说我其实是呃非常呃非常 LOOK FORWARD 去在国内和在其他的国家去这个旅行啊。"
+    },
+    {
+      "sentenceIdx": 437,
+      "speaker": "清扬",
+      "text": "生活",
+      "type": "in_sentence_repeat",
+      "typeLabel": "句内重复",
+      "fullSentence": "然后呃我我其实甚至觉得我不是选择美国和中国，对很多有些时候如果从生活生活的角度吧，我甚至觉得我的选择是美国和美国以外。"
+    },
+    {
+      "sentenceIdx": 448,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "对，那我觉得这就是一个呃我离开美国之后的一个福利吧。"
+    },
+    {
+      "sentenceIdx": 449,
+      "speaker": "清扬",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "就是说我觉得我的人生啊，啊我的这个整个的对于自己生活的呃支配会自由很多。"
+    },
+    {
+      "sentenceIdx": 451,
+      "speaker": "清扬",
+      "text": "奇很很很很",
+      "type": "self_correction",
+      "fullSentence": "啊，好玩的地方去这个旅个游啊什么，这个对我来说还是也是蛮重要的。"
+    },
+    {
+      "sentenceIdx": 469,
+      "speaker": "清扬",
+      "text": "就是世，",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "就是世，就是这个有很广阔的这个天地，啊，然后不管是这个美景也好啊，或者是不同地方的人文风俗也好啊。"
+    },
+    {
+      "sentenceIdx": 471,
+      "speaker": "清扬",
+      "text": "一个嗯",
+      "type": "stutter",
+      "fullSentence": "对，这个对我来说是 inspiration，这个反而能够帮助我在工作中能够调整到更好的一个嗯一个心态。"
+    },
+    {
+      "sentenceIdx": 480,
+      "speaker": "清扬",
+      "text": "嗯，",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "但是在上海，比如说我有一个高中同学，就跟我同班同学，他是在复旦读了法语专业，现在在这个上海的 broadway，就上海的这个这个这个这个相当于是这个演剧吧，在演一些话剧。"
+    },
+    {
+      "sentenceIdx": 518,
+      "speaker": "响歌歌",
+      "text": "我会觉得会更高一点。 嗯嗯，明白好的，那我们收个尾吧。",
+      "type": "production_talk",
+      "typeLabel": "录制讨论",
+      "fullSentence": "我会觉得会更高一点。"
+    },
+    {
+      "sentenceIdx": 527,
+      "speaker": "响歌歌",
+      "text": "非常呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "嗯，对，然后也非常呃非常能感受到你对未来生活的那种期待，对城市生活的多样性，然后下班的娱乐活动。"
+    },
+    {
+      "sentenceIdx": 44,
+      "speaker": "安安",
+      "text": "第一",
+      "type": "repeated_sentence",
+      "typeLabel": "重复句",
+      "fullSentence": "我是来美国读了数据分析，然后第一第一份工作是在一个创业公司做 growth analyst，后来加入 meta 做 product growth analyst。"
+    },
+    {
+      "sentenceIdx": 104,
+      "speaker": "菲菲",
+      "text": "我",
+      "type": "repeated_sentence",
+      "typeLabel": "重复句",
+      "fullSentence": "对，我我作证，我们俩聚会的时候就是比较随遇而安的。"
+    },
+    {
+      "sentenceIdx": 146,
+      "speaker": "阿穆尔",
+      "text": "我们就是一个",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "我们就是一个呃，让容器以一个被迫做自由职业的中文系毕业生的身份来跟我们一起来讨论嗯，这个失业问题、职业问题、求职问题以及。"
+    },
+    {
+      "sentenceIdx": 171,
+      "speaker": "阿穆尔",
+      "text": "这个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "嗯，然后你这个这个状态是怎么去解释的啊？"
+    },
+    {
+      "sentenceIdx": 182,
+      "speaker": "容七",
+      "text": "比较稳、",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "比如说是什么展会兼职，比如说是充当观众，比如说像我这种比较稳、稍微稳定一点的，就是去一些目前缺口比较大的纯靠人力，像不要比如说餐饮部门，比如说这种我说的咖啡厅啊，还有一些快餐店，其实他们会非常缺人，流动性也非常高。"
+    },
+    {
+      "sentenceIdx": 190,
+      "speaker": "容七",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "但是我通常都是可以在呃一到三个月里面可以找到一份比较好的工作。"
+    },
+    {
+      "sentenceIdx": 206,
+      "speaker": "阿穆尔",
+      "text": "嗯，",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "听起来其实就是你既有对于工作本身它的价值的怀疑，就无论任何工作，嗯，或者是你五年之这五年间你做过的那些工作，或者想投的那些工作，有对这些工作本身价值的怀疑。"
+    },
+    {
+      "sentenceIdx": 206,
+      "speaker": "阿穆尔",
+      "text": "五年之",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "听起来其实就是你既有对于工作本身它的价值的怀疑，就无论任何工作，嗯，或者是你五年之这五年间你做过的那些工作，或者想投的那些工作，有对这些工作本身价值的怀疑。"
+    },
+    {
+      "sentenceIdx": 207,
+      "speaker": "阿穆尔",
+      "text": "嗯，",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "同时呢，其实也夹杂了一些对自己的怀疑，就是我到底自己的我的能力，嗯，我自己的存在要不要去。"
+    },
+    {
+      "sentenceIdx": 209,
+      "speaker": "阿穆尔",
+      "text": "去",
+      "type": "consecutive_filler",
+      "typeLabel": "连续填充词",
+      "fullSentence": "去这样的几个问题混杂在一起，然后导致你其实有一团一团乱。"
+    },
+    {
+      "sentenceIdx": 209,
+      "speaker": "阿穆尔",
+      "text": "一团",
+      "type": "in_sentence_repeat",
+      "fullSentence": "去这样的几个问题混杂在一起，然后导致你其实有一团一团乱。"
+    },
+    {
+      "sentenceIdx": 211,
+      "speaker": "容七",
+      "text": "回到归后来，",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "但是回到归后来，其实我感觉我在问的就是我是谁，我要做什么，我我在哪里，我到底要去干什么。"
+    },
+    {
+      "sentenceIdx": 211,
+      "speaker": "容七",
+      "text": "我",
+      "type": "in_sentence_repeat",
+      "fullSentence": "但是回到归后来，其实我感觉我在问的就是我是谁，我要做什么，我我在哪里，我到底要去干什么。"
+    },
+    {
+      "sentenceIdx": 283,
+      "speaker": "小锅",
+      "text": "你的对",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "嗯，毕竟你的性格、你的兴趣爱好、你的对你对世界的观察和理解，跟你的同事完全不一样。"
+    },
+    {
+      "sentenceIdx": 303,
+      "speaker": "阿穆尔",
+      "text": "今",
+      "type": "in_sentence_repeat",
+      "typeLabel": "句内重复",
+      "fullSentence": "今今天我还看到一个新闻，腾讯上上了一个微信吧，上线了一款叫附近的工作，就是专门用来看附近有什么零工的。"
+    },
+    {
+      "sentenceIdx": 303,
+      "speaker": "阿穆尔",
+      "text": "上",
+      "type": "in_sentence_repeat",
+      "fullSentence": "今今天我还看到一个新闻，腾讯上上了一个微信吧，上线了一款叫附近的工作，就是专门用来看附近有什么零工的。"
+    },
+    {
+      "sentenceIdx": 303,
+      "speaker": "阿穆尔",
+      "text": "上上了一个微信吧，",
+      "type": "self_correction",
+      "fullSentence": "今今天我还看到一个新闻，腾讯上上了一个微信吧，上线了一款叫附近的工作，就是专门用来看附近有什么零工的。"
+    },
+    {
+      "sentenceIdx": 303,
+      "speaker": "阿穆尔",
+      "text": "上了一个微信吧",
+      "type": "self_correction",
+      "fullSentence": "今今天我还看到一个新闻，腾讯上上了一个微信吧，上线了一款叫附近的工作，就是专门用来看附近有什么零工的。"
+    },
+    {
+      "sentenceIdx": 308,
+      "speaker": "阿穆尔",
+      "text": "不不多",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "但是与此同时带来的也就是不不多好多的人涌入这个行业，涌入零工经济的领域，导致他其实也带来大量的压力。"
+    },
+    {
+      "sentenceIdx": 323,
+      "speaker": "菲菲",
+      "text": "很多于",
+      "type": "in_sentence_repeat",
+      "typeLabel": "句内重复",
+      "fullSentence": "就是我觉得你的这种各种方面的能力，其实很多于很多都是来自来自你本真的自我。"
+    },
+    {
+      "sentenceIdx": 330,
+      "speaker": "阿穆尔",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "而且呃像我们平时呃作为年轻人，其实还对这个比较了解。"
+    },
+    {
+      "sentenceIdx": 330,
+      "speaker": "阿穆尔",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "而且呃像我们平时呃作为年轻人，其实还对这个比较了解。"
+    },
+    {
+      "sentenceIdx": 337,
+      "speaker": "阿穆尔",
+      "text": "呃",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "嗯，或者是你在小，如果你只是在社交媒体上看，在小红书呃在微信或者在微博上看。"
+    },
+    {
+      "sentenceIdx": 341,
+      "speaker": "阿穆尔",
+      "text": "你看的",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "我很难形容，但是我觉得你看的你在文字上和图片上看到的和荣启讲的那种震撼力还是不太一样的。"
+    },
+    {
+      "sentenceIdx": 341,
+      "speaker": "阿穆尔",
+      "text": "你",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "我很难形容，但是我觉得你看的你在文字上和图片上看到的和荣启讲的那种震撼力还是不太一样的。"
+    },
+    {
+      "sentenceIdx": 343,
+      "speaker": "容七",
+      "text": "我我",
+      "type": "in_sentence_repeat",
+      "fullSentence": "嗯，因为其实在大家去努力打工的这个感觉，你感觉的是大家都好努力啊，大家都好努力的在为了生活去做很多事情，哪怕他现在可能失业了，甚至有的人我遇到的一个人最震撼的是他他打三份零工，同时他。"
+    },
+    {
+      "sentenceIdx": 343,
+      "speaker": "容七",
+      "text": "但",
+      "type": "consecutive_filler",
+      "fullSentence": "嗯，因为其实在大家去努力打工的这个感觉，你感觉的是大家都好努力啊，大家都好努力的在为了生活去做很多事情，哪怕他现在可能失业了，甚至有的人我遇到的一个人最震撼的是他他打三份零工，同时他。"
+    },
+    {
+      "sentenceIdx": 344,
+      "speaker": "容七",
+      "text": "一个一个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "还有的人就是单纯是咖啡店的兼职，可能他早他他一天抢三轮班，嗯，他早上打三个小时，中午三个小时，下午再三个小时，然后直接九个小时。"
+    },
+    {
+      "sentenceIdx": 344,
+      "speaker": "容七",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "还有的人就是单纯是咖啡店的兼职，可能他早他他一天抢三轮班，嗯，他早上打三个小时，中午三个小时，下午再三个小时，然后直接九个小时。"
+    },
+    {
+      "sentenceIdx": 348,
+      "speaker": "容七",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "我是，我是觉得大家其实都有很努力的在生活。"
+    },
+    {
+      "sentenceIdx": 411,
+      "speaker": "容七",
+      "text": "他你你的",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "他你你的收入很低，出如果就像说你去送外卖，送外卖也可以送到10000多块钱。"
+    },
+    {
+      "sentenceIdx": 411,
+      "speaker": "容七",
+      "text": "出如果就像说",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "他你你的收入很低，出如果就像说你去送外卖，送外卖也可以送到10000多块钱。"
+    },
+    {
+      "sentenceIdx": 415,
+      "speaker": "容七",
+      "text": "你刚想问什么来着，我又忘了。",
+      "type": "production_talk",
+      "typeLabel": "录制讨论",
+      "fullSentence": "你刚想问什么来着，我又忘了。"
+    },
+    {
+      "sentenceIdx": 480,
+      "speaker": "阿穆尔",
+      "text": "嗯，",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "去思考工作的意义，思考自己要不要工作这件事的时候，嗯，你会有冲突吗？"
+    },
+    {
+      "sentenceIdx": 500,
+      "speaker": "容七",
+      "text": "你不能明白吗？",
+      "type": "other",
+      "typeLabel": "其他",
+      "fullSentence": "你不能明白吗？"
+    },
+    {
+      "sentenceIdx": 502,
+      "speaker": "阿穆尔",
+      "text": "薪，不不不说",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "是因为你想要找的那份工作，咱不说薪，不不不说薪资啊，或者说是比如说他的这个品牌啊，或者说他的这种就是所谓的公司的排名等等。"
+    },
+    {
+      "sentenceIdx": 531,
+      "speaker": "容七",
+      "text": "未来的过",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "其实你也在思考一个问题，在未来的过未来十年里面，如果你还要去做这个内容行业，你真的有信心可以持续的去做这件事情吗？"
+    },
+    {
+      "sentenceIdx": 544,
+      "speaker": "阿穆尔",
+      "text": "嗯嗯，",
+      "type": "repeated_sentence",
+      "typeLabel": "重复句",
+      "fullSentence": "嗯嗯，就是其实我自己听下来感觉有种，不管是哪个公司，为了这种经济利益，或者说是为了人家人家是为了利润嘛，去制造内容和你想要去作为一个中文系毕业生去制造的内容。"
+    },
+    {
+      "sentenceIdx": 627,
+      "speaker": "阿穆尔",
+      "text": "无论",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "无论我们这个影响的好坏，没有办法判断，但是我们希望能够去触动和打动他们的内容，对得起我自己所学的东西、所思考的东西。"
+    },
+    {
+      "sentenceIdx": 627,
+      "speaker": "阿穆尔",
+      "text": "无论",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "无论我们这个影响的好坏，没有办法判断，但是我们希望能够去触动和打动他们的内容，对得起我自己所学的东西、所思考的东西。"
+    },
+    {
+      "sentenceIdx": 650,
+      "speaker": "阿穆尔",
+      "text": "技术",
+      "type": "in_sentence_repeat",
+      "typeLabel": "句内重复",
+      "fullSentence": "嗯，那么这个长衫可能它也不是针对理工科这种技术技术类别的学生，也不是针对就是商科在在学校里模仿社会化的这个比较成功的学生，嗯，更多的可能就是针对于。"
+    },
+    {
+      "sentenceIdx": 651,
+      "speaker": "阿穆尔",
+      "text": "嗯",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "人文社科类的学生，就是你需要去权衡，去平衡你所学的这个东西，你所追求的嗯这个东西和现实社会和一个真实的，没那么包容你，然后讲利益、讲经济利益的社会之间的这个平衡。"
+    },
+    {
+      "sentenceIdx": 651,
+      "speaker": "阿穆尔",
+      "text": "讲利益、",
+      "type": "self_correction",
+      "fullSentence": "人文社科类的学生，就是你需要去权衡，去平衡你所学的这个东西，你所追求的嗯这个东西和现实社会和一个真实的，没那么包容你，然后讲利益、讲经济利益的社会之间的这个平衡。"
+    },
+    {
+      "sentenceIdx": 669,
+      "speaker": "阿穆尔",
+      "text": "嗯，",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "但是你去一个商业社会上摸爬滚打，嗯，是完全不一样的。"
+    },
+    {
+      "sentenceIdx": 678,
+      "speaker": "容七",
+      "text": "嗯。",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "很多人嗯。"
+    },
+    {
+      "sentenceIdx": 694,
+      "speaker": "容七",
+      "text": "我",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "嗯，比如说我有一个有一个他就是他是学古代文学的，但是他非常喜欢音乐，上大学的时候就是在追各种乐队，所以他毕业之后就去网易云做一些运营之类的工作。"
+    },
+    {
+      "sentenceIdx": 699,
+      "speaker": "容七",
+      "text": "可就是我觉得",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "可就是我觉得有没有可能这个其实是一个比较好的职业的选择，对于中文人来说，对于一些学文史这方面的人来说，早期做内容运营方面的。"
+    },
+    {
+      "sentenceIdx": 866,
+      "speaker": "阿穆尔",
+      "text": "那个",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "他不工作了，长期不工作了，他反而有时间去思考原来灵光乍现的那个那个那个那个那个想要去想深入去想的东西。"
+    },
+    {
+      "sentenceIdx": 866,
+      "speaker": "阿穆尔",
+      "text": "那个那个那个那个",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "他不工作了，长期不工作了，他反而有时间去思考原来灵光乍现的那个那个那个那个那个想要去想深入去想的东西。"
+    },
+    {
+      "sentenceIdx": 866,
+      "speaker": "阿穆尔",
+      "text": "那个那个那个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "他不工作了，长期不工作了，他反而有时间去思考原来灵光乍现的那个那个那个那个那个想要去想深入去想的东西。"
+    },
+    {
+      "sentenceIdx": 876,
+      "speaker": "容七",
+      "text": "我后来才想，其实在我我",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "我后来才想，其实在我我我最近在回想，就是在我刚上大学，我本科也是中文系嘛，然后研究生是古代汉语。"
+    },
+    {
+      "sentenceIdx": 878,
+      "speaker": "容七",
+      "text": "不是一定，",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "不是一定，不是说我们要去跟别人去卷我们的呃其他的职业方面的技能。"
+    },
+    {
+      "sentenceIdx": 897,
+      "speaker": "阿穆尔",
+      "text": "然后我我去。",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "但是现在呢，就是没有那么多工作可以提供给我，让我能够让他能够适应我，然后我我去。"
+    },
+    {
+      "sentenceIdx": 897,
+      "speaker": "阿穆尔",
+      "text": "让我能够",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "但是现在呢，就是没有那么多工作可以提供给我，让我能够让他能够适应我，然后我我去。"
+    },
+    {
+      "sentenceIdx": 908,
+      "speaker": "小锅",
+      "text": "我说的啥我不知道。",
+      "type": "production_talk",
+      "typeLabel": "录制讨论",
+      "fullSentence": "我说的啥我不知道。"
+    },
+    {
+      "sentenceIdx": 946,
+      "speaker": "阿穆尔",
+      "text": "A",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "实验的A A B对照组对照下来呢，B会感觉更幸福。"
+    },
+    {
+      "sentenceIdx": 951,
+      "speaker": "阿穆尔",
+      "text": "不要框",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "不要框不要框住自己。"
+    },
+    {
+      "sentenceIdx": 952,
+      "speaker": "阿穆尔",
+      "text": "因为你想要去，",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "嗯，因为你想要去，我觉得获得幸福是很幸运的一件事，就是它其实挺看运气的，它是很很很偶然的，它的概率不是100%的，我觉得是偶然事件。"
+    },
+    {
+      "sentenceIdx": 952,
+      "speaker": "阿穆尔",
+      "text": "它是很很很偶然的，",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "嗯，因为你想要去，我觉得获得幸福是很幸运的一件事，就是它其实挺看运气的，它是很很很偶然的，它的概率不是100%的，我觉得是偶然事件。"
+    },
+    {
+      "sentenceIdx": 952,
+      "speaker": "阿穆尔",
+      "text": "它的概率不是100%的，",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "嗯，因为你想要去，我觉得获得幸福是很幸运的一件事，就是它其实挺看运气的，它是很很很偶然的，它的概率不是100%的，我觉得是偶然事件。"
+    },
+    {
+      "sentenceIdx": 953,
+      "speaker": "阿穆尔",
+      "text": "去用自己就是放放",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "就是你真真正正去放松本心，去用自己就是放放放松了身体去去感受，去去认认真真做你你该做的事儿。"
+    },
+    {
+      "sentenceIdx": 955,
+      "speaker": "阿穆尔",
+      "text": "我今",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "你说这件事这件事我一定要做，但是比如说我今我今年一定要赚100万，你真的赚了这100万之后，你是不是真的会感到幸福？"
+    },
+    {
+      "sentenceIdx": 955,
+      "speaker": "阿穆尔",
+      "text": "这件事",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "你说这件事这件事我一定要做，但是比如说我今我今年一定要赚100万，你真的赚了这100万之后，你是不是真的会感到幸福？"
+    },
+    {
+      "sentenceIdx": 955,
+      "speaker": "阿穆尔",
+      "text": "这件事",
+      "type": "in_sentence_repeat",
+      "typeLabel": "句内重复",
+      "fullSentence": "你说这件事这件事我一定要做，但是比如说我今我今年一定要赚100万，你真的赚了这100万之后，你是不是真的会感到幸福？"
+    },
+    {
+      "sentenceIdx": 956,
+      "speaker": "阿穆尔",
+      "text": "今今一天一",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "还是说我就是这么努努力力，我今今一天一一个月写10篇稿子，然后我还要做一个全职工作，然后呢同时我每周周六周日还要去给人遛狗，然后再做一点其他的兼职，然后一不小心到年底，你发现自己账户里有100万。"
+    },
+    {
+      "sentenceIdx": 990,
+      "speaker": "容七",
+      "text": "他反",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "他反在非常努力的追逐这个目标的过程当中，反而迷失了自己。"
+    },
+    {
+      "sentenceIdx": 1003,
+      "speaker": "容七",
+      "text": "那我。",
+      "type": "residual_sentence",
+      "typeLabel": "残句",
+      "fullSentence": "那我。"
+    },
+    {
+      "sentenceIdx": 1013,
+      "speaker": "小锅",
+      "text": "然后你就可以找到很好的工作，我在说什么。",
+      "type": "production_talk",
+      "typeLabel": "录制讨论",
+      "fullSentence": "然后你就可以找到很好的工作，我在说什么。"
+    },
+    {
+      "sentenceIdx": 1027,
+      "speaker": "阿穆尔",
+      "text": "嗯，",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "可以回想一下你原来读书的时候，或者说比如说你现在这种状态下，就是不是为了赚钱，因为赚钱其实还目标性挺强的，嗯，就是不是为了赚钱，仅仅是因为你作为兴趣也好，嗯，或者说你就是喜欢这件事儿也好，你去做了。"
+    },
+    {
+      "sentenceIdx": 1048,
+      "speaker": "容七",
+      "text": "因为你表情非常困惑。",
+      "type": "chit_chat",
+      "typeLabel": "闲聊",
+      "fullSentence": "因为你表情非常困惑。"
+    },
+    {
+      "sentenceIdx": 1064,
+      "speaker": "阿穆尔",
+      "text": "你",
+      "type": "in_sentence_repeat",
+      "fullSentence": "就是你你从金融行业辞职，已经算直面自己的一次很勇敢。"
+    },
+    {
+      "sentenceIdx": 1105,
+      "speaker": "阿穆尔",
+      "text": "你你你你要么你。",
+      "type": "residual_sentence",
+      "typeLabel": "残句",
+      "fullSentence": "你你你你要么你。"
+    },
+    {
+      "sentenceIdx": 1121,
+      "speaker": "阿穆尔",
+      "text": "考试这种竞争的竞，",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "我们太铁了，我们过去可能受到了不错的人文教育，但是呢，我们也有一个非常强大的文化惯性也好，或者说是一个学生气，就是我们身上考试这种竞争的竞，就是考试竞技压力的这种惯性太大了，我们什么都想争口气，不争馒头争口气。"
+    },
+    {
+      "sentenceIdx": 1121,
+      "speaker": "阿穆尔",
+      "text": "就是",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "我们太铁了，我们过去可能受到了不错的人文教育，但是呢，我们也有一个非常强大的文化惯性也好，或者说是一个学生气，就是我们身上考试这种竞争的竞，就是考试竞技压力的这种惯性太大了，我们什么都想争口气，不争馒头争口气。"
+    },
+    {
+      "sentenceIdx": 1121,
+      "speaker": "阿穆尔",
+      "text": "就是我们身上",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "我们太铁了，我们过去可能受到了不错的人文教育，但是呢，我们也有一个非常强大的文化惯性也好，或者说是一个学生气，就是我们身上考试这种竞争的竞，就是考试竞技压力的这种惯性太大了，我们什么都想争口气，不争馒头争口气。"
+    },
+    {
+      "sentenceIdx": 1180,
+      "speaker": "阿穆尔",
+      "text": "你来总结也不是说总结吧",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "你来总结也不是说总结吧，就是其实我们说了这么多嘛嗯。"
+    },
+    {
+      "sentenceIdx": 1190,
+      "speaker": "阿穆尔",
+      "text": "那么呃小郭最后好像还要问容器一个问题。 不是。",
+      "type": "other",
+      "typeLabel": "其他",
+      "fullSentence": "那么呃小郭最后好像还要问容器一个问题。"
+    },
+    {
+      "sentenceIdx": 1205,
+      "speaker": "容七",
+      "text": "我我有，",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "我想一想，我我有，那我就说我想知道的吧，我好奇的可能就是想如果呃就听到这个节目的用户，不是听到这个节目的听众。"
+    },
+    {
+      "sentenceIdx": 1205,
+      "speaker": "容七",
+      "text": "那",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "我想一想，我我有，那我就说我想知道的吧，我好奇的可能就是想如果呃就听到这个节目的用户，不是听到这个节目的听众。"
+    },
+    {
+      "sentenceIdx": 8,
+      "speaker": "老秦",
+      "text": "嗯。",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "欢迎大家来到我们新一期的超越百岁嗯。"
+    },
+    {
+      "sentenceIdx": 13,
+      "speaker": "老秦",
+      "text": "好的，那么我们就开始了。",
+      "type": "production_talk",
+      "typeLabel": "录制讨论",
+      "fullSentence": "嗯，好的，那么我们就开始了。"
+    },
+    {
+      "sentenceIdx": 25,
+      "speaker": "老秦",
+      "text": "这这这些",
+      "type": "in_sentence_repeat",
+      "fullSentence": "巴拉巴拉这么写，这这这些这些名词全都说出来。"
+    },
+    {
+      "sentenceIdx": 30,
+      "speaker": "老秦",
+      "text": "我",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "嗯，然后我我刚刚讲的这个顺序呢，是是这个呃它造成慢性炎症，从最能够造成到这个。"
+    },
+    {
+      "sentenceIdx": 30,
+      "speaker": "老秦",
+      "text": "是",
+      "type": "consecutive_filler",
+      "fullSentence": "嗯，然后我我刚刚讲的这个顺序呢，是是这个呃它造成慢性炎症，从最能够造成到这个。"
+    },
+    {
+      "sentenceIdx": 61,
+      "speaker": "老秦",
+      "text": "咳咳",
+      "type": "stutter",
+      "fullSentence": "总之就是感受一下，就是跟着我的这个咳咳。"
+    },
+    {
+      "sentenceIdx": 70,
+      "speaker": "老秦",
+      "text": "它",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "我们接收到之后，它它最先导最先导致产生的就是情绪。"
+    },
+    {
+      "sentenceIdx": 95,
+      "speaker": "老秦",
+      "text": "嗯，",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "到肾上腺，整个的这个下丘脑垂体肾上腺轴，嗯，根据它这个首字母缩写叫做H P A轴。"
+    },
+    {
+      "sentenceIdx": 108,
+      "speaker": "老秦",
+      "text": "睡了一睡",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "然后我们睡了一睡睡觉一晚上休息好了之后，到第二天早上，在我们慢慢睡觉过程当中，皮质醇又会慢慢的增加。"
+    },
+    {
+      "sentenceIdx": 129,
+      "speaker": "老秦",
+      "text": "一个一个",
+      "type": "consecutive_filler",
+      "fullSentence": "然后这个垂体还要有一个受体去接收这个激素的信号，然后再接收到这个信号，它再转移到下一个信号，所以这是比较慢的一个比较慢速的一个一个一个反应。"
+    },
+    {
+      "sentenceIdx": 139,
+      "speaker": "老秦",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "中枢神经系统好像中枢神经系统没办法去呃对它进行一个强有力的调控吧。"
+    },
+    {
+      "sentenceIdx": 165,
+      "speaker": "老秦",
+      "text": "这个这个这个",
+      "type": "consecutive_filler",
+      "typeLabel": "连续填充词",
+      "fullSentence": "说我要是遇到这种慢慢的长期的压力，我就只激活H P A轴；我要是遇到那种很紧急的压力，我就只激活这个这个这个这个这个交感神经系统。"
+    },
+    {
+      "sentenceIdx": 174,
+      "speaker": "老秦",
+      "text": "他",
+      "type": "in_sentence_repeat",
+      "fullSentence": "啊，然后呢，因为他因为他的交织出现，所以说呃所以说很多时候慢性压力和急性压力，他他都不分了，分分不了分不了那么那么开，在分不了那么开的情况下，交感神经是一个其实是一个持续的激活的状态。"
+    },
+    {
+      "sentenceIdx": 213,
+      "speaker": "老秦",
+      "text": "这个这个",
+      "type": "consecutive_filler",
+      "typeLabel": "连续填充词",
+      "fullSentence": "这个这个这个急性压力的这个系统就会激活。"
+    },
+    {
+      "sentenceIdx": 302,
+      "speaker": "老秦",
+      "text": "在人身上",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "在人身上在人身上电，不管是电刺激还是磁刺激，那还是还是要谨慎的，还是要谨慎的。"
+    },
+    {
+      "sentenceIdx": 316,
+      "speaker": "老秦",
+      "text": "关于继续",
+      "type": "self_correction",
+      "typeLabel": "重说纠正",
+      "fullSentence": "关于继续我们继续讲关于这个缺乏控制感这个事儿，这个我们现代社会的很多压力，它正好是符合这个不可控压力的条件。"
+    },
+    {
+      "sentenceIdx": 343,
+      "speaker": "",
+      "text": "我我",
+      "type": "in_sentence_repeat",
+      "fullSentence": "但但我先我先大概总结一下吧，反正第一个就是我职场早期，我我我信奉的一个东西就是办法总比问题多。"
+    },
+    {
+      "sentenceIdx": 343,
+      "speaker": "",
+      "text": "但",
+      "type": "consecutive_filler",
+      "fullSentence": "但但我先我先大概总结一下吧，反正第一个就是我职场早期，我我我信奉的一个东西就是办法总比问题多。"
+    },
+    {
+      "sentenceIdx": 344,
+      "speaker": "",
+      "text": "一个一个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "对，这也是我觉得比较呃比较好的一个一个一个机会，而不是说我自己一定要从0到1去呃搞一个新的 company 或者说我觉得在一个已有的。"
+    },
+    {
+      "sentenceIdx": 344,
+      "speaker": "",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "对，这也是我觉得比较呃比较好的一个一个一个机会，而不是说我自己一定要从0到1去呃搞一个新的 company 或者说我觉得在一个已有的。"
+    },
+    {
+      "sentenceIdx": 348,
+      "speaker": "",
+      "text": "呃",
+      "type": "stutter",
+      "fullSentence": "对，这个是我的一个感觉，因为我说实话，对国内的创业的氛围可能还不是，或者创业的环境嘛，啊，可能还不是特别了解，因为我主要的呃认识的朋友啊，什么，还是主要在硅谷这边比较多一点。"
+    },
+    {
+      "sentenceIdx": 354,
+      "speaker": "小段",
+      "text": "我",
+      "type": "stutter",
+      "typeLabel": "卡顿词",
+      "fullSentence": "那时候感觉大家无所谓，都是生产合作社，我我就扛个锄头过去了，再扛个锄头回来了。"
+    },
+    {
+      "sentenceIdx": 358,
+      "speaker": "",
+      "text": "最后",
+      "type": "in_sentence_repeat",
+      "fullSentence": "对，然后但最后最后其实我也没当上产品经理啊，这是一个但这但这个是有原因的了。"
+    },
+    {
+      "sentenceIdx": 358,
+      "speaker": "",
+      "text": "这是一个但这",
+      "type": "self_correction",
+      "fullSentence": "对，然后但最后最后其实我也没当上产品经理啊，这是一个但这但这个是有原因的了。"
+    },
+    {
+      "sentenceIdx": 451,
+      "speaker": "",
+      "text": "奇很很很很",
+      "type": "self_correction",
+      "fullSentence": "然后这段时间呢，就有一个奇很很很很很有意思的经历。"
+    },
+    {
+      "sentenceIdx": 453,
+      "speaker": "",
+      "text": "有有",
+      "type": "in_sentence_repeat",
+      "fullSentence": "然后当时呢，我有有有一个老板，他是做音乐剧的，然后他当时就很需要一个运营总监，他很认可我能力，就说要不你来我这儿吧。"
+    },
+    {
+      "sentenceIdx": 545,
+      "speaker": "",
+      "text": "你",
+      "type": "in_sentence_repeat",
+      "fullSentence": "因为我想啊，你你是一个比较呃对于创造这么敏感的人，其实或许你也是一个比较敏感的人。"
+    },
+    {
+      "sentenceIdx": 545,
+      "speaker": "",
+      "text": "比较呃",
+      "type": "consecutive_filler",
+      "fullSentence": "因为我想啊，你你是一个比较呃对于创造这么敏感的人，其实或许你也是一个比较敏感的人。"
+    }
+  ],
+  "boundaryErrors": [
+    {
+      "sentenceIdx": 10,
+      "goldText": "上一期呢",
+      "predText": "上一期",
+      "type": "self_correction",
+      "fullSentence": "我心里也会有那么一些纠结。"
+    },
+    {
+      "sentenceIdx": 15,
+      "goldText": "呃这个",
+      "predText": "呃，",
+      "type": "consecutive_filler",
+      "fullSentence": "对，呃，我想先介绍一下我自己的啊这个这个经历啊，然后我其实呃这个可以从比较早开始介绍给大家多一点，这个多一点铺垫吧。"
+    },
+    {
+      "sentenceIdx": 15,
+      "goldText": "多一点这个",
+      "predText": "多一点",
+      "type": "self_correction",
+      "fullSentence": "对，呃，我想先介绍一下我自己的啊这个这个经历啊，然后我其实呃这个可以从比较早开始介绍给大家多一点，这个多一点铺垫吧。"
+    },
+    {
+      "sentenceIdx": 18,
+      "goldText": "呃上海大学的老师",
+      "predText": "大学的老师",
+      "type": "self_correction",
+      "fullSentence": "对，然后我觉得就是在这个上海的话呢，我其实我家庭环境，我妈是呃上海大学的老师，复旦大学的老师。"
+    },
+    {
+      "sentenceIdx": 38,
+      "goldText": "嗯，我们补一下自我介绍哈。",
+      "predText": "嗯，",
+      "type": "production_talk",
+      "fullSentence": "啊，有应用跟应用结合的一个呃专业啊。"
+    },
+    {
+      "sentenceIdx": 79,
+      "goldText": "对对",
+      "predText": "对，",
+      "type": "stutter",
+      "fullSentence": "比较有一些所谓的规划，对对，但是我就觉得哦，这样试下来发现啊，可能是这个这条路这条路更适合我的，对，是这样子。"
+    },
+    {
+      "sentenceIdx": 83,
+      "goldText": "自己自",
+      "predText": "自己的一些",
+      "type": "self_correction",
+      "fullSentence": "所以这个可能也是对我最终决定去美国一个蛮大的影响，就是说它的一个呃呃大学的一个所谓LIBERAL ARTS比较注重呃每一个学生自主性，然后呢有自己自自己的一些思思维啊，或者包括自己的一些。"
+    },
+    {
+      "sentenceIdx": 107,
+      "goldText": "一年以后或者",
+      "predText": "一年以后",
+      "type": "self_correction",
+      "fullSentence": "是我在2022年，就是我一年以后毕业了，一年以后或者拿拿到OFFER一年以后，我入职的2022年年底。"
+    },
+    {
+      "sentenceIdx": 116,
+      "goldText": "但其实呃应该是。",
+      "predText": "但其实",
+      "type": "self_correction",
+      "fullSentence": "因为我知道我以前有过很好的规划，把我工作几年再怎么样，啊，其实这个如果碰到这种事情的话，啊，你的规划基本上就是白做，然后我重新再 navigate 我的整个的工作啊等等。"
+    },
+    {
+      "sentenceIdx": 139,
+      "goldText": "中枢神经系统好像",
+      "predText": "中枢神经系统",
+      "type": "self_correction",
+      "fullSentence": "这个是也是一个 ai 的一个比较传统的一个业务。"
+    },
+    {
+      "sentenceIdx": 255,
+      "goldText": "嗯，",
+      "predText": "啊，",
+      "type": "stutter",
+      "fullSentence": "对，所以这个其实是我的一个呃很重要的一个想法，就是认为我一直生活在这种不能自由出行，啊，然后因为我有很多想要去旅游啊，想要回国啊探亲啊，都是不可以的这样一个啊环境下。"
+    },
+    {
+      "sentenceIdx": 262,
+      "goldText": "就比如说办那个啊。 杰出人才O ONE E B ONE嗯，或者是在一个公司待久一点办绿卡。",
+      "predText": "啊",
+      "type": "chit_chat",
+      "fullSentence": "就比如说办那个啊。"
+    },
+    {
+      "sentenceIdx": 338,
+      "goldText": "这个",
+      "predText": "一些这个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "另外比如说跟这个制造，就是跟一些 manufacturing 这个东西也好，我觉得是呃如果是有一个比较呃比较成熟的一个领域，比如说医疗是一个很成熟的领域。"
+    },
+    {
+      "sentenceIdx": 338,
+      "goldText": "这个这个",
+      "predText": "一些这个",
+      "type": "consecutive_filler",
+      "fullSentence": "另外比如说跟这个制造，就是跟一些 manufacturing 这个东西也好，我觉得是呃如果是有一个比较呃比较成熟的一个领域，比如说医疗是一个很成熟的领域。"
+    },
+    {
+      "sentenceIdx": 404,
+      "goldText": "我再换一个话题，也不是换一个话题，重新开始一个小的部分。",
+      "predText": "换一个话题",
+      "type": "production_talk",
+      "fullSentence": "就是说这个我先先解释一下，对，然后我自己的一些这个接触和了解吧。"
+    },
+    {
+      "sentenceIdx": 505,
+      "goldText": "嗯，好的，谢谢",
+      "predText": "嗯，",
+      "type": "chit_chat",
+      "fullSentence": "嗯，好的，谢谢。"
+    },
+    {
+      "sentenceIdx": 528,
+      "goldText": "我觉得今天也是个很好的机会，就是我们刚好也彼此认识一下，我把这个整个整个的介绍一下，对。",
+      "predText": "对",
+      "type": "other",
+      "fullSentence": "诶，可能一年之后或八年之后，我们可以再聊一次，然后看一下你之后的感觉是不是跟你现在的预期是一样的。"
+    },
+    {
+      "sentenceIdx": 529,
+      "goldText": "或八年之后",
+      "predText": "年之后",
+      "type": "repeated_sentence",
+      "fullSentence": "嗯。"
+    },
+    {
+      "sentenceIdx": 35,
+      "goldText": "放到台面来说，放",
+      "predText": "放到台面",
+      "type": "in_sentence_repeat",
+      "fullSentence": "呃，只是因为我觉得过了32岁，我就实在是不想上班了。"
+    },
+    {
+      "sentenceIdx": 116,
+      "goldText": "但其实呃应该是。",
+      "predText": "但其实",
+      "type": "self_correction",
+      "fullSentence": "就就就是因为需要平衡，不可能一直是对。"
+    },
+    {
+      "sentenceIdx": 129,
+      "goldText": "比较慢的",
+      "predText": "比较慢",
+      "type": "self_correction",
+      "fullSentence": "嗯，对，创造的原因是因为其实我在。"
+    },
+    {
+      "sentenceIdx": 164,
+      "goldText": "嗯，OK",
+      "predText": "嗯，",
+      "type": "chit_chat",
+      "fullSentence": "嗯，OK。"
+    },
+    {
+      "sentenceIdx": 297,
+      "goldText": "这个",
+      "predText": "那个公司",
+      "type": "in_sentence_repeat",
+      "fullSentence": "然后那个公司呢，当然那个公司现在已经不行了。"
+    },
+    {
+      "sentenceIdx": 337,
+      "goldText": "嗯，或者是你在小，",
+      "predText": "嗯，",
+      "type": "self_correction",
+      "fullSentence": "我好像聊跑题了，你问我这个几几个关键词，我好像聊跑题了啊。"
+    },
+    {
+      "sentenceIdx": 338,
+      "goldText": "这个",
+      "predText": "一些这个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "对，没事，我觉得挺好，就是。"
+    },
+    {
+      "sentenceIdx": 338,
+      "goldText": "这个这个",
+      "predText": "一些这个",
+      "type": "consecutive_filler",
+      "fullSentence": "对，没事，我觉得挺好，就是。"
+    },
+    {
+      "sentenceIdx": 359,
+      "goldText": "对对，",
+      "predText": "对，",
+      "type": "stutter",
+      "fullSentence": "就然后故事就来到了我下一份工作，然后呃这也是为什么那天录播客录两个多小时，因为我的故事时间有点长。"
+    },
+    {
+      "sentenceIdx": 406,
+      "goldText": "我还是那种",
+      "predText": "是那种",
+      "type": "self_correction",
+      "fullSentence": "然后我那天晚上呢，我就因为也不懂什么叫CMS系统，但是我还是那种我是那种不畏难的人。"
+    },
+    {
+      "sentenceIdx": 456,
+      "goldText": "，这阵一直在北京",
+      "predText": "一直在北京",
+      "type": "self_correction",
+      "fullSentence": "对，都在，我一直在北京，这阵一直在北京。"
+    },
+    {
+      "sentenceIdx": 517,
+      "goldText": "嗯，",
+      "predText": "对，",
+      "type": "stutter",
+      "fullSentence": "对，然后但是然后包括到此刻，你看做WEB CODING，其实如果我不是在创造，我可能会很痛苦。"
+    },
+    {
+      "sentenceIdx": 528,
+      "goldText": "我觉得今天也是个很好的机会，就是我们刚好也彼此认识一下，我把这个整个整个的介绍一下，对。",
+      "predText": "对",
+      "type": "other",
+      "fullSentence": "我觉得今天也是个很好的机会，就是我们刚好也彼此认识一下，我把这个整个整个的介绍一下，对。"
+    },
+    {
+      "sentenceIdx": 539,
+      "goldText": "呃呃，",
+      "predText": "呃，",
+      "type": "stutter",
+      "fullSentence": "很有亮光的几个点，呃呃，后面你说的包括选择大于努力，那这些可能嗯也是很重要，但是我可能刚才就听了你这些之后，我觉得这几个词和这些印象就在我的脑海里就就能够去。"
+    },
+    {
+      "sentenceIdx": 541,
+      "goldText": "然后呃，",
+      "predText": "呃，",
+      "type": "consecutive_filler",
+      "fullSentence": "然后呃，真的还是很有意思啊。"
+    },
+    {
+      "sentenceIdx": 556,
+      "goldText": "，别人",
+      "predText": "很在意别人的",
+      "type": "self_correction",
+      "fullSentence": "对你很懂，别人很多时候你就会很、你会很在意别人的这种看法，或者是很在意别人的评价。"
+    },
+    {
+      "sentenceIdx": 618,
+      "goldText": "两，",
+      "predText": "对，",
+      "type": "self_correction",
+      "fullSentence": "对，然后接下来就是两，第二次分享，第三次分享，然后人越来越多。"
+    },
+    {
+      "sentenceIdx": 644,
+      "goldText": "你就对",
+      "predText": "对，",
+      "type": "self_correction",
+      "fullSentence": "你就对，硬着头皮干就完事了。"
+    },
+    {
+      "sentenceIdx": 649,
+      "goldText": "呃，对应的问题。",
+      "predText": "对",
+      "type": "self_correction",
+      "fullSentence": "呃，对应的问题。"
+    },
+    {
+      "sentenceIdx": 666,
+      "goldText": "对对，",
+      "predText": "对，",
+      "type": "self_correction",
+      "fullSentence": "对对，那这两条曲线的一个交叉点。"
+    },
+    {
+      "sentenceIdx": 689,
+      "goldText": "我就",
+      "predText": "流就是",
+      "type": "self_correction",
+      "fullSentence": "我就我有一套自己的方法流，就是工作流，就是先拿gemini做前端，然后把代码抠出来，然后放到cursor里面去做后端的开发，后续的开发。"
+    },
+    {
+      "sentenceIdx": 718,
+      "goldText": "就是又又浅浅的，",
+      "predText": "浅浅的",
+      "type": "self_correction",
+      "fullSentence": "他当时就没有想法，所以他就是又又浅浅的，就是浅浅的迷茫了一段时间，然后因为这个事儿就直接在酒馆那个氛围里面就炸，直接炸掉了。"
+    },
+    {
+      "sentenceIdx": 723,
+      "goldText": "我说我我",
+      "predText": "我说我",
+      "type": "self_correction",
+      "fullSentence": "就是后来我俩就私聊，我我我我对他说，我说我我我说我特别感谢你能做出这个东西来。"
+    },
+    {
+      "sentenceIdx": 834,
+      "goldText": "他，",
+      "predText": "对，",
+      "type": "stutter",
+      "fullSentence": "对，就是有一天有一个人在，就我我发我一个跟 ai 沟通的一个群，就是一个截图一个截图发到一个群里面，他，有一个女生说，哎，你居然还会夸 ai，就因为 ai 在帮我做一个东西。"
+    },
+    {
+      "sentenceIdx": 1156,
+      "goldText": "个那个那个对那个",
+      "predText": "那个那个",
+      "type": "self_correction",
+      "fullSentence": "然后通过今天聊天，其实我觉得我我现在的印象，包括我现在还还在回味你从书包里拿出那个那个那个那个那个对那个那个思维导图的那个画面啊，我觉得对对，我觉得非常酷，然后。"
+    },
+    {
+      "sentenceIdx": 1156,
+      "goldText": "那个那个那",
+      "predText": "那个那个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "然后通过今天聊天，其实我觉得我我现在的印象，包括我现在还还在回味你从书包里拿出那个那个那个那个那个对那个那个思维导图的那个画面啊，我觉得对对，我觉得非常酷，然后。"
+    },
+    {
+      "sentenceIdx": 1168,
+      "goldText": "对对对，可能等到过年后了，过年后，然后到时候有机会，我们到时候再去酒馆呃坐一坐，聊聊天。",
+      "predText": "过年后",
+      "type": "production_talk",
+      "fullSentence": "对对对，可能等到过年后了，过年后，然后到时候有机会，我们到时候再去酒馆呃坐一坐，聊聊天。"
+    },
+    {
+      "sentenceIdx": 1169,
+      "goldText": "好呀，没问题，没问题。",
+      "predText": "没问题",
+      "type": "production_talk",
+      "fullSentence": "好呀，没问题，没问题。"
+    },
+    {
+      "sentenceIdx": 1175,
+      "goldText": "对对。",
+      "predText": "对",
+      "type": "stutter",
+      "fullSentence": "对对对。"
+    },
+    {
+      "sentenceIdx": 10,
+      "goldText": "上一期呢",
+      "predText": "上一期",
+      "type": "self_correction",
+      "fullSentence": "我心里也会有那么一些纠结。"
+    },
+    {
+      "sentenceIdx": 15,
+      "goldText": "呃这个",
+      "predText": "呃，",
+      "type": "consecutive_filler",
+      "fullSentence": "对，呃，我想先介绍一下我自己的啊这个这个经历啊，然后我其实呃这个可以从比较早开始介绍给大家多一点这个多一点铺垫吧。"
+    },
+    {
+      "sentenceIdx": 15,
+      "goldText": "多一点这个",
+      "predText": "多一点",
+      "type": "self_correction",
+      "fullSentence": "对，呃，我想先介绍一下我自己的啊这个这个经历啊，然后我其实呃这个可以从比较早开始介绍给大家多一点这个多一点铺垫吧。"
+    },
+    {
+      "sentenceIdx": 38,
+      "goldText": "嗯，我们补一下自我介绍哈。",
+      "predText": "嗯，",
+      "type": "production_talk",
+      "fullSentence": "啊，有应用跟应用结合的一个呃专业啊。"
+    },
+    {
+      "sentenceIdx": 79,
+      "goldText": "对对",
+      "predText": "对，",
+      "type": "stutter",
+      "fullSentence": "比较有一些所谓的规划，对对，但是我就觉得哦，这样试下来发现啊，可能是这个这条路这条路更适合我的，对，是这样子。"
+    },
+    {
+      "sentenceIdx": 83,
+      "goldText": "自己自",
+      "predText": "自己的一些",
+      "type": "self_correction",
+      "fullSentence": "所以这个可能也是对我最终决定去美国一个蛮大的影响，就是说它的一个呃呃大学的一个所谓LIBERAL ARTS比较注重呃每一个学生自主性，然后呢有自己自自己的一些思思维啊，或者包括自己的一些。"
+    },
+    {
+      "sentenceIdx": 85,
+      "goldText": "嗯，怎么了？",
+      "predText": "嗯，",
+      "type": "production_talk",
+      "fullSentence": "对，这个我觉得是内的高中和大学都没有看到的一个一个一个一个一个特点吧。"
+    },
+    {
+      "sentenceIdx": 107,
+      "goldText": "一年以后或者",
+      "predText": "一年以后",
+      "type": "self_correction",
+      "fullSentence": "是我在2022年，就是我一年以后毕业了，一年以后或者拿拿到OFFER一年以后，我入职的2022年年底。"
+    },
+    {
+      "sentenceIdx": 116,
+      "goldText": "但其实呃应该是。",
+      "predText": "但其实",
+      "type": "self_correction",
+      "fullSentence": "因为我知道我以前有过很好的规划，把我工作几年再怎么样，啊，其实这个如果碰到这种事情的话，啊，你的规划基本上就是白做，然后我重新再 navigate 我的整个的工作啊等等。"
+    },
+    {
+      "sentenceIdx": 129,
+      "goldText": "比较慢的",
+      "predText": "比较慢",
+      "type": "self_correction",
+      "fullSentence": "这个经验啊，因为以前我做的还是DOMAIN SPECIFIC的小模型。"
+    },
+    {
+      "sentenceIdx": 139,
+      "goldText": "中枢神经系统好像",
+      "predText": "中枢神经系统",
+      "type": "self_correction",
+      "fullSentence": "这个是也是一个 ai 的一个比较传统的一个业务。"
+    },
+    {
+      "sentenceIdx": 148,
+      "goldText": "嗯嗯，呃，对，",
+      "predText": "对，",
+      "type": "stutter",
+      "fullSentence": "然后看到了这个 deep seek 啊，那那那个时候给我极大的这个震撼，这个之后我们可以说比较详细的聊，但是我当时到到了 deep seek 这个 moment 其实真的让我感觉到，啊，可能这个 lm 它真的要变成一个。"
+    },
+    {
+      "sentenceIdx": 148,
+      "goldText": "嗯，",
+      "predText": "对，",
+      "type": "stutter",
+      "fullSentence": "然后看到了这个 deep seek 啊，那那那个时候给我极大的这个震撼，这个之后我们可以说比较详细的聊，但是我当时到到了 deep seek 这个 moment 其实真的让我感觉到，啊，可能这个 lm 它真的要变成一个。"
+    },
+    {
+      "sentenceIdx": 157,
+      "goldText": "比较",
+      "predText": "比较大的一个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "一些应用啊，然后这个其实也是我呃选择来领英学习到的比较大的一个比较比较大的一个一个方面嘛，就是怎么能够把L M从一个语言模型真正的用到我们呃各种不同的场景下。"
+    },
+    {
+      "sentenceIdx": 157,
+      "goldText": "一个",
+      "predText": "比较大的一个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "一些应用啊，然后这个其实也是我呃选择来领英学习到的比较大的一个比较比较大的一个一个方面嘛，就是怎么能够把L M从一个语言模型真正的用到我们呃各种不同的场景下。"
+    },
+    {
+      "sentenceIdx": 179,
+      "goldText": "更、更、更、",
+      "predText": "更",
+      "type": "self_correction",
+      "fullSentence": "嗯，啊，其实有很多，比如说跟我工作直接相关的就是 coding agent 啊，这个这个我印象很深，我2023年的时候也用过这个所谓的 ai coding agent 这是是是，简直是一塌糊涂。"
+    },
+    {
+      "sentenceIdx": 187,
+      "goldText": "去裁了之被我",
+      "predText": "裁了之",
+      "type": "self_correction",
+      "fullSentence": "啊，一些信息。"
+    },
+    {
+      "sentenceIdx": 187,
+      "goldText": "去裁了之被",
+      "predText": "裁了之",
+      "type": "self_correction",
+      "fullSentence": "啊，一些信息。"
+    },
+    {
+      "sentenceIdx": 247,
+      "goldText": "就开始是 trump",
+      "predText": "trump",
+      "type": "self_correction",
+      "fullSentence": "啊，但是呢，到了 mit 就看，当我开始读博士的时候呢，就开始是 trump 正好是跟 trump 这个上台的时候，然后当时呢，就 mit 的很多博士，他就是在签证的时候，就会有，比如说4到6周。"
+    },
+    {
+      "sentenceIdx": 255,
+      "goldText": "嗯，",
+      "predText": "啊，",
+      "type": "stutter",
+      "fullSentence": "对对我的这个工作本身是一个 disruption 然后对我比如说跟同事之间，跟我老板之间，其实也是一个我觉得比较大的一个一个妨碍吧。"
+    },
+    {
+      "sentenceIdx": 297,
+      "goldText": "这个",
+      "predText": "那个公司",
+      "type": "in_sentence_repeat",
+      "fullSentence": "这个这个一个业务内真的是模型也好，产品也好，做到一个非常极致的一个一个状态。"
+    },
+    {
+      "sentenceIdx": 300,
+      "goldText": "、模型的这个",
+      "predText": "模型的",
+      "type": "self_correction",
+      "fullSentence": "但是同样的话，它的这个AI的模型的整个的架构、模型的这个其实是更更好，或者是对这个是我的第一个感觉啊。"
+    },
+    {
+      "sentenceIdx": 337,
+      "goldText": "嗯，或者是你在小，",
+      "predText": "嗯，",
+      "type": "self_correction",
+      "fullSentence": "然后医疗领域的话也有有不同的一些落地的，比如说是诊断也好，对吧？"
+    },
+    {
+      "sentenceIdx": 338,
+      "goldText": "这个",
+      "predText": "一些这个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "或者是医疗机器人也好啊，或者是一些这个别的相关的一些这个这个，我是对对这样的一些啊场景，我是特别有啊特别有兴趣的。"
+    },
+    {
+      "sentenceIdx": 338,
+      "goldText": "这个这个",
+      "predText": "一些这个",
+      "type": "consecutive_filler",
+      "fullSentence": "或者是医疗机器人也好啊，或者是一些这个别的相关的一些这个这个，我是对对这样的一些啊场景，我是特别有啊特别有兴趣的。"
+    },
+    {
+      "sentenceIdx": 355,
+      "goldText": "这个 FLEXIBILITY可能给我呃会",
+      "predText": "这个FLEXIBILITY",
+      "type": "self_correction",
+      "fullSentence": "对，然后我觉得这个其实这个 FLEXIBILITY可能给我呃会给我更多的这个 FLEXIBILITY，然后呢可能会到一个比较成熟的时间，我会去考虑创业，或者说呃如果真的能够遇到一个靠谱的团队啊什么，我觉得也是啊也是可以的。"
+    },
+    {
+      "sentenceIdx": 385,
+      "goldText": "啊把 domain",
+      "predText": "domain",
+      "type": "self_correction",
+      "fullSentence": "你要能够去啊把 domain 用你的 domain knowledge to bridge the technology gap 这部分可能就跟你用什么技术啊，什么框架没有太大关系，是你要能够去。"
+    },
+    {
+      "sentenceIdx": 388,
+      "goldText": "一些",
+      "predText": "一些这个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "你需要有一些这个技术之外的一些一些这个东西。"
+    },
+    {
+      "sentenceIdx": 388,
+      "goldText": "一些",
+      "predText": "一些这个",
+      "type": "in_sentence_repeat",
+      "fullSentence": "你需要有一些这个技术之外的一些一些这个东西。"
+    },
+    {
+      "sentenceIdx": 431,
+      "goldText": "非常，我我觉得是一个非常呃，",
+      "predText": "我觉得是",
+      "type": "self_correction",
+      "fullSentence": "对，这个我觉得是非常，我我觉得是一个非常呃，对我来说很重要的一个事情啊。"
+    },
+    {
+      "sentenceIdx": 529,
+      "goldText": "或八年之后",
+      "predText": "年之后",
+      "type": "repeated_sentence",
+      "fullSentence": "诶，可能一年之后或八年之后，我们可以再聊一次，然后看一下你之后的感觉是不是跟你现在的预期是一样的。"
+    },
+    {
+      "sentenceIdx": 24,
+      "goldText": "和大家都很关心的，很，",
+      "predText": "和大家都很关心的",
+      "type": "in_sentence_repeat",
+      "fullSentence": "然后我们播客的主要内容是和工作相关，和大家都很关心的，很，和大家都很关心的，经常发生的 burnout 相关。"
+    },
+    {
+      "sentenceIdx": 35,
+      "goldText": "放到台面来说，放",
+      "predText": "放到台面",
+      "type": "in_sentence_repeat",
+      "fullSentence": "把 burnout 这个话题放到台面来说，放放到台面上来说，让大家知道说这不是一件羞于启齿的事情，然后当你也，如果有现在正在经历 burnout 这种感觉的小伙伴们也请你们就是呃不要吝于去呃。"
+    },
+    {
+      "sentenceIdx": 38,
+      "goldText": "嗯，我们补一下自我介绍哈。",
+      "predText": "嗯，",
+      "type": "production_talk",
+      "fullSentence": "嗯，我们补一下自我介绍哈。"
+    },
+    {
+      "sentenceIdx": 144,
+      "goldText": "呃，那么今天呢，我们刚刚",
+      "predText": "呃，",
+      "type": "other",
+      "fullSentence": "呃，那么今天呢，我们刚刚容器也介绍了自己是一个中文系毕业的学生。"
+    },
+    {
+      "sentenceIdx": 144,
+      "goldText": "3呃，那么今天呢，我们",
+      "predText": "呃，",
+      "type": "other",
+      "fullSentence": "呃，那么今天呢，我们刚刚容器也介绍了自己是一个中文系毕业的学生。"
+    },
+    {
+      "sentenceIdx": 144,
+      "goldText": "呃，那么今天呢，我们",
+      "predText": "呃，",
+      "type": "self_correction",
+      "fullSentence": "呃，那么今天呢，我们刚刚容器也介绍了自己是一个中文系毕业的学生。"
+    },
+    {
+      "sentenceIdx": 148,
+      "goldText": "嗯嗯，呃，对，",
+      "predText": "对，",
+      "type": "stutter",
+      "fullSentence": "嗯嗯，呃，对，就是我 burn out 的一次，呃，我我最近 burn out 是因为就是我当时入职了一个新组。"
+    },
+    {
+      "sentenceIdx": 148,
+      "goldText": "嗯，",
+      "predText": "对，",
+      "type": "stutter",
+      "fullSentence": "嗯嗯，呃，对，就是我 burn out 的一次，呃，我我最近 burn out 是因为就是我当时入职了一个新组。"
+    },
+    {
+      "sentenceIdx": 187,
+      "goldText": "去裁了之被我",
+      "predText": "裁了之",
+      "type": "self_correction",
+      "fullSentence": "我就内耗非常严重，因为其实我毕业这么多年，去裁了之被我在被裁了之后。"
+    },
+    {
+      "sentenceIdx": 187,
+      "goldText": "去裁了之被",
+      "predText": "裁了之",
+      "type": "self_correction",
+      "fullSentence": "我就内耗非常严重，因为其实我毕业这么多年，去裁了之被我在被裁了之后。"
+    },
+    {
+      "sentenceIdx": 255,
+      "goldText": "嗯，",
+      "predText": "啊，",
+      "type": "stutter",
+      "fullSentence": "我觉得你只要发挥出自己的擅长的地方，嗯，就不怕找工作这件事情。"
+    },
+    {
+      "sentenceIdx": 334,
+      "goldText": "嗯，",
+      "predText": "呃，",
+      "type": "stutter",
+      "fullSentence": "但是年轻人的话，那哪怕我知道这件事，我知道零工经济，我知道比如说替人遛狗，嗯，或者在咖啡店兼职，呃，或者说是去做那种人工审核材料啊等等。"
+    },
+    {
+      "sentenceIdx": 337,
+      "goldText": "嗯，或者是你在小，",
+      "predText": "嗯，",
+      "type": "self_correction",
+      "fullSentence": "嗯，或者是你在小，如果你只是在社交媒体上看，在小红书呃在微信或者在微博上看。"
+    },
+    {
+      "sentenceIdx": 404,
+      "goldText": "我再换一个话题，也不是换一个话题，重新开始一个小的部分。",
+      "predText": "换一个话题",
+      "type": "production_talk",
+      "fullSentence": "我再换一个话题，也不是换一个话题，重新开始一个小的部分。"
+    },
+    {
+      "sentenceIdx": 510,
+      "goldText": "嗯，当你去，",
+      "predText": "嗯，",
+      "type": "self_correction",
+      "fullSentence": "嗯，当你去，你作为一个运营策划，本身在这样的一个可能市场营销、品牌这个呃这个行业本身是在被做质疑，这个工种是在被质疑的。"
+    },
+    {
+      "sentenceIdx": 517,
+      "goldText": "嗯，",
+      "predText": "对，",
+      "type": "stutter",
+      "fullSentence": "那我有两个问题，嗯，一个是。"
+    },
+    {
+      "sentenceIdx": 645,
+      "goldText": "我的教育，",
+      "predText": "的教育",
+      "type": "self_correction",
+      "fullSentence": "就像现在说的，我的矛盾，我的我要去认清这个社会的现实，我的教育，我受到的教育里面所缺失的，对于我自己哎，要真正的去社会化的，要理解商业逻辑的，去售卖自己知识技能的部分，这是我要补的课。"
+    },
+    {
+      "sentenceIdx": 659,
+      "goldText": "哎，我刚想说，",
+      "predText": "我刚想说",
+      "type": "self_correction",
+      "fullSentence": "哎，我刚想说，我刚想说的是我们中文系，我在想他家的职业出路，好像大部分都是去当老师和公务员，其实很少有人真正去选择去做。"
+    },
+    {
+      "sentenceIdx": 694,
+      "goldText": "嗯，比如说我有一个",
+      "predText": "嗯，",
+      "type": "self_correction",
+      "fullSentence": "嗯，比如说我有一个有一个他就是他是学古代文学的，但是他非常喜欢音乐，上大学的时候就是在追各种乐队，所以他毕业之后就去网易云做一些运营之类的工作。"
+    },
+    {
+      "sentenceIdx": 695,
+      "goldText": "基本上我觉得这也，我觉得会，",
+      "predText": "我觉得",
+      "type": "self_correction",
+      "fullSentence": "然后收入也很高，基本上我觉得这也，我觉得会，我相对于他来说，我会觉得我很自卑，因为我很羡慕他这种状态，就是他那么热爱他做的这个内容，然后他同时又可以以这个他对这个内容的深入的钻研研究，获得一份在大厂的工作。"
+    },
+    {
+      "sentenceIdx": 866,
+      "goldText": "长期不工作了，",
+      "predText": "不工作了",
+      "type": "self_correction",
+      "fullSentence": "他不工作了，长期不工作了，他反而有时间去思考原来灵光乍现的那个那个那个那个那个想要去想深入去想的东西。"
+    },
+    {
+      "sentenceIdx": 997,
+      "goldText": "嗯，",
+      "predText": "啊，",
+      "type": "stutter",
+      "fullSentence": "所以可能目标可以对于你而言啊，对于目前的你而言，可能目标可以不用那么的太琐碎和具体，嗯，反而是嗯知道那个方向。"
+    },
+    {
+      "sentenceIdx": 1062,
+      "goldText": "对啊。",
+      "predText": "对",
+      "type": "stutter",
+      "fullSentence": "而且我很坦然面对，对啊。"
+    },
+    {
+      "sentenceIdx": 1205,
+      "goldText": "听到这个节目的用户，不是",
+      "predText": "听到这个节目的",
+      "type": "self_correction",
+      "fullSentence": "我想一想，我我有，那我就说我想知道的吧，我好奇的可能就是想如果呃就听到这个节目的用户，不是听到这个节目的听众。"
+    },
+    {
+      "sentenceIdx": 1205,
+      "goldText": "用户，不是听到这个节目的",
+      "predText": "听到这个节目的",
+      "type": "self_correction",
+      "fullSentence": "我想一想，我我有，那我就说我想知道的吧，我好奇的可能就是想如果呃就听到这个节目的用户，不是听到这个节目的听众。"
+    },
+    {
+      "sentenceIdx": 10,
+      "goldText": "上一期呢",
+      "predText": "上一期",
+      "type": "self_correction",
+      "fullSentence": "呃，上一期呢在上一期的超越百岁里边，我们是讲了这个普通人健康之路上的最大boss，就是长期慢性低度炎症。"
+    },
+    {
+      "sentenceIdx": 85,
+      "goldText": "嗯，怎么了？",
+      "predText": "嗯，",
+      "type": "production_talk",
+      "fullSentence": "嗯，怎么了？"
+    },
+    {
+      "sentenceIdx": 116,
+      "goldText": "但其实呃应该是。",
+      "predText": "但其实",
+      "type": "self_correction",
+      "fullSentence": "但其实更重要，但其实呃应该是。"
+    },
+    {
+      "sentenceIdx": 129,
+      "goldText": "比较慢的",
+      "predText": "比较慢",
+      "type": "self_correction",
+      "fullSentence": "然后这个垂体还要有一个受体去接收这个激素的信号，然后再接收到这个信号，它再转移到下一个信号，所以这是比较慢的一个比较慢速的一个一个一个反应。"
+    },
+    {
+      "sentenceIdx": 139,
+      "goldText": "中枢神经系统好像",
+      "predText": "中枢神经系统",
+      "type": "self_correction",
+      "fullSentence": "中枢神经系统好像中枢神经系统没办法去呃对它进行一个强有力的调控吧。"
+    },
+    {
+      "sentenceIdx": 174,
+      "goldText": "分不了分不了那么那么开，",
+      "predText": "分不了那么",
+      "type": "self_correction",
+      "fullSentence": "啊，然后呢，因为他因为他的交织出现，所以说呃所以说很多时候慢性压力和急性压力，他他都不分了，分分不了分不了那么那么开，在分不了那么开的情况下，交感神经是一个其实是一个持续的激活的状态。"
+    },
+    {
+      "sentenceIdx": 174,
+      "goldText": "分",
+      "predText": "分不了那么",
+      "type": "self_correction",
+      "fullSentence": "啊，然后呢，因为他因为他的交织出现，所以说呃所以说很多时候慢性压力和急性压力，他他都不分了，分分不了分不了那么那么开，在分不了那么开的情况下，交感神经是一个其实是一个持续的激活的状态。"
+    },
+    {
+      "sentenceIdx": 179,
+      "goldText": "更、更、更、",
+      "predText": "更",
+      "type": "self_correction",
+      "fullSentence": "所以他俩就是只要只要交感神经激活了，副交感神经那就一定是相对来说会更、更、更、更不活跃、更压抑的。"
+    },
+    {
+      "sentenceIdx": 359,
+      "goldText": "对对，",
+      "predText": "对，",
+      "type": "stutter",
+      "fullSentence": "对对，是的，就失去了那个控制感。"
+    }
+  ],
+  "fpDetails": [
+    {
+      "sentenceIdx": 149,
+      "text": "都没有",
+      "restoreType": "ai_misjudge",
+      "reason": ""
+    },
+    {
+      "sentenceIdx": 381,
+      "text": "没有被啊没有被",
+      "restoreType": "ai_misjudge",
+      "reason": ""
+    },
+    {
+      "sentenceIdx": 83,
+      "text": "自",
+      "restoreType": "important_content",
+      "reason": ""
+    },
+    {
+      "sentenceIdx": 187,
+      "text": "啊，一些信息。",
+      "restoreType": "important_content",
+      "reason": ""
+    },
+    {
+      "sentenceIdx": 203,
+      "text": "啊，或者这个智能制造",
+      "restoreType": "important_content",
+      "reason": ""
+    },
+    {
+      "sentenceIdx": 231,
+      "text": "呃，这个 flexibility。",
+      "restoreType": "important_content",
+      "reason": ""
+    },
+    {
+      "sentenceIdx": 300,
+      "text": "模型的整个的架构、",
+      "restoreType": "important_content",
+      "reason": ""
+    },
+    {
+      "sentenceIdx": 388,
+      "text": "一些",
+      "restoreType": "important_content",
+      "reason": ""
+    },
+    {
+      "sentenceIdx": 604,
+      "text": "嗯，",
+      "restoreType": "natural_flow",
+      "reason": "删了有卡顿感"
+    },
+    {
+      "sentenceIdx": 116,
+      "text": "但其实更重要，但其实呃应该是。",
+      "restoreType": "important_content",
+      "reason": ""
+    },
+    {
+      "sentenceIdx": 354,
+      "text": "那时候感觉大家无所谓，都是生产合作社，我我就扛个锄头过去了，再扛个锄头回来了。",
+      "restoreType": "important_content",
+      "reason": ""
+    },
+    {
+      "sentenceIdx": 358,
+      "text": "对，但是像咱们，你如果是下行期，你可能就是无论努力不努力，都会得不到一个怎么都逃离不了这个结果，并不是很好的状态，这就会让人很有估计，有很很强的不可控感吧。",
+      "restoreType": "important_content",
+      "reason": ""
+    },
+    {
+      "sentenceIdx": 359,
+      "text": "对对，是的，就失去了那个控制感。",
+      "restoreType": "important_content",
+      "reason": ""
+    },
+    {
+      "sentenceIdx": 451,
+      "text": "就是这个以前我们的这个老祖宗啊，他的这个慢跑续航能力超过了大多数的野兽。",
+      "restoreType": "important_content",
+      "reason": ""
+    },
+    {
+      "sentenceIdx": 545,
+      "text": "然后统一的进行一个管理，这不可能啊，这样这样出来的人类，他他他不可能是一个 well functional 的人类。",
+      "restoreType": "important_content",
+      "reason": ""
+    }
+  ]
+}
