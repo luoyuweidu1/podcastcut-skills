@@ -179,6 +179,25 @@ body {
 }
 
 /* Block header */
+/* Chapter header — content section divider */
+.chap-hdr {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 20px 16px 10px; margin: 32px 0 8px;
+  border-bottom: 1px solid var(--sage-dark);
+}
+.chap-num {
+  font-family: "SF Mono", monospace;
+  font-size: 13px; color: var(--light); min-width: 24px;
+}
+.chap-title {
+  font-family: "Noto Serif SC", serif;
+  font-size: 20px; font-weight: 700; color: var(--dark);
+}
+.chap-desc {
+  font-size: 13px; color: var(--muted); margin-left: auto;
+}
+
+/* Block header — deleted section */
 .blk {
   display: flex; align-items: center; gap: 12px;
   padding: 12px 16px; margin: 24px 0 6px;
@@ -215,7 +234,14 @@ body {
 .row.del { opacity: .55; }
 .row.del:hover { opacity: .7; }
 .row.del .r-txt { text-decoration: line-through; text-decoration-color: var(--mid); color: var(--muted); }
-.row.sug { border-left: 3px dashed var(--gold-light); background: var(--sage-light); }
+.row.sug { border-left: 3px dashed var(--gold-light); }
+.row.sug .r-txt { text-decoration-style: dashed; }
+.sug-reason {
+  display: inline-block; margin-left: 8px;
+  font-size: 12px; color: var(--gold-dark); font-weight: 600;
+  background: var(--gold-dim); padding: 1px 8px; border-radius: 3px;
+  vertical-align: middle;
+}
 
 .r-chk { margin-right: 12px; padding-top: 3px; }
 .r-sp { font-size: 15px; font-weight: 800; min-width: 56px; flex-shrink:0; margin-right: 12px; padding-top: 3px; color: var(--dark); }
@@ -313,16 +339,6 @@ body {
     <div class="sp-legend" id="spleg"></div>
   </div>
 
-  <!-- Leaf divider -->
-  <div style="text-align:center;padding:4px 0">
-    <svg width="120" height="24" viewBox="0 0 120 24" fill="none" style="opacity:.4">
-      <path d="M10 12 C20 12 30 6 42 8 C54 10 58 12 60 12 C62 12 66 10 78 8 C90 6 100 12 110 12" stroke="#3A3A30" stroke-width="1" fill="none" stroke-linecap="round"/>
-      <path d="M42 8 C38 2 32 0 28 4 C24 8 30 12 36 10" stroke="#3A3A30" stroke-width="0.8" fill="none" stroke-linecap="round"/>
-      <path d="M78 8 C82 2 88 0 92 4 C96 8 90 12 84 10" stroke="#3A3A30" stroke-width="0.8" fill="none" stroke-linecap="round"/>
-      <path d="M60 12 C58 6 54 2 58 0" stroke="#3A3A30" stroke-width="0.8" fill="none" stroke-linecap="round"/>
-    </svg>
-  </div>
-
   <div class="nav-section">
     <div class="section-label">章节导航</div>
     <div class="nav-list" id="nav"></div>
@@ -384,7 +400,7 @@ S.forEach(x=>{ if(x.sp && !spCMap[x.sp]){ spCMap[x.sp]=spShades[spList.length%3]
 // State
 const del=new Set(), um=new Set();
 let curIdx=-1, curNav=-1;
-S.forEach(x=>{ if(x.ai) del.add(x.idx); });
+S.forEach(x=>{ if(x.ai) del.add(x.idx); if(x.sug) del.add(x.idx); });
 
 function fm(s){ if(s<0)s=0; const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=Math.floor(s%60); return h>0?`${h}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`:`${m}:${String(sc).padStart(2,'0')}`; }
 function esc(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -407,7 +423,13 @@ function renderSidebar() {
   const pts=[];
   if(fd>0)pts.push(`${Math.round(fd/60)} 分钟${fn.join('、')}`);
   cc.forEach(c=>pts.push(`${Math.round(c.d/60)} 分钟${c.l}`));
-  document.getElementById('summ').textContent=pts.length?`共删除 ${pts.join('，')}。剩余内容保持原始顺序与完整语境。`:'未做任何删减。';
+  // Count suggested deletes
+  const sugCount = S.filter(x => x.sug && del.has(x.idx)).length;
+  let summText = '';
+  if(pts.length) summText += `共删除 ${pts.join('，')}。`;
+  if(sugCount > 0) summText += `另有 ${sugCount} 句建议精简（重复叙述/展开过多），可在右侧逐条恢复。`;
+  if(!summText) summText = '未做任何删减。';
+  document.getElementById('summ').textContent = summText;
 
   // Pie — same gold family
   const en=spList.filter(sp=>sd[sp]>0).map(sp=>({n:sp,d:sd[sp]||0}));
@@ -436,18 +458,37 @@ function renderSidebar() {
 // ===== TRANSCRIPT =====
 function renderTx() {
   const c=document.getElementById('tx');let h='';
+  // Block map (deleted sections)
   const bm={};BLK.forEach(b=>{for(let i=b.r[0];i<=b.r[1];i++)bm[i]=b});
+  // Chapter map (content sections)
+  const cm={};CHAPS.forEach((ch,i)=>{if(ch.startIdx!==undefined)cm[ch.startIdx]={...ch,num:i+1}});
+
   let lb=null;
   S.forEach(x=>{
+    // Chapter header — content section divider
+    if(cm[x.idx]){
+      const ch=cm[x.idx];
+      h+=`<div class="chap-hdr" id="chap${ch.num}">
+        <span class="chap-num">${String(ch.num).padStart(2,'0')}</span>
+        <span class="chap-title">${esc(ch.title)}</span>
+        <span class="chap-desc">${esc(ch.desc||'')}</span>
+      </div>`;
+    }
+
+    // Block header — deleted section
     const b=bm[x.idx];
     if(b&&b!==lb){
       const ck=isBD(b);
       h+=`<div class="blk"><div class="chk ${ck?'on':''}" onclick="tgB(${b.id})">✕</div><span class="blk-tag">${TL[b.type]||b.type}</span><span class="blk-rsn">${b.reason}</span><span class="blk-dur mono">${b.dur}</span></div>`;
       lb=b;
     }
-    const id=del.has(x.idx),sg=x.sug&&!id;
-    let cl='row';if(id)cl+=' del';if(sg)cl+=' sug';if(x.idx===curIdx)cl+=' act';
-    h+=`<div class="${cl}" id="r${x.idx}" onclick="goTo(${x.idx})"><div class="r-chk"><div class="chk ${id?'on':''}" onclick="event.stopPropagation();tgS(${x.idx})">✕</div></div><div class="r-sp">${x.sp}</div><div class="r-tm">${x.ts}</div><div class="r-txt">${esc(x.t)}</div></div>`;
+
+    // Sentence row
+    const id=del.has(x.idx);
+    const isSug = x.sug && id; // suggested + currently deleted
+    let cl='row';if(id)cl+=' del';if(isSug)cl+=' sug';if(x.idx===curIdx)cl+=' act';
+    const reasonTag = (isSug && x.sugReason) ? `<span class="sug-reason">${esc(x.sugReason)}</span>` : '';
+    h+=`<div class="${cl}" id="r${x.idx}" onclick="goTo(${x.idx})"><div class="r-chk"><div class="chk ${id?'on':''}" onclick="event.stopPropagation();tgS(${x.idx})">✕</div></div><div class="r-sp">${x.sp}</div><div class="r-tm">${x.ts}</div><div class="r-txt">${esc(x.t)}${reasonTag}</div></div>`;
   });
   c.innerHTML=h;
 }
@@ -539,9 +580,11 @@ function doExport(){
 }
 
 // Persistence
-const SK='rc5_'+document.title;
-function sv(){try{localStorage.setItem(SK,JSON.stringify({d:Array.from(del),m:Array.from(um)}))}catch(e){}}
-function rs(){try{const r=localStorage.getItem(SK);if(!r)return;const s=JSON.parse(r);if(s.d){del.clear();s.d.forEach(i=>del.add(i))}if(s.m)s.m.forEach(i=>um.add(i))}catch(e){}}
+// Version key = title + sentence count + delete count, so stale cache is ignored
+const DATA_VER = document.title + '_' + S.length + '_' + S.filter(x=>x.ai||x.sug).length;
+const SK='rc6_'+DATA_VER;
+function sv(){try{localStorage.setItem(SK,JSON.stringify({v:DATA_VER,d:Array.from(del),m:Array.from(um)}))}catch(e){}}
+function rs(){try{const r=localStorage.getItem(SK);if(!r)return;const s=JSON.parse(r);if(s.v!==DATA_VER)return;if(s.d){del.clear();s.d.forEach(i=>del.add(i))}if(s.m)s.m.forEach(i=>um.add(i))}catch(e){}}
 function showT(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('vis');setTimeout(()=>el.classList.remove('vis'),2000)}
 
 rs();renderAll();

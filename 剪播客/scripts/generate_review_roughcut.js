@@ -57,11 +57,13 @@ console.log(`   句子: ${sentences.length}, 词: ${actualWords.length}`);
 
 // ===== 构建删除集合 =====
 const deletedSet = new Set();
+const suggestedSet = new Set();
 const blockMap = {};
 
 if (analysis.sentences) {
   analysis.sentences.forEach(s => {
     if (s.action === 'delete') deletedSet.add(s.sentenceIdx);
+    if (s.action === 'suggest_delete') suggestedSet.add(s.sentenceIdx);
   });
 }
 
@@ -119,6 +121,14 @@ for (let i = 0; i < sentences.length; i++) {
     }
   }
 
+  if (suggestedSet.has(idx)) {
+    entry.sug = 1;
+    const sentInfo = analysis.sentences.find(s => s.sentenceIdx === idx);
+    if (sentInfo && sentInfo.reason) {
+      entry.sugReason = sentInfo.reason;
+    }
+  }
+
   S.push(entry);
 }
 
@@ -148,23 +158,36 @@ if (analysis.blocks) {
   });
 }
 
-// ===== 自动生成章节导航 =====
-// 从非删除句中均匀抽取 6-10 个章节
-const keptSentences = S.filter(s => !s.ai);
-const chapCount = Math.min(10, Math.max(4, Math.ceil(keptSentences.length / 80)));
-const chapSize = Math.ceil(keptSentences.length / chapCount);
+// ===== 章节导航 =====
+// 优先使用分析文件中的 chapters（AI 生成的内容分段）
 const CHAPS = [];
-
-for (let i = 0; i < keptSentences.length; i += chapSize) {
-  const first = keptSentences[i];
-  // 用前几个词作为章节标题
-  const titleText = first.t.substring(0, 20) + (first.t.length > 20 ? '…' : '');
-  CHAPS.push({
-    startIdx: first.idx,
-    time: first.ts,
-    title: titleText,
-    desc: ''
+if (analysis.chapters && analysis.chapters.length > 0) {
+  analysis.chapters.forEach(ch => {
+    const sent = S.find(s => s.idx === ch.range[0]);
+    CHAPS.push({
+      startIdx: ch.range[0],
+      endIdx: ch.range[1],
+      time: sent ? sent.ts : ch.startTime || '0:00',
+      title: ch.title,
+      desc: ch.desc || ''
+    });
   });
+  console.log(`   章节: ${CHAPS.length} (来自分析文件)`);
+} else {
+  // Fallback: 自动均分
+  const keptSentences = S.filter(s => !s.ai);
+  const chapCount = Math.min(10, Math.max(4, Math.ceil(keptSentences.length / 80)));
+  const chapSize = Math.ceil(keptSentences.length / chapCount);
+  for (let i = 0; i < keptSentences.length; i += chapSize) {
+    const first = keptSentences[i];
+    CHAPS.push({
+      startIdx: first.idx,
+      time: first.ts,
+      title: first.t.substring(0, 20) + (first.t.length > 20 ? '…' : ''),
+      desc: ''
+    });
+  }
+  console.log(`   章节: ${CHAPS.length} (自动生成)`);
 }
 
 // ===== 统计 =====
