@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>__TITLE__</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700;900&display=swap');
+
+:root {
+  --sage: #C5CBAD;
+  --sage-light: #D2D7BD;
+  --sage-dark: #B0B696;
+  --sage-deep: #9CA383;
+  --black: #1A1A18;
+  --dark: #2E2E2A;
+  --mid: #4A4A42;
+  --muted: #5E5E54;
+  --light: #7A7A6E;
+  --faint: #E0E2D6;
+  --white: #F2F3EC;
+  --gold: #8B6914;
+  --gold-light: #C9A84C;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  background: var(--sage);
+  color: var(--black);
+  -webkit-font-smoothing: antialiased;
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.serif {
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", Georgia, "Times New Roman", serif;
+}
+
+.mono {
+  font-family: "SF Mono", "Fira Code", Consolas, "Courier New", monospace;
+}
+
+/* ===== TOP BAR ===== */
+.topbar {
+  position: fixed; top:0; left:0; right:0; z-index:1000;
+  background: var(--black);
+  height: 48px;
+  display: flex; align-items: center;
+  padding: 0 32px; gap: 24px;
+}
+.topbar .brand {
+  font-family: "Noto Serif SC", serif;
+  font-size: 16px; font-weight: 900; color: var(--sage-light);
+  letter-spacing: 2px;
+}
+.topbar .proj { font-size: 13px; color: var(--light); letter-spacing: 1px; }
+.topbar .fill { flex:1; }
+.topbar .status { font-size: 11px; color: var(--muted); letter-spacing: 1.5px; font-family: "SF Mono", monospace; }
+.topbar .expbtn {
+  background: transparent; color: var(--sage-light); border: 1.5px solid var(--sage-dark);
+  padding: 6px 20px; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; cursor: pointer; transition: all .15s;
+}
+.topbar .expbtn:hover { background: var(--sage-light); color: var(--black); }
+
+/* ===== LAYOUT ===== */
+.layout {
+  display: flex;
+  margin-top: 48px;
+  margin-bottom: 72px;
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+  width: 360px; flex-shrink:0;
+  background: var(--sage-light);
+  border-right: 1px solid var(--sage-dark);
+  position: sticky; top: 48px;
+  height: calc(100vh - 120px);
+  overflow-y: auto;
+  padding: 36px 28px;
+  display: flex; flex-direction: column; gap: 32px;
+}
+
+.section-label {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--mid); margin-bottom: 16px;
+  font-family: "SF Mono", monospace;
+}
+
+/* Duration */
+.dur-block { padding-bottom: 28px; border-bottom: 1px solid var(--sage-dark); }
+
+.dur-main {
+  display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px;
+}
+.dur-from {
+  font-family: "Noto Serif SC", serif;
+  font-size: 24px; font-weight: 600;
+  color: var(--light); text-decoration: line-through; text-decoration-color: var(--sage-dark);
+}
+.dur-arrow { font-size: 20px; color: var(--sage-dark); }
+.dur-to {
+  font-family: "Noto Serif SC", serif;
+  font-size: 40px; font-weight: 900; color: var(--black);
+  line-height: 1.1;
+}
+.dur-meta { font-size: 15px; color: var(--mid); }
+.dur-meta strong { font-weight: 700; color: var(--gold); }
+
+/* Summary */
+.summary-text {
+  font-size: 15px; line-height: 1.9; color: var(--mid);
+  border-left: 3px solid var(--gold-light); padding-left: 16px;
+}
+
+/* Speakers */
+.pie {
+  width: 96px; height: 96px; border-radius: 50%;
+  margin: 0 auto 16px; border: 2px solid var(--sage-dark);
+}
+.sp-legend { display:flex; flex-direction:column; gap: 8px; }
+.sp-row { display:flex; align-items:center; gap: 10px; }
+.sp-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink:0; }
+.sp-name { font-size: 16px; font-weight: 700; color: var(--dark); flex:1; }
+.sp-val { font-family: "SF Mono", monospace; font-size: 14px; color: var(--muted); }
+
+/* Navigator — editorial numbered list */
+.nav-section { flex:1; min-height:0; display:flex; flex-direction:column; }
+.nav-list { display:flex; flex-direction:column; gap:4px; overflow-y:auto; flex:1; }
+
+.nav-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 12px; border-radius: 6px;
+  cursor: pointer; transition: all .12s;
+  border-left: 3px solid transparent;
+}
+.nav-item:hover { background: var(--sage); }
+.nav-item.active { background: var(--sage); border-left-color: var(--black); }
+
+.nav-num {
+  font-family: "SF Mono", monospace;
+  font-size: 13px; color: var(--muted);
+  min-width: 22px; padding-top: 3px;
+}
+.nav-item.active .nav-num { color: var(--dark); }
+
+.nav-body { flex:1; }
+.nav-title {
+  font-family: "Noto Serif SC", serif;
+  font-size: 16px; font-weight: 700; color: var(--dark);
+  line-height: 1.4; margin-bottom: 2px;
+}
+.nav-item.active .nav-title { text-decoration: underline; text-underline-offset: 3px; }
+
+.nav-ts {
+  font-family: "SF Mono", monospace;
+  font-size: 12px; color: var(--muted);
+}
+
+/* --- MAIN --- */
+.main { flex:1; min-width:0; padding: 40px 52px; }
+
+.main-title {
+  font-family: "Noto Serif SC", serif;
+  font-size: 44px; font-weight: 900; color: var(--black);
+  line-height: 1.2; margin-bottom: 10px;
+}
+
+.main-sub {
+  font-size: 16px; color: var(--mid); line-height: 1.7; margin-bottom: 40px;
+}
+.hint-tag {
+  display: inline-block; background: var(--faint); color: var(--dark);
+  padding: 2px 10px; border-radius: 3px; font-size: 14px; font-weight: 600;
+}
+
+/* Block header */
+.blk {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; margin: 24px 0 6px;
+  background: var(--sage-dark);
+  border-left: 3px solid var(--gold-light);
+  border-radius: 0 6px 6px 0;
+}
+.blk-tag {
+  font-size: 12px; font-weight: 700; letter-spacing: .5px;
+  text-transform: uppercase; color: var(--gold);
+}
+.blk-rsn { color: var(--mid); font-size: 15px; flex:1; }
+.blk-dur { font-family: "SF Mono", monospace; font-size: 13px; color: var(--muted); }
+
+/* Toggle */
+.chk {
+  width: 22px; height: 22px; border: 2px solid var(--sage-dark); border-radius: 4px;
+  cursor: pointer; display:flex; align-items:center; justify-content:center;
+  font-size: 13px; color: transparent; transition: all .1s; flex-shrink:0;
+  background: var(--sage-light);
+}
+.chk:hover { border-color: var(--mid); }
+.chk.on { border-color: var(--dark); background: var(--dark); color: var(--sage-light); }
+
+/* Sentence row */
+.row {
+  display: flex; align-items: flex-start;
+  padding: 12px 16px; border-radius: 6px; margin-bottom: 2px;
+  cursor: pointer; transition: background .08s;
+  border-left: 3px solid transparent;
+}
+.row:hover { background: var(--sage-light); }
+.row.act { background: var(--sage-light); border-left-color: var(--black); }
+.row.del { opacity: .55; }
+.row.del:hover { opacity: .7; }
+.row.del .r-txt { text-decoration: line-through; text-decoration-color: var(--mid); color: var(--muted); }
+.row.sug { border-left: 3px dashed var(--gold-light); background: var(--sage-light); }
+
+.r-chk { margin-right: 12px; padding-top: 3px; }
+.r-sp { font-size: 15px; font-weight: 800; min-width: 56px; flex-shrink:0; margin-right: 12px; padding-top: 3px; color: var(--dark); }
+.r-tm { font-family:"SF Mono",monospace; font-size: 14px; color: var(--muted); min-width: 48px; flex-shrink:0; margin-right: 16px; padding-top: 4px; cursor:pointer; }
+.r-tm:hover { color: var(--dark); }
+.r-txt { font-size: 17px; line-height: 1.85; color: var(--dark); flex:1; min-width:0; }
+
+/* ===== PLAYER ===== */
+.player {
+  position: fixed; bottom:0; left:0; right:0; z-index:1000;
+  background: var(--black); height: 72px;
+  display: flex; align-items: center; padding: 0 32px; gap: 24px;
+}
+
+.p-time {
+  font-family: "SF Mono", monospace;
+  font-size: 15px; color: var(--sage-light); min-width: 60px;
+}
+.p-total {
+  font-family: "SF Mono", monospace;
+  font-size: 15px; color: var(--muted); min-width: 60px;
+}
+
+.p-track { flex:1; height: 4px; background: var(--dark); cursor:pointer; position:relative; border-radius:2px; }
+.p-fill { height:100%; background: var(--sage-light); width:0%; transition:width .05s; border-radius:2px; position:relative; }
+.p-leaf {
+  position:absolute; right:-10px; top:-14px;
+  width:20px; height:28px;
+  transition: right .05s;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.3));
+}
+.p-track:active .p-fill { transition:none; }
+.p-track:active .p-leaf { transition:none; }
+
+.p-btn {
+  background: transparent; color: var(--sage-light);
+  border: 1.5px solid var(--muted);
+  padding: 7px 24px; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; cursor: pointer; transition: all .12s;
+}
+.p-btn:hover { background: var(--sage-light); color: var(--black); border-color: var(--sage-light); }
+
+.p-spd {
+  font-family: "SF Mono", monospace;
+  font-size: 12px; color: var(--muted); background: none;
+  border: none; cursor: pointer; letter-spacing: 1px;
+}
+.p-spd:hover { color: var(--sage-light); }
+
+.toast {
+  position:fixed; top:60px; right:28px; background:var(--black); color:var(--sage-light);
+  padding:12px 24px; font-size:15px; font-weight:600; z-index:2000;
+  opacity:0; transition:opacity .3s; pointer-events:none; border-radius:4px;
+}
+.toast.vis { opacity:1; }
+
+@media(max-width:960px) {
+  .layout { flex-direction:column; }
+  .sidebar { width:100%; position:relative; height:auto; border-right:none; border-bottom:1px solid var(--sage-dark); }
+  .main-title { font-size:32px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">辟客</span>
+  <span class="proj">__PROJECT_NAME__</span>
+  <span class="fill"></span>
+  <span class="status" id="sv">自动保存：已保存</span>
+  <button class="expbtn" onclick="doExport()">导出</button>
+</div>
+
+<div class="layout">
+<aside class="sidebar">
+
+  <div class="dur-block">
+    <div class="section-label">时长</div>
+    <div class="dur-main">
+      <span class="dur-from serif" id="d-from">0:00</span>
+      <span class="dur-arrow">→</span>
+      <span class="dur-to serif" id="d-to">0:00</span>
+    </div>
+    <div class="dur-meta">删减了 <strong id="d-rm">0:00</strong></div>
+  </div>
+
+  <div>
+    <div class="section-label">删减概要</div>
+    <div class="summary-text" id="summ"></div>
+  </div>
+
+  <div>
+    <div class="section-label">说话人</div>
+    <div class="pie" id="pie"></div>
+    <div class="sp-legend" id="spleg"></div>
+  </div>
+
+  <!-- Leaf divider -->
+  <div style="text-align:center;padding:4px 0">
+    <svg width="120" height="24" viewBox="0 0 120 24" fill="none" style="opacity:.4">
+      <path d="M10 12 C20 12 30 6 42 8 C54 10 58 12 60 12 C62 12 66 10 78 8 C90 6 100 12 110 12" stroke="#3A3A30" stroke-width="1" fill="none" stroke-linecap="round"/>
+      <path d="M42 8 C38 2 32 0 28 4 C24 8 30 12 36 10" stroke="#3A3A30" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+      <path d="M78 8 C82 2 88 0 92 4 C96 8 90 12 84 10" stroke="#3A3A30" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+      <path d="M60 12 C58 6 54 2 58 0" stroke="#3A3A30" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div class="nav-section">
+    <div class="section-label">章节导航</div>
+    <div class="nav-list" id="nav"></div>
+  </div>
+
+
+</aside>
+
+<main class="main">
+  <div style="position:relative">
+    <!-- Botanical decoration — branch with leaves -->
+    <svg class="deco-branch" width="180" height="220" viewBox="0 0 180 220" fill="none" style="position:absolute;right:-20px;top:-30px;opacity:.32;pointer-events:none">
+      <path d="M90 210 C88 180 82 150 70 120 C62 100 50 85 45 65 C42 52 48 38 58 30 C68 22 75 28 72 40 C69 52 60 58 55 70" stroke="#3A3A30" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M70 120 C85 115 100 105 108 90 C112 82 110 72 102 68 C94 64 88 70 90 80 C92 90 88 95 82 100" stroke="#3A3A30" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      <path d="M82 148 C68 142 55 148 48 158 C44 164 46 172 54 174 C62 176 68 168 65 160" stroke="#3A3A30" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      <path d="M86 165 C100 160 112 165 118 175 C122 182 118 190 110 190 C102 190 98 182 102 176" stroke="#3A3A30" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      <path d="M45 65 C32 60 20 65 15 75 C12 82 16 90 24 90 C32 90 35 82 30 76" stroke="#3A3A30" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      <path d="M55 80 C68 72 80 74 88 82" stroke="#3A3A30" stroke-width="1" fill="none" stroke-linecap="round"/>
+      <!-- Small scattered leaves -->
+      <path d="M108 90 C120 84 130 88 132 98 C134 108 124 112 116 106" stroke="#3A3A30" stroke-width="1" fill="none" stroke-linecap="round"/>
+      <path d="M58 30 C48 20 38 22 35 32 C32 42 42 48 50 40" stroke="#3A3A30" stroke-width="1" fill="none" stroke-linecap="round"/>
+    </svg>
+    <h1 class="main-title">粗剪逐字稿</h1>
+  </div>
+  <p class="main-sub">
+    审阅并编辑你的播客内容。点击句子跳转播放，使用 <span class="hint-tag">☐</span> 删除或恢复段落，所有操作自动保存。
+  </p>
+  <div id="tx"></div>
+</main>
+</div>
+
+<div class="player">
+  <span class="p-time mono" id="ptm">0:00</span>
+  <div class="p-track" id="ptrk" onmousedown="startDrag(event)"><div class="p-fill" id="pfill"><svg class="p-leaf" viewBox="0 0 20 28" fill="none"><path d="M10 2 C5 6 2 12 3 18 C4 22 7 25 10 26 C13 25 16 22 17 18 C18 12 15 6 10 2Z" fill="#8BA86A" stroke="#5C6B48" stroke-width="0.8"/><path d="M10 6 C10 12 10 20 10 26" stroke="#5C6B48" stroke-width="0.6" opacity=".5"/><path d="M10 10 C7 12 5 14" stroke="#5C6B48" stroke-width="0.4" opacity=".4"/><path d="M10 14 C13 16 15 18" stroke="#5C6B48" stroke-width="0.4" opacity=".4"/></svg></div></div>
+  <span class="p-total mono" id="pdur">0:00</span>
+  <button class="p-btn" id="pbtn" onclick="tgPlay()">播放</button>
+  <button class="p-spd" id="pspd" onclick="cySpd()">1.0×</button>
+</div>
+
+
+<div class="toast" id="toast"></div>
+<audio id="au" src="__AUDIO_SRC__" preload="auto"></audio>
+
+<script>
+
+const S = __SENTENCES_DATA__;
+const BLK = __BLOCKS_DATA__;
+
+const TL={"pre_show":"录前准备","tech_debug":"技术调试","chit_chat":"闲聊寒暄","repeated_content":"重复内容","production_talk":"制作讨论","privacy":"隐私内容","redundant_viewpoint":"重复观点","over_detail":"过度展开","low_density":"低密度段落","weak_relevance":"弱相关内容"};
+
+// Nav chapters — topic summaries
+const CHAPS = __CHAPTERS_DATA__;
+
+// Speakers — 3 shades of the same warm tone
+const spShades = ['#5C4813','#8B6914','#B89545'];
+const spList=[], spCMap={};
+S.forEach(x=>{ if(x.sp && !spCMap[x.sp]){ spCMap[x.sp]=spShades[spList.length%3]; spList.push(x.sp); }});
+
+// State
+const del=new Set(), um=new Set();
+let curIdx=-1, curNav=-1;
+S.forEach(x=>{ if(x.ai) del.add(x.idx); });
+
+function fm(s){ if(s<0)s=0; const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=Math.floor(s%60); return h>0?`${h}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`:`${m}:${String(sc).padStart(2,'0')}`; }
+function esc(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ===== SIDEBAR =====
+function renderSidebar() {
+  const td=S.length?S[S.length-1].e:0; let rd=0; const rbt={}, sd={};
+  S.forEach(x=>{const d=x.e-x.s;if(del.has(x.idx)){rd+=d;rbt[x.dt||'other']=(rbt[x.dt||'other']||0)+d}else if(x.sp){sd[x.sp]=(sd[x.sp]||0)+d}});
+  const rc=td-rd;
+
+  document.getElementById('d-from').textContent=fm(td);
+  document.getElementById('d-to').textContent=fm(rc);
+  document.getElementById('d-rm').textContent=fm(rd);
+
+  // Summary
+  const fill=['pre_show','tech_debug','production_talk','chit_chat'];
+  let fd=0;const fn=[];const cc=[];
+  for(const[t,d] of Object.entries(rbt)){if(t==='other')continue;if(fill.includes(t)){fd+=d;fn.push(TL[t]||t)}else cc.push({l:TL[t]||t,d})}
+  cc.sort((a,b)=>b.d-a.d);
+  const pts=[];
+  if(fd>0)pts.push(`${Math.round(fd/60)} 分钟${fn.join('、')}`);
+  cc.forEach(c=>pts.push(`${Math.round(c.d/60)} 分钟${c.l}`));
+  document.getElementById('summ').textContent=pts.length?`共删除 ${pts.join('，')}。剩余内容保持原始顺序与完整语境。`:'未做任何删减。';
+
+  // Pie — same gold family
+  const en=spList.filter(sp=>sd[sp]>0).map(sp=>({n:sp,d:sd[sp]||0}));
+  if(en.length){
+    let a=0;
+    const gp=en.map(e=>{const p=e.d/rc;const s=a;a+=p*360;return`${spCMap[e.n]} ${s}deg ${a}deg`});
+    document.getElementById('pie').style.background=`conic-gradient(${gp.join(', ')})`;
+    document.getElementById('spleg').innerHTML=en.map(e=>{
+      const p=Math.round(e.d/rc*100);
+      return`<div class="sp-row"><span class="sp-dot" style="background:${spCMap[e.n]}"></span><span class="sp-name">${e.n}</span><span class="sp-val">${p}% · ${fm(e.d)}</span></div>`;
+    }).join('');
+  }
+
+  // Navigator
+  document.getElementById('nav').innerHTML = CHAPS.map((ch,i)=>{
+    return`<div class="nav-item${i===curNav?' active':''}" onclick="navTo(${i})">
+      <span class="nav-num">${String(i+1).padStart(2,'0')}</span>
+      <div class="nav-body">
+        <div class="nav-title">${esc(ch.title)}</div>
+        <div class="nav-ts">${ch.time} · ${esc(ch.desc)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===== TRANSCRIPT =====
+function renderTx() {
+  const c=document.getElementById('tx');let h='';
+  const bm={};BLK.forEach(b=>{for(let i=b.r[0];i<=b.r[1];i++)bm[i]=b});
+  let lb=null;
+  S.forEach(x=>{
+    const b=bm[x.idx];
+    if(b&&b!==lb){
+      const ck=isBD(b);
+      h+=`<div class="blk"><div class="chk ${ck?'on':''}" onclick="tgB(${b.id})">✕</div><span class="blk-tag">${TL[b.type]||b.type}</span><span class="blk-rsn">${b.reason}</span><span class="blk-dur mono">${b.dur}</span></div>`;
+      lb=b;
+    }
+    const id=del.has(x.idx),sg=x.sug&&!id;
+    let cl='row';if(id)cl+=' del';if(sg)cl+=' sug';if(x.idx===curIdx)cl+=' act';
+    h+=`<div class="${cl}" id="r${x.idx}" onclick="goTo(${x.idx})"><div class="r-chk"><div class="chk ${id?'on':''}" onclick="event.stopPropagation();tgS(${x.idx})">✕</div></div><div class="r-sp">${x.sp}</div><div class="r-tm">${x.ts}</div><div class="r-txt">${esc(x.t)}</div></div>`;
+  });
+  c.innerHTML=h;
+}
+
+function isBD(b){for(let i=b.r[0];i<=b.r[1];i++)if(!del.has(i))return false;return true}
+function renderAll(){renderSidebar();renderTx()}
+
+// ===== INTERACTIONS =====
+function tgS(i){del.has(i)?del.delete(i):del.add(i);um.add(i);renderAll();sv()}
+function tgB(id){const b=BLK.find(x=>x.id===id);if(!b)return;const ad=isBD(b);for(let i=b.r[0];i<=b.r[1];i++){ad?del.delete(i):del.add(i);um.add(i)}renderAll();sv()}
+
+function goTo(idx){
+  curIdx=idx;
+  const x=S.find(s=>s.idx===idx);
+  if(x){sk(x.s);au.play()}
+  document.querySelectorAll('.row.act').forEach(el=>el.classList.remove('act'));
+  const r=document.getElementById('r'+idx);
+  if(r){r.classList.add('act');r.scrollIntoView({behavior:'smooth',block:'center'})}
+  if(x) updateNav(x.s);
+}
+
+function navTo(i){
+  curNav=i;
+  const ch=CHAPS[i];
+  const x=S.find(s=>s.idx===ch.startIdx);
+  if(x){sk(x.s);au.play()}
+  document.querySelectorAll('.nav-item.active').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-item')[i]?.classList.add('active');
+  const r=document.getElementById('r'+ch.startIdx);
+  if(r) r.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function updateNav(time){
+  let active=0;
+  for(let i=CHAPS.length-1;i>=0;i--){
+    const x=S.find(s=>s.idx===CHAPS[i].startIdx);
+    if(x&&time>=x.s){active=i;break}
+  }
+  if(active!==curNav){
+    curNav=active;
+    document.querySelectorAll('.nav-item.active').forEach(el=>el.classList.remove('active'));
+    document.querySelectorAll('.nav-item')[active]?.classList.add('active');
+  }
+}
+
+// ===== AUDIO =====
+const au=document.getElementById('au');let pl=false;
+const spds=[1,1.25,1.5,1.75,2,.75];let si=0;
+function tgPlay(){pl?au.pause():au.play()}
+function sk(t){au.currentTime=t}
+let dragging=false;
+function startDrag(e){
+  dragging=true;
+  seekFromPos(e);
+  const onMove=ev=>{if(dragging)seekFromPos(ev)};
+  const onUp=()=>{dragging=false;document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp)};
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onUp);
+}
+function seekFromPos(e){const rc=document.getElementById('ptrk').getBoundingClientRect();const pct=Math.max(0,Math.min(1,(e.clientX-rc.left)/rc.width));if(au.duration){au.currentTime=pct*au.duration;document.getElementById('pfill').style.width=(pct*100)+'%'}}
+function cySpd(){si=(si+1)%spds.length;au.playbackRate=spds[si];document.getElementById('pspd').textContent=spds[si]+'×'}
+
+au.addEventListener('play',()=>{pl=true;document.getElementById('pbtn').textContent='暂停'});
+au.addEventListener('pause',()=>{pl=false;document.getElementById('pbtn').textContent='播放'});
+au.addEventListener('loadedmetadata',()=>{document.getElementById('pdur').textContent=fm(au.duration)});
+
+au.addEventListener('timeupdate',()=>{
+  const t=au.currentTime,d=au.duration||0;
+  document.getElementById('ptm').textContent=fm(t);
+  if(d>0) document.getElementById('pfill').style.width=(t/d*100)+'%';
+
+  const cur=S.find((x,i)=>{const nx=S[i+1];return t>=x.s&&(!nx||t<nx.s)});
+  if(cur&&cur.idx!==curIdx){
+    curIdx=cur.idx;
+    document.querySelectorAll('.row.act').forEach(el=>el.classList.remove('act'));
+    const r=document.getElementById('r'+cur.idx);
+    if(r){r.classList.add('act');const rc=r.getBoundingClientRect();if(rc.top<60||rc.bottom>window.innerHeight-90)r.scrollIntoView({behavior:'smooth',block:'center'})}
+  }
+  updateNav(t);
+  if(pl)for(const x of S)if(del.has(x.idx)&&t>=x.s&&t<x.e){au.currentTime=x.e+.05;return}
+});
+
+// ===== EXPORT =====
+function doExport(){
+  const segs=[];let c=null;
+  S.forEach(x=>{if(del.has(x.idx)){if(c&&Math.abs(x.s-c.end)<.5)c.end=x.e;else{if(c)segs.push(c);c={start:x.s,end:x.e}}}else{if(c){segs.push(c);c=null}}});if(c)segs.push(c);
+  const bl=new Blob([JSON.stringify({version:"roughcut_v1",exported_at:new Date().toISOString(),segments:segs},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='delete_segments_edited.json';a.click();showT('已导出剪辑文件');
+}
+
+// Persistence
+const SK='rc5_'+document.title;
+function sv(){try{localStorage.setItem(SK,JSON.stringify({d:Array.from(del),m:Array.from(um)}))}catch(e){}}
+function rs(){try{const r=localStorage.getItem(SK);if(!r)return;const s=JSON.parse(r);if(s.d){del.clear();s.d.forEach(i=>del.add(i))}if(s.m)s.m.forEach(i=>um.add(i))}catch(e){}}
+function showT(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('vis');setTimeout(()=>el.classList.remove('vis'),2000)}
+
+rs();renderAll();
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&e.target===document.body){e.preventDefault();tgPlay()}});
+
+</script>
+</body>
+</html>
