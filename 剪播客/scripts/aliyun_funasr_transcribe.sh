@@ -7,7 +7,11 @@
 set -e
 
 # 自动加载 .env（如果 DASHSCOPE_API_KEY 未设置）
-ENV_FILE="/Volumes/T9/claude_skill/podcastcut/.env"
+# 自动检测项目根目录（脚本所在目录向上两级）
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+ENV_FILE="${SKILL_DIR:+$SKILL_DIR/.env}"
+ENV_FILE="${ENV_FILE:-$PROJECT_ROOT/.env}"
 if [ -z "$DASHSCOPE_API_KEY" ] && [ -f "$ENV_FILE" ]; then
   export $(grep -v '^#' "$ENV_FILE" | grep -v '^$' | xargs)
 fi
@@ -31,7 +35,7 @@ if [ -z "$DASHSCOPE_API_KEY" ]; then
     echo "请设置API Key:"
     echo "  export DASHSCOPE_API_KEY='your-api-key'"
     echo ""
-    echo "或在 /Volumes/T9/claude_skill/podcastcut/.env 中配置"
+    echo "或在 $ENV_FILE 中配置"
     exit 1
 fi
 

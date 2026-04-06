@@ -29,10 +29,11 @@ git clone <repo-url> /path/to/podcastcut
 # 在 Claude Code 中注册（创建 symlinks）
 PODCASTCUT_DIR="/path/to/podcastcut"  # 替换为你的路径
 mkdir -p ~/.claude/skills
-ln -s "$PODCASTCUT_DIR/安装"    ~/.claude/skills/podcastcut-安装
-ln -s "$PODCASTCUT_DIR/剪播客"  ~/.claude/skills/podcastcut-剪播客
-ln -s "$PODCASTCUT_DIR/后期"    ~/.claude/skills/podcastcut-后期
-ln -s "$PODCASTCUT_DIR/质检"    ~/.claude/skills/podcastcut-质检
+ln -s "$PODCASTCUT_DIR/安装"      ~/.claude/skills/podcastcut-安装
+ln -s "$PODCASTCUT_DIR/剪播客"    ~/.claude/skills/podcastcut-剪播客
+ln -s "$PODCASTCUT_DIR/后期"      ~/.claude/skills/podcastcut-后期
+ln -s "$PODCASTCUT_DIR/质检"      ~/.claude/skills/podcastcut-质检
+ln -s "$PODCASTCUT_DIR/音质处理"  ~/.claude/skills/podcastcut-音质处理
 ```
 
 验证：重启 Claude Code，按 `/` 应该能看到 `podcastcut-安装`、`podcastcut-剪播客` 等。
@@ -62,28 +63,24 @@ cp .env.example .env
 
 详细安装说明见 `/podcastcut-安装`。
 
-## 8 阶段流水线
+## 5 阶段流水线（v7）
 
 ```
 /podcastcut-剪播客
     │
-    │  阶段 1: 用户启动
-    │  ├─ 新用户：样本学习 / 结构化提问
-    │  └─ 老用户：一句话确认偏好
-    │
-    │  阶段 2: 剪辑分析
+    │  阶段 1: 转录 + AI 分析（全自动）
+    │  ├─ 用户启动：加载偏好 / 新用户引导
     │  ├─ 转录（阿里云 FunASR，~3 分钟）
     │  ├─ 说话人识别 + 句子分割
     │  ├─ AI 粗剪分析（段落级删减）
-    │  └─ AI 精剪分析（词级：卡顿、重说、填充词）
+    │  ├─ AI 精剪分析（词级：卡顿、重说、填充词）
+    │  └─ AI 自审查：查漏补缺
     │
-    │  阶段 3: AI 自审查
-    │  └─ 审查 Agent 检查一致性、误判、安全词
-    │
-    │  阶段 4: 用户审核稿
+    │  阶段 2: 人工审核
     │  ├─ 生成审查页面 → 浏览器打开
     │  │   ┌──────────────────────────────────────┐
     │  │   │  审查页面（review_enhanced.html）     │
+    │  │   │  - 更大字体、更清晰布局              │
     │  │   │  - 精剪播放器（实时跳过删除段）      │
     │  │   │  - 整句删除/恢复、精剪切换           │
     │  │   │  - 手动选中删除 + AI 反馈导出        │
@@ -91,26 +88,26 @@ cp .env.example .env
     │  ├─ 用户审查 + 导出 delete_segments_edited.json
     │  └─ 反馈学习 → 更新用户偏好/剪辑规则
     │
-    │  阶段 5: 剪辑执行
-    │  ├─ cut_audio.py（WAV 采样级精确剪辑）
-    │  └─ trim_silences.py（成品静音裁剪）
+    │  阶段 3: 剪辑执行 + 质检
+    │  ├─ cut_audio.py（WAV 采样级精确剪辑，≥192kbps）
+    │  ├─ trim_silences.py（成品静音裁剪）
+    │  └─ /podcastcut-质检（可选）
+    │     ├─ Phase A: 数据层
+    │     ├─ Phase B: 信号层
+    │     └─ Phase C: 语义层
     │
-/podcastcut-质检
-    │  阶段 6: AI 质检
-    │  ├─ Phase A: 数据层（删除段正确性）
-    │  ├─ Phase B: 信号层（能量/频谱/静音分析）
-    │  └─ Phase C: 语义层（重转录 LCS 对齐，可选）
+/podcastcut-音质处理
+    │  阶段 4: 音质处理
+    │  ├─ 按说话人响度分析（LUFS）
+    │  ├─ 选择性降噪/去回声（DeepFilterNet）
+    │  ├─ 音乐段检测与保护
+    │  └─ 全局响度标准化（-16 LUFS）
     │
 /podcastcut-后期
-    │  阶段 7: 后期处理
-    │  ├─ 高亮片段 → 片头预览
-    │  ├─ 主题曲片头片尾
+    │  阶段 5: 后期
+    │  ├─ 高光片段提取 → 放开头
+    │  ├─ 片头片尾音乐
     │  └─ 时间戳章节 + 标题 + 简介
-    │
-    │  阶段 8: 用户终审
-    │  ├─ 终审页面（review_final.html）
-    │  │   质检问题列表 + 可点击时间戳 + 确认/标记
-    │  └─ 反馈学习 → 更新剪辑规则/用户偏好
 ```
 
 ## Skill 清单
@@ -118,9 +115,10 @@ cp .env.example .env
 | Skill | slash 命令 | 功能 |
 |-------|-----------|------|
 | 安装 | `/podcastcut-安装` | 注册 skills、安装依赖、配置 API Key |
-| 剪播客 | `/podcastcut-剪播客` | 8 阶段编排器：转录 + 分析 + 审查 + 剪辑 + 终审 |
+| 剪播客 | `/podcastcut-剪播客` | 5 阶段编排器：转录 + 分析 + 审查 + 剪辑 |
 | 质检 | `/podcastcut-质检` | 三阶段质检：数据层 + 信号层 + 语义层 |
-| 后期 | `/podcastcut-后期` | 片头预览、主题曲、时间戳、标题、简介 |
+| 音质处理 | `/podcastcut-音质处理` | 按说话人降噪/去回声 + 响度标准化 |
+| 后期 | `/podcastcut-后期` | 高光片段、片头片尾音乐、时间戳、标题、简介 |
 
 ## 目录结构
 
@@ -154,7 +152,10 @@ podcastcut/
 │   └── 用户偏好/           # 个人偏好（per-user）
 │       ├── default/
 │       └── <userId>/
-├── 后期/                  # 最终润色 skill（阶段 7）
+├── 音质处理/              # 音质处理 skill（阶段 4）
+│   ├── SKILL.md
+│   └── scripts/
+├── 后期/                  # 最终润色 skill（阶段 5）
 │   ├── SKILL.md
 │   └── scripts/
 │       └── mix_highlights_with_music.py
@@ -192,6 +193,20 @@ podcastcut/
 | FFmpeg | 音频处理 | `brew install ffmpeg` |
 | Python 3 | 音频剪辑 | macOS 自带 |
 | 阿里云 DashScope API | 语音转录 + 说话人分离 | [申请 Key](https://dashscope.console.aliyun.com/) |
+
+## V7 变更记录
+
+本版本基于 [@luoyuweidu1](https://github.com/luoyuweidu1) 的 [podcastcut-skills](https://github.com/luoyuweidu1/podcastcut-skills) 项目迭代开发，主要改动：
+
+- **工作流重构**：8 阶段 → 5 阶段（转录分析 → 人工审核 → 剪辑质检 → 音质处理 → 后期）
+- **音质保护**：全流程不压缩原则，审查页面音频 192kbps CBR，剪辑基于原始音频
+- **审查页面重设计**：橄榄绿编辑式 UI，侧边栏章节导航，说话人分布饼图，全页联动播放
+- **新增音质处理子技能**：按说话人降噪/去回声、音乐段检测保护、LUFS 响度标准化
+- **去除硬编码路径**：所有脚本使用 `$SKILL_DIR` 或自动检测
+
+## 致谢
+
+感谢 [@luoyuweidu1](https://github.com/luoyuweidu1) 创建了 podcastcut-skills 的核心架构，包括阿里云 FunASR 转录集成、规则+LLM 混合精剪分析、交互式审查页面框架，以及三阶段质检系统。本项目在此基础上进行了工作流优化、UI 重设计和功能扩展。
 
 ## License
 

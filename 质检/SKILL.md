@@ -429,9 +429,10 @@ pip install google-genai          # 可选，启用 AI 听感评估
 ## 与其他 Skill 的关系
 
 ```
-/podcastcut-剪播客      → 阶段 1-5（转录 → 分析 → 审查 → 剪辑）
-/podcastcut-质检        → 阶段 6（本 Skill: Phase A + B + C）
-/podcastcut-后期        → 阶段 7（后期处理）
+/podcastcut-剪播客      → 阶段 1（转录+AI分析） → 阶段 2（人工审核） → 阶段 3（剪辑+质检）
+/podcastcut-质检        → 阶段 3.3（本 Skill: Phase A + B + C）
+/podcastcut-音质处理    → 阶段 4（按说话人处理音质）
+/podcastcut-后期        → 阶段 5（高光+音乐+后期）
 ```
 
-本 Skill 对应流程中的**阶段 6**，在剪辑执行（阶段 5）之后、后期处理（阶段 7）之前。
+本 Skill 对应流程中的**阶段 3.3**，在剪辑执行（3.1-3.2）之后、音质处理（阶段 4）之前。
