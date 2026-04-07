@@ -173,6 +173,29 @@ body {
 .main-sub {
   font-size: 16px; color: var(--mid); line-height: 1.7; margin-bottom: 40px;
 }
+/* Preview mode toggle */
+.mode-bar {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 32px;
+}
+.mode-toggle {
+  display: flex; background: var(--sage-dark); border-radius: 6px; overflow: hidden;
+}
+.mode-btn {
+  padding: 8px 18px; font-size: 13px; font-weight: 600;
+  color: var(--muted); cursor: pointer; border: none; background: none;
+  transition: all .12s; letter-spacing: 0.3px;
+}
+.mode-btn.active {
+  background: var(--dark); color: var(--sage-light);
+}
+.mode-btn:hover:not(.active) { color: var(--dark); }
+
+/* Preview mode: hide deleted rows and block headers */
+body.preview .row.del { display: none; }
+body.preview .blk { display: none; }
+body.preview .sug-reason { display: none; }
+
 .hint-tag {
   display: inline-block; background: var(--faint); color: var(--dark);
   padding: 2px 10px; border-radius: 3px; font-size: 14px; font-weight: 600;
@@ -291,6 +314,67 @@ body {
 }
 .p-spd:hover { color: var(--sage-light); }
 
+/* Info icon */
+.info-icon {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1.5px solid var(--muted); color: var(--muted);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  font-style: italic; font-family: Georgia, serif;
+  transition: all .12s;
+}
+.info-icon:hover { border-color: var(--sage-light); color: var(--sage-light); }
+
+/* Info popup */
+.info-popup {
+  position: fixed; top: 56px; right: 20px; z-index: 2001;
+  background: white; border: 1px solid var(--sage-dark);
+  border-radius: 8px; padding: 20px; width: 320px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  font-size: 14px; line-height: 1.7; color: var(--dark);
+  display: none;
+}
+.info-popup.vis { display: block; }
+.info-popup-title { font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+.info-popup p { margin-bottom: 8px; }
+.info-close {
+  margin-top: 8px; padding: 6px 16px; background: var(--dark); color: var(--sage-light);
+  border: none; border-radius: 4px; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+
+/* Export success modal */
+.export-modal {
+  position: fixed; inset: 0; z-index: 3000;
+  background: rgba(12,10,9,.6); display: none;
+  align-items: center; justify-content: center;
+}
+.export-modal.vis { display: flex; }
+.export-modal-inner {
+  background: white; border-radius: 12px; padding: 32px;
+  max-width: 440px; width: 90%;
+}
+.export-modal-title {
+  font-family: "Noto Serif SC", serif;
+  font-size: 22px; font-weight: 700; margin-bottom: 20px; color: var(--dark);
+}
+.export-modal-steps { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
+.export-step {
+  display: flex; align-items: flex-start; gap: 12px;
+  font-size: 15px; line-height: 1.6; color: var(--mid);
+}
+.export-step em { color: var(--gold-dark); font-style: normal; font-weight: 600; }
+.export-step-num {
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+  background: var(--gold-dim); color: var(--gold-dark);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; margin-top: 2px;
+}
+.export-modal-btn {
+  width: 100%; padding: 10px; background: var(--dark); color: var(--sage-light);
+  border: none; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer;
+}
+.export-modal-btn:hover { background: var(--black); }
+
 .toast {
   position:fixed; top:60px; right:28px; background:var(--black); color:var(--sage-light);
   padding:12px 24px; font-size:15px; font-weight:600; z-index:2000;
@@ -312,7 +396,38 @@ body {
   <span class="proj">__PROJECT_NAME__</span>
   <span class="fill"></span>
   <span class="status" id="sv">自动保存：已保存</span>
+  <span class="info-icon" onclick="document.getElementById('info-tip').classList.toggle('vis')" title="关于导出">?</span>
   <button class="expbtn" onclick="doExport()">导出</button>
+</div>
+
+<!-- Info tooltip -->
+<div class="info-popup" id="info-tip">
+  <div class="info-popup-title">导出说明</div>
+  <p>导出的是一份 <strong>delete_segments_edited.json</strong> 文件，包含所有标记删除的时间段。</p>
+  <p>导出后，将文件拖入 Claude Code 对话框，即可执行剪辑生成 MP3 成品，并继续后续的精剪（口癖词、卡顿等）和音质处理。</p>
+  <button class="info-close" onclick="document.getElementById('info-tip').classList.remove('vis')">明白了</button>
+</div>
+
+<!-- Export success modal -->
+<div class="export-modal" id="export-modal">
+  <div class="export-modal-inner">
+    <div class="export-modal-title">导出成功</div>
+    <div class="export-modal-steps">
+      <div class="export-step">
+        <span class="export-step-num">1</span>
+        <span>打开 Claude Code，将下载的 <strong>delete_segments_edited.json</strong> 拖入对话框</span>
+      </div>
+      <div class="export-step">
+        <span class="export-step-num">2</span>
+        <span>输入：<em>「用这个文件剪辑音频」</em></span>
+      </div>
+      <div class="export-step">
+        <span class="export-step-num">3</span>
+        <span>Claude 会执行剪辑，然后可以继续精剪口癖词、音质处理、加片头音乐等</span>
+      </div>
+    </div>
+    <button class="export-modal-btn" onclick="document.getElementById('export-modal').classList.remove('vis')">好的</button>
+  </div>
 </div>
 
 <div class="layout">
@@ -366,6 +481,12 @@ body {
   <p class="main-sub">
     审阅并编辑你的播客内容。点击句子跳转播放，使用 <span class="hint-tag">☐</span> 删除或恢复段落，所有操作自动保存。
   </p>
+  <div class="mode-bar">
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="mode-edit" onclick="setMode('edit')">编辑模式</button>
+      <button class="mode-btn" id="mode-preview" onclick="setMode('preview')">粗剪预览</button>
+    </div>
+  </div>
   <div id="tx"></div>
 </main>
 </div>
@@ -405,11 +526,16 @@ S.forEach(x=>{ if(x.ai) del.add(x.idx); if(x.sug) del.add(x.idx); });
 function fm(s){ if(s<0)s=0; const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=Math.floor(s%60); return h>0?`${h}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`:`${m}:${String(sc).padStart(2,'0')}`; }
 function esc(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// ===== SIDEBAR =====
-function renderSidebar() {
+// ===== STATS =====
+function computeStats() {
   const td=S.length?S[S.length-1].e:0; let rd=0; const rbt={}, sd={};
   S.forEach(x=>{const d=x.e-x.s;if(del.has(x.idx)){rd+=d;rbt[x.dt||'other']=(rbt[x.dt||'other']||0)+d}else if(x.sp){sd[x.sp]=(sd[x.sp]||0)+d}});
-  const rc=td-rd;
+  return {td, rd, rc:td-rd, rbt, sd};
+}
+
+// ===== SIDEBAR =====
+function renderSidebar() {
+  const {td, rd, rc, rbt, sd} = computeStats();
 
   document.getElementById('d-from').textContent=fm(td);
   document.getElementById('d-to').textContent=fm(rc);
@@ -534,6 +660,60 @@ function updateNav(time){
   }
 }
 
+// ===== MODE SWITCHING =====
+let previewMode = false;
+
+function setMode(mode) {
+  previewMode = (mode === 'preview');
+  document.body.classList.toggle('preview', previewMode);
+  document.getElementById('mode-edit').classList.toggle('active', !previewMode);
+  document.getElementById('mode-preview').classList.toggle('active', previewMode);
+
+  // Update sidebar + player duration
+  renderSidebar();
+  if(typeof updatePlayerDuration === 'function') updatePlayerDuration();
+
+  // If switching to preview, jump to first kept sentence
+  if (previewMode) {
+    const firstKept = S.find(x => !del.has(x.idx));
+    if (firstKept) sk(firstKept.s);
+  }
+}
+
+// Compute virtual time (rough cut position) from original time
+function originalToVirtual(origTime) {
+  let virtualTime = 0;
+  let lastEnd = 0;
+  // Sort kept segments
+  const kept = [];
+  let segStart = null;
+  S.forEach(x => {
+    if (!del.has(x.idx)) {
+      if (segStart === null) segStart = x.s;
+    } else {
+      if (segStart !== null) {
+        kept.push({ s: segStart, e: x.s });
+        segStart = null;
+      }
+    }
+  });
+  if (segStart !== null) {
+    const lastS = S[S.length - 1];
+    kept.push({ s: segStart, e: lastS.e });
+  }
+
+  for (const seg of kept) {
+    if (origTime <= seg.s) break;
+    if (origTime >= seg.e) {
+      virtualTime += seg.e - seg.s;
+    } else {
+      virtualTime += origTime - seg.s;
+      break;
+    }
+  }
+  return virtualTime;
+}
+
 // ===== AUDIO =====
 const au=document.getElementById('au');let pl=false;
 const spds=[1,1.25,1.5,1.75,2,.75];let si=0;
@@ -553,12 +733,31 @@ function cySpd(){si=(si+1)%spds.length;au.playbackRate=spds[si];document.getElem
 
 au.addEventListener('play',()=>{pl=true;document.getElementById('pbtn').textContent='暂停'});
 au.addEventListener('pause',()=>{pl=false;document.getElementById('pbtn').textContent='播放'});
-au.addEventListener('loadedmetadata',()=>{document.getElementById('pdur').textContent=fm(au.duration)});
+au.addEventListener('loadedmetadata',()=>{ updatePlayerDuration(); });
+
+function updatePlayerDuration() {
+  if(previewMode) {
+    const stats = computeStats();
+    document.getElementById('pdur').textContent=fm(stats.rc);
+  } else {
+    document.getElementById('pdur').textContent=fm(au.duration||0);
+  }
+}
 
 au.addEventListener('timeupdate',()=>{
   const t=au.currentTime,d=au.duration||0;
-  document.getElementById('ptm').textContent=fm(t);
-  if(d>0) document.getElementById('pfill').style.width=(t/d*100)+'%';
+
+  // Show virtual time in preview mode, original time in edit mode
+  if(previewMode) {
+    const vt = originalToVirtual(t);
+    document.getElementById('ptm').textContent=fm(vt);
+    // Progress bar based on virtual time / rough cut duration
+    const stats = computeStats();
+    if(stats.rc > 0) document.getElementById('pfill').style.width=(vt/stats.rc*100)+'%';
+  } else {
+    document.getElementById('ptm').textContent=fm(t);
+    if(d>0) document.getElementById('pfill').style.width=(t/d*100)+'%';
+  }
 
   const cur=S.find((x,i)=>{const nx=S[i+1];return t>=x.s&&(!nx||t<nx.s)});
   if(cur&&cur.idx!==curIdx){
@@ -568,6 +767,7 @@ au.addEventListener('timeupdate',()=>{
     if(r){r.classList.add('act');const rc=r.getBoundingClientRect();if(rc.top<60||rc.bottom>window.innerHeight-90)r.scrollIntoView({behavior:'smooth',block:'center'})}
   }
   updateNav(t);
+  // Always skip deleted segments during playback (both modes)
   if(pl)for(const x of S)if(del.has(x.idx)&&t>=x.s&&t<x.e){au.currentTime=x.e+.05;return}
 });
 
@@ -575,8 +775,22 @@ au.addEventListener('timeupdate',()=>{
 function doExport(){
   const segs=[];let c=null;
   S.forEach(x=>{if(del.has(x.idx)){if(c&&Math.abs(x.s-c.end)<.5)c.end=x.e;else{if(c)segs.push(c);c={start:x.s,end:x.e}}}else{if(c){segs.push(c);c=null}}});if(c)segs.push(c);
-  const bl=new Blob([JSON.stringify({version:"roughcut_v1",exported_at:new Date().toISOString(),segments:segs},null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='delete_segments_edited.json';a.click();showT('已导出剪辑文件');
+
+  const stats = computeStats();
+  const data = {
+    version: "roughcut_v1",
+    exported_at: new Date().toISOString(),
+    original_duration: Math.round(stats.td),
+    roughcut_duration: Math.round(stats.rc),
+    removed_duration: Math.round(stats.rd),
+    segments: segs
+  };
+
+  const bl=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='delete_segments_edited.json';a.click();
+
+  // Show success modal with next steps
+  document.getElementById('export-modal').classList.add('vis');
 }
 
 // Persistence
