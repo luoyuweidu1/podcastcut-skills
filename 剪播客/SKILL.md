@@ -5,7 +5,7 @@ description: 播客音频转录和AI深度语义分析。基于阿里云FunASR A
 
 <!--
 input: 音频文件 (*.mp3, *.wav, *.m4a) + 说话人信息
-output: subtitles_words.json、semantic_deep_analysis.json、review_enhanced.html（动态播放器）、精剪版mp3
+output: subtitles_words.json、semantic_deep_analysis.json、review_roughcut.html（动态播放器）、精剪版mp3
 pos: 阿里云转录 + AI深度理解 + 增强审核 + 自动剪辑
 
 架构守护者：一旦我被修改，请同步更新：
@@ -56,10 +56,10 @@ pos: 阿里云转录 + AI深度理解 + 增强审核 + 自动剪辑
 - 不要尝试自己判断或猜测说话人数量
 - 说话人数量设置错误会导致98.8% → 低准确度
 
-**🚫 CRITICAL: 永远不要 regenerate review_enhanced.html 覆盖用户已审查的文件！**
+**🚫 CRITICAL: 永远不要 regenerate review_roughcut.html 覆盖用户已审查的文件！**
 - 用户手动编辑存在 HTML 内的 JS/localStorage 状态中，regenerate 会彻底丢失
-- 如果必须更新模板逻辑：只改模板文件（`templates/review_enhanced.html`），让用户自己刷新或重新生成
-- 如果确实需要 regenerate：**必须先备份**（`cp review_enhanced.html review_enhanced.html.bak`）并**明确告知用户手动编辑会丢失，等用户确认**
+- 如果必须更新模板逻辑：只改模板文件（`templates/review_roughcut.html`），让用户自己刷新
+- 如果确实需要 regenerate：**必须先备份**（`cp review_roughcut.html review_roughcut.html.bak`）并**明确告知用户手动编辑会丢失，等用户确认**
 
 ## 输出目录结构
 
@@ -85,7 +85,7 @@ output/
         │   ├── 播客名_精剪版_v1.mp3
         │   ├── 播客名_精剪版_v2.mp3             # 重剪版本
         │   └── ...
-        ├── review_enhanced.html                 # 审查界面
+        ├── review_roughcut.html                 # 审查界面
         └── server.log                           # 服务器日志（可选）
 ```
 
@@ -106,7 +106,7 @@ output/
     1.5 AI 自审查：查漏补缺 → 合并标记
     ↓
 阶段 2: 人工审核
-    → 生成 review_enhanced.html（重设计：大字体、分层信息、干净界面）
+    → 生成 review_roughcut.html（重设计：大字体、分层信息、干净界面）
     → 用户审查 + 编辑 + 导出 delete_segments_edited.json
     → 反馈学习 ← ai_feedback → 更新用户偏好
     ↓
@@ -659,7 +659,7 @@ LLM 层 (Claude → fine_analysis_llm.json):
 **与审查界面的集成**：
 - `review_agent_catches.json` 中的 catches → 合并到 fine_analysis.json 的 extraFineEdits
 - false_positives → 在审查界面中标记为"待确认"（不自动取消）
-- 重新生成 review_enhanced.html 时自动包含
+- 重新生成 review_roughcut.html 时自动包含
 
 **⚠️ 执行要点**：
 - 审查 Agent 使用独立的 prompt（不是复用 5b 的 LLM精剪prompt模板.md）
@@ -680,7 +680,7 @@ LLM 层 (Claude → fine_analysis_llm.json):
 
 #### 2.1 生成增强审查界面
 
-生成 `review_enhanced.html`，提供可视化审核 + 实时试听 + 交互编辑。
+生成 `review_roughcut.html`，提供可视化审核 + 实时试听 + 交互编辑。
 
 **输入文件**：
 - `subtitles_words.json` — 词级时间戳（核心数据源）
@@ -770,20 +770,20 @@ actual_words = words.filter(w => !w.isGap && !w.isSpeakerLabel)
 cd "$BASE_DIR/2_分析"
 
 # 生成审查 HTML（audio_seekable.mp3 已在 Step 1 生成）
-node "$SKILL_DIR/剪播客/scripts/generate_review_enhanced.js" \
+node "$SKILL_DIR/剪播客/scripts/generate_review_roughcut.js" \
   --sentences sentences.txt \
   --words "$BASE_DIR/1_转录/subtitles_words.json" \
   --analysis semantic_deep_analysis.json \
   --fine fine_analysis.json \
   --audio "1_转录/audio_seekable.mp3" \
-  --output "$BASE_DIR/review_enhanced.html" \
+  --output "$BASE_DIR/review_roughcut.html" \
   --title "播客审查稿 (可编辑)"
 
 # 打开审查页面
-open "$BASE_DIR/review_enhanced.html"
+open "$BASE_DIR/review_roughcut.html"
 ```
 
-> 模板位于 `templates/review_enhanced.html`，脚本自动注入数据。
+> 模板位于 `templates/review_roughcut.html`，脚本自动注入数据。
 > 如果没有 `fine_analysis.json`（跳过了步骤 5b），脚本会自动忽略精剪数据。
 
 ---
@@ -793,7 +793,7 @@ open "$BASE_DIR/review_enhanced.html"
 打开审查页面，审核 AI 建议，进行手动编辑，导出剪辑文件。
 
 ```bash
-open "$BASE_DIR/review_enhanced.html"
+open "$BASE_DIR/review_roughcut.html"
 ```
 
 **操作流程**：
@@ -1064,18 +1064,67 @@ python3 "$SKILL_DIR/剪播客/scripts/trim_silences.py" \
 
 ---
 
-### 阶段 4: 音质处理 → /podcastcut-音质处理（新增）
+### 阶段 4: 音质处理 → /podcastcut-音质处理
 
-> 详见 `音质处理/SKILL.md`。在剪辑成品上按说话人单独处理音质，保护音乐段，最终响度标准化。
+> 在剪辑成品上按说话人单独处理音质，保护音乐段，最终响度标准化。
 > 此阶段在剪辑+质检通过后、加音乐之前执行，确保 DeepFilterNet 等工具不会破坏音乐段。
 
 **输入**：阶段 3 成品 MP3 + speaker_mapping.json + subtitles_words.json
 **输出**：音质处理版 MP3（同码率，同格式）
 
+**⚠️ 启动前询问用户**：哪些说话人需要降噪/去回声？音频中是否已有音乐段？
+
 ```bash
-# 触发音质处理 skill
-# → 按说话人响度分析 → 选择性降噪 → 音乐段保护 → 响度标准化
+# 4.1 响度分析 — 查看各说话人音量差异
+python3 "$SKILL_DIR/音质处理/scripts/analyze_loudness.py" \
+  --audio "$BASE_DIR/3_成品/${AUDIO_NAME}_精剪版_trimmed.mp3" \
+  --words "$BASE_DIR/1_转录/subtitles_words.json" \
+  --speaker-mapping "$BASE_DIR/1_转录/speaker_mapping.json" \
+  --output "$BASE_DIR/3_成品/loudness_report.json"
+
+# 4.2 按说话人降噪/去回声（可选，用户指定谁需要处理）
+# 先生成试听对比
+python3 "$SKILL_DIR/音质处理/scripts/process_speaker.py" \
+  --audio "$BASE_DIR/3_成品/${AUDIO_NAME}_精剪版_trimmed.mp3" \
+  --words "$BASE_DIR/1_转录/subtitles_words.json" \
+  --speaker-mapping "$BASE_DIR/1_转录/speaker_mapping.json" \
+  --speakers "阿司" \
+  --preview-only \
+  --preview-dir "$BASE_DIR/3_成品/previews"
+
+# 用户确认效果后，执行完整处理
+python3 "$SKILL_DIR/音质处理/scripts/process_speaker.py" \
+  --audio "$BASE_DIR/3_成品/${AUDIO_NAME}_精剪版_trimmed.mp3" \
+  --words "$BASE_DIR/1_转录/subtitles_words.json" \
+  --speaker-mapping "$BASE_DIR/1_转录/speaker_mapping.json" \
+  --speakers "阿司" \
+  --output "$BASE_DIR/3_成品/${AUDIO_NAME}_denoised.mp3" \
+  --bitrate 192k
+
+# 4.3 音乐段检测（如音频已含音乐）
+# 手动标注：
+python3 "$SKILL_DIR/音质处理/scripts/detect_music.py" \
+  --manual "0-15,2845-2860" \
+  --output "$BASE_DIR/3_成品/music_segments.json"
+# 或自动检测：
+python3 "$SKILL_DIR/音质处理/scripts/detect_music.py" \
+  --audio "$BASE_DIR/3_成品/${AUDIO_NAME}_denoised.mp3" \
+  --output "$BASE_DIR/3_成品/music_segments.json"
+
+# 4.4 全局响度标准化 → -16 LUFS
+python3 "$SKILL_DIR/音质处理/scripts/normalize_loudness.py" \
+  --audio "$BASE_DIR/3_成品/${AUDIO_NAME}_denoised.mp3" \
+  --loudness-report "$BASE_DIR/3_成品/loudness_report.json" \
+  --words "$BASE_DIR/1_转录/subtitles_words.json" \
+  --speaker-mapping "$BASE_DIR/1_转录/speaker_mapping.json" \
+  --music-segments "$BASE_DIR/3_成品/music_segments.json" \
+  --target-lufs -16 \
+  --output "$BASE_DIR/3_成品/${AUDIO_NAME}_final.mp3" \
+  --bitrate 192k
 ```
+
+**流程**：响度分析 → 用户确认谁需要降噪 → 试听对比 → 完整处理 → 音乐段保护 → 响度标准化
+**跳过条件**：如果录音质量已经足够好（所有说话人 LUFS 偏差 < 1dB，无回声），可以跳过直接进阶段 5
 
 ---
 
@@ -1689,7 +1738,7 @@ const charOffset = (preFrag.textContent || '').length;
 
 ### 陷阱 28: ASR onset pullback 必须覆盖所有间隙大小
 
-**问题**：review_enhanced.html 的 `exportDeleteSegments()` 只对 gap < 300ms 做 onset pullback（前移 50ms），gap ≥ 300ms 时不处理。导致 S13 "对"（gap 470ms）、S14 "嗯"（gap 280ms→已处理但类似问题）删除后仍有残音。
+**问题**：review_roughcut.html 的 `exportDeleteSegments()` 只对 gap < 300ms 做 onset pullback（前移 50ms），gap ≥ 300ms 时不处理。导致 S13 "对"（gap 470ms）、S14 "嗯"（gap 280ms→已处理但类似问题）删除后仍有残音。
 
 **原因**：ASR 报告的词起始时间比实际发声晚 30-90ms（onset lag），这与间隙大小无关。
 
@@ -1737,7 +1786,7 @@ const charOffset = (preFrag.textContent || '').length;
 
 **根因**：`merge_llm_fine.js` 的 gap-cleanup 生成的 `silence_merged` 段挂在相邻句上（如 S94），其时间范围覆盖整个删除块（如 269.3s-297.12s）。当用户恢复块内的 S97/S98 时，5a 段被禁用，但 silence_merged 段（属于 S94）仍然 enabled，导致 `collectActiveRanges()` 仍包含该范围。
 
-**修复**：在 `getSkipRanges()` 和 `exportDeleteSegments()` 中，合并跳过范围后增加"打孔"步骤——遍历所有非删除句，将其时间范围从跳过范围中挖除。已同步修复模板文件 `templates/review_enhanced.html`。**已修复**。
+**修复**：在 `getSkipRanges()` 和 `exportDeleteSegments()` 中，合并跳过范围后增加"打孔"步骤——遍历所有非删除句，将其时间范围从跳过范围中挖除。已同步修复模板文件 `templates/review_roughcut.html`。**已修复**。
 
 ### 陷阱 33: punch-holes 误杀精剪编辑（陷阱 32 的回归 bug）
 
@@ -1766,7 +1815,7 @@ if (r[0] >= ksStart && r[1] <= ksEnd) {
 
 **数据**：12 个用户标注的句首停顿中，9 个实际已被检测但显示在上一句末尾，3 个实际 gap < 0.8s（用户感知偏差）。
 
-**修复**：`generate_review_enhanced.js` 增加 `incomingSilences` 字段，将 silence 编辑同时传给下一个非删除句。`review_enhanced.html` 模板在句首渲染 `⏸ -Xs` 标记（黄色虚线边框，可点击联动 toggleFineEdit）。**已修复**。
+**修复**：`generate_review_roughcut.js` 增加 `incomingSilences` 字段，将 silence 编辑同时传给下一个非删除句。`review_roughcut.html` 模板在句首渲染 `⏸ -Xs` 标记（黄色虚线边框，可点击联动 toggleFineEdit）。**已修复**。
 
 ### 陷阱 23: merge_fine_edits.js 静音编辑未进入 delete_segments（三重 bug）
 
@@ -1810,11 +1859,11 @@ if (r[0] >= ksStart && r[1] <= ksEnd) {
 
 **修复**：start 用 200ms 阈值（同自动精剪），end 用 2.0s 阈值（手动删除的填充词后往往有较长死区间隙）。**已修复**。
 
-### 陷阱 37: review_enhanced.html 注入状态覆盖用户编辑
+### 陷阱 37: review_roughcut.html 注入状态覆盖用户编辑
 
 **现象**：用户在审查页修改后刷新页面，所有修改丢失。
 
-**根因**：`generate_review_enhanced.js` 注入的 `_injectedState` 代码在每次页面加载时无条件覆盖 localStorage，即使 localStorage 中有更新的用户编辑。
+**根因**：`generate_review_roughcut.js` 注入的 `_injectedState` 代码在每次页面加载时无条件覆盖 localStorage，即使 localStorage 中有更新的用户编辑。
 
 **修复**：注入代码增加时间戳比较，仅在 localStorage 没有更新状态时注入。**已修复**。
 
@@ -1928,7 +1977,7 @@ refine_boundaries.py (波形分析 → 精修时间戳)
      ↓
 fine_analysis.json (更新后)
      ↓
-generate_review_enhanced.js / cut_audio.py
+generate_review_roughcut.js / cut_audio.py
 ```
 
 ### 触发条件
