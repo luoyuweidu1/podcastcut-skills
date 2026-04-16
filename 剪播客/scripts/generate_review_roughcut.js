@@ -132,11 +132,14 @@ for (let i = 0; i < sentences.length; i++) {
   S.push(entry);
 }
 
-// Fix endTime: use next sentence's startTime
+// Fix endTime: extend each sentence's end to next sentence's start
+// This ensures gaps between sentences are covered when deleting
 for (let i = 0; i < S.length - 1; i++) {
-  if (S[i].e <= S[i].s) {
-    S[i].e = S[i + 1].s;
-  }
+  S[i].e = S[i + 1].s;
+}
+// First sentence: extend start to 0 if it's very close
+if (S.length > 0 && S[0].s < 5) {
+  S[0].s = 0;
 }
 
 // ===== 构建 BLK 数组 =====

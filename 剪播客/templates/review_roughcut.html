@@ -957,7 +957,9 @@ au.addEventListener('timeupdate',()=>{
 // ===== EXPORT =====
 function doExport(){
   const segs=[];let c=null;
-  S.forEach(x=>{if(del.has(x.idx)){if(c&&Math.abs(x.s-c.end)<.5)c.end=x.e;else{if(c)segs.push(c);c={start:x.s,end:x.e}}}else{if(c){segs.push(c);c=null}}});if(c)segs.push(c);
+  S.forEach(x=>{if(del.has(x.idx)){if(c&&(x.s-c.end)<1.5)c.end=x.e;else{if(c)segs.push(c);c={start:x.s,end:x.e}}}else{if(c){segs.push(c);c=null}}});if(c)segs.push(c);
+  // Extend first segment to 0 to avoid opening artifacts
+  if(segs.length>0 && segs[0].start<5) segs[0].start=0;
 
   const stats = computeStats();
   const data = {
