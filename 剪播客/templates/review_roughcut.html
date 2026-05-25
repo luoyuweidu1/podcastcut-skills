@@ -391,8 +391,8 @@ body.preview .sug-reason { opacity: 0; }
 .r-txt { font-size: 18px; line-height: 1.9; color: var(--black); flex:1; min-width:0; }
 /* 句子序号列 */
 .r-num { font-family:"SF Mono",monospace; font-size: 12px; color: var(--light); min-width: 34px; flex-shrink:0; margin-right: 10px; padding-top: 7px; text-align:right; user-select:none; }
-/* 半句删除：字符级划线（点击可恢复） */
-.r-txt .pd { text-decoration: line-through; text-decoration-color: var(--gold-dark); text-decoration-thickness: 2px; color: var(--muted); background: var(--gold-dim); cursor: pointer; border-radius: 2px; }
+/* 半句删除：字符级划线（点击可恢复）。删除线颜色/粗细与整句删除(.row.del .r-txt)保持一致 */
+.r-txt .pd { text-decoration: line-through; text-decoration-color: var(--mid); color: var(--muted); background: var(--gold-dim); cursor: pointer; border-radius: 2px; }
 /* 选区浮动删除按钮 */
 #selbtn { position: fixed; z-index: 9999; display:none; background: var(--black); color:#fff; font-size: 13px; font-weight:600; padding: 6px 12px; border-radius: 6px; cursor:pointer; box-shadow: 0 3px 12px rgba(0,0,0,.25); user-select:none; }
 #selbtn:hover { background: var(--gold-dark); }
