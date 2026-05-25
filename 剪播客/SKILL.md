@@ -251,110 +251,18 @@ node "$SKILL_DIR/剪播客/scripts/manifest.js" init "$BASE_DIR" --audio "$AUDIO
 > - 精剪同理（`fine`）；执行成品后：`set-stage "$BASE_DIR" execute done`
 > - 阶段id：`transcribe / roughcut / fine / execute / qa / audio_quality / post`；状态：`pending/in_progress/awaiting_review/approved/done/skipped/failed`
 
-##### 准备音频
+##### 转录 → 委托 /podcastcut-转录
 
-```bash
-# 1) 保留原始高质量音频（剪辑用，保持原格式不转码）
-AUDIO_EXT="${AUDIO_PATH##*.}"
-cp "$AUDIO_PATH" "$BASE_DIR/1_转录/audio_original.$AUDIO_EXT"
+本阶段已抽成独立单元。调用 **`/podcastcut-转录`**，传入 `$AUDIO_PATH` 和用户提供的**说话人数量 + 姓名**。它会：
+- 准备音频三版（audio_original / audio.mp3-16k / audio_seekable-192k）
+- 上传 → 阿里云 FunASR 转录（已修 0 字节下载 bug）
+- 识别说话人 → 写 `speaker_mapping.json`
+- 生成 `subtitles_words.json` + `sentences.txt`
+- 更新 `project.json`（transcribe=done + speakers）
 
-# 2) 降采样为 16kHz mono MP3（ASR 转录用，FunASR 需要低采样率）
-ffmpeg -i "file:$AUDIO_PATH" -vn -acodec libmp3lame -ar 16000 -ac 1 -y "$BASE_DIR/1_转录/audio.mp3"
+> ⚠️ 说话人数量/姓名必须由用户提供，转录单元会在缺失时询问。
 
-# 3) ⚠️ 必须：重编码为 CBR MP3 供审查页面使用（精确 seek）
-# VBR MP3 在浏览器中 seek 会随位置偏移越来越大，导致点击句子播放错位
-ffmpeg -i "file:$AUDIO_PATH" -c:a libmp3lame -b:a 192k -write_xing 1 -y "$BASE_DIR/1_转录/audio_seekable.mp3"
-
-echo "✅ 音频已准备:"
-echo "   audio_original.$AUDIO_EXT (剪辑用，原始质量)"
-echo "   audio.mp3 (转录用，16kHz mono)"
-echo "   audio_seekable.mp3 (审查页面用，CBR 192k，保持高音质)"
-```
-
-> **剪辑时（阶段 3）必须使用 `audio_original.*`** 而非 `audio.mp3`。`audio.mp3` 是 16kHz 降采��版本，��它切出的成品音质会���重下降。
-
-> **审查页面必须使用 `audio_seekable.mp3`**（192k CBR）。生��� HTML 时 `--audio` 参数传 `1_转录/audio_seekable.mp3`。
-
-##### 上传获取公网URL
-
-```bash
-# 上传到uguu.se（24小时有效）
-UPLOAD_RESPONSE=$(curl -s -F "files[]=@$BASE_DIR/1_转录/audio.mp3" "https://uguu.se/upload?output=text")
-
-echo "✅ 音频已上传"
-echo "   URL: $UPLOAD_RESPONSE"
-
-# 保存URL供后续使用
-echo "$UPLOAD_RESPONSE" > "$BASE_DIR/1_转录/audio_url.txt"
-AUDIO_URL="$UPLOAD_RESPONSE"
-```
-
-**注意**：
-- uguu.se文件24小时后自动删除
-- 如需长期保存，使用阿里云OSS或其他云存储
-- 确保URL可公网访问
-
-##### 转录 + 说话人映射 → subtitles_words.json
-
-本步骤完成：API转录 → 识别说话人 → 生成字级别转录
-
-```bash
-SPEAKER_COUNT=3  # ⚠️ 必须由用户提供（2人、3人等）
-
-# 3a. 调用阿里云API转录（~3分钟）
-# API Key 会自动从 .env 加载，无需手动 export
-cd "$BASE_DIR/1_转录"
-bash "$SKILL_DIR/剪播客/scripts/aliyun_funasr_transcribe.sh" "$AUDIO_URL" "$SPEAKER_COUNT"
-# 生成: aliyun_funasr_transcription.json
-
-# 3b. 识别说话人身份（查看前20句）
-node "$SKILL_DIR/剪播客/scripts/identify_speakers.js" "$BASE_DIR/1_转录/aliyun_funasr_transcription.json"
-# 输出示例：
-# 1. [Speaker 0] 0.2s - 我是主播麦雅
-# 2. [Speaker 1] 29.4s - Hello大家好，我是十一
-
-# 3c. 根据输出创建映射
-cat > "$BASE_DIR/1_转录/speaker_mapping.json" << 'EOF'
-{
-  "0": "麦雅",
-  "1": "十一"
-}
-EOF
-
-# 3d. 生成字级别转录（最终输出）
-cd "$BASE_DIR/1_转录"
-node "$SKILL_DIR/剪播客/scripts/generate_subtitles_from_aliyun.js" \
-  aliyun_funasr_transcription.json \
-  speaker_mapping.json
-# 生成: subtitles_words.json ⭐核心文件
-
-echo "✅ 步骤3完成：subtitles_words.json 已生成"
-```
-
-**关键点**：
-- `SPEAKER_COUNT` 必须正确（98.8%准确度依赖此参数）
-- `identify_speakers.js` 辅助工具帮助快速识别
-- `subtitles_words.json` 是后续所有步骤的基础
-
-##### 句子分割 (sentences.txt)
-
-从字级别转录生成句子级别文本，方便后续分析。
-
-```bash
-# 调用句子分割脚本
-cd "$BASE_DIR/2_分析"
-node "$SKILL_DIR/剪播客/scripts/generate_sentences.js" "$BASE_DIR/1_转录/subtitles_words.json"
-
-# 输出: sentences.txt
-# 格式: 句子索引|词索引范围|说话人|文本内容
-```
-
-**输出示例**：
-```
-0|0-429|麦雅|哈喽大家好欢迎来到今天的五点一刻...
-1|431-607|十一|啊对的嗯啊对现在已经26年了...
-2|609-612|十一|啊对的嗯。
-```
+转录单元用相同的 `$BASE_DIR`（同日期+音频名），产物落在 `$BASE_DIR/1_转录` 与 `2_分析`。完成后 `$BASE_DIR` / `$AUDIO_NAME` 不变，直接进入 1.3。
 
 ---
 
