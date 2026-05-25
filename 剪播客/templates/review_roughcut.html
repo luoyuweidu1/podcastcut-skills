@@ -529,7 +529,7 @@ body.preview .sug-reason { opacity: 0; }
 <!-- Info tooltip -->
 <div class="info-popup" id="info-tip">
   <div class="info-popup-title">导出说明</div>
-  <p>导出的是一份 <strong>delete_segments_edited.json</strong> 文件，包含所有标记删除的时间段。</p>
+  <p>导出的是一份 <strong>delete_segments_roughcut.json</strong> 文件，包含所有标记删除的时间段。</p>
   <p>导出后，将文件拖入 Claude Code 对话框，即可执行剪辑生成 MP3 成品，并继续后续的精剪（口癖词、卡顿等）和音质处理。</p>
   <button class="info-close" onclick="document.getElementById('info-tip').classList.remove('vis')">明白了</button>
 </div>
@@ -541,7 +541,7 @@ body.preview .sug-reason { opacity: 0; }
     <div class="export-modal-steps">
       <div class="export-step">
         <span class="export-step-num">1</span>
-        <span>打开 Claude Code，将下载的 <strong>delete_segments_edited.json</strong> 拖入对话框</span>
+        <span>打开 Claude Code，将下载的 <strong>delete_segments_roughcut.json</strong> 拖入对话框</span>
       </div>
       <div class="export-step">
         <span class="export-step-num">2</span>
@@ -1086,7 +1086,7 @@ function doExport(){
   };
 
   const bl=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='delete_segments_edited.json';a.click();
+  const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='delete_segments_roughcut.json';a.click();
 
   // Show success modal with next steps
   document.getElementById('export-modal').classList.add('vis');
