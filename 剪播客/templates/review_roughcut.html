@@ -391,9 +391,8 @@ body.preview .sug-reason { opacity: 0; }
 .r-txt { font-size: 18px; line-height: 1.9; color: var(--black); flex:1; min-width:0; }
 /* 句子序号列 */
 .r-num { font-family:"SF Mono",monospace; font-size: 12px; color: var(--light); min-width: 34px; flex-shrink:0; margin-right: 10px; padding-top: 7px; text-align:right; user-select:none; }
-/* 半句删除：逐词 span + 划线 */
-.r-txt .w { cursor: text; }
-.r-txt .w.pd { text-decoration: line-through; text-decoration-color: var(--gold-dark); text-decoration-thickness: 2px; color: var(--muted); background: var(--gold-dim); cursor: pointer; border-radius: 2px; }
+/* 半句删除：字符级划线（点击可恢复） */
+.r-txt .pd { text-decoration: line-through; text-decoration-color: var(--gold-dark); text-decoration-thickness: 2px; color: var(--muted); background: var(--gold-dim); cursor: pointer; border-radius: 2px; }
 /* 选区浮动删除按钮 */
 #selbtn { position: fixed; z-index: 9999; display:none; background: var(--black); color:#fff; font-size: 13px; font-weight:600; padding: 6px 12px; border-radius: 6px; cursor:pointer; box-shadow: 0 3px 12px rgba(0,0,0,.25); user-select:none; }
 #selbtn:hover { background: var(--gold-dark); }
@@ -667,14 +666,26 @@ S.forEach(x=>{ if(x.ai) del.add(x.idx); if(x.sug) del.add(x.idx); });
 function fm(s){ if(s<0)s=0; const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=Math.floor(s%60); return h>0?`${h}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`:`${m}:${String(sc).padStart(2,'0')}`; }
 function esc(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// 半句删除：把句子文本渲染成逐词 span；落在 pdel 范围内的词加 .pd 划线
+// 半句删除：字符级渲染。pdel 段用 [cs,ce) 字符区间标记，落在区间内的字符串划线。
+// 字符级（而非整词）才能显示"词内部分删除"，与导出的插值时间一致。
 function txtHtml(x){
   if(!x.w || !x.w.length) return esc(x.t);  // 兼容无逐词时间的旧数据
+  const full = x.w.map(w=>w.t).join('');
   const ranges = pdel[x.idx] || [];
-  return x.w.map((w,j)=>{
-    const isPd = ranges.some(r => j >= r.a && j <= r.b);
-    return `<span class="w${isPd?' pd':''}" data-wi="${j}">${esc(w.t)}</span>`;
-  }).join('');
+  let html='', i=0;
+  while(i < full.length){
+    const ri = ranges.findIndex(r => i >= r.cs && i < r.ce);
+    if(ri >= 0){
+      html += `<span class="pd" data-ri="${ri}">${esc(full.slice(i, ranges[ri].ce))}</span>`;
+      i = ranges[ri].ce;
+    } else {
+      const starts = ranges.filter(r => r.cs > i).map(r => r.cs);
+      const nx = starts.length ? Math.min(...starts) : full.length;
+      html += esc(full.slice(i, nx));
+      i = nx;
+    }
+  }
+  return html;
 }
 
 // ===== STATS =====
@@ -789,9 +800,8 @@ document.getElementById('tx').addEventListener('mouseup',e=>{
   // 点到已划掉的词 → 恢复该段
   if(e.target.classList && e.target.classList.contains('pd')){
     const row=e.target.closest('.row'); if(!row) return;
-    const idx=+row.id.slice(1), j=+e.target.dataset.wi;
-    pdel[idx]=(pdel[idx]||[]).filter(r=>!(j>=r.a&&j<=r.b));
-    if(!pdel[idx].length) delete pdel[idx];
+    const idx=+row.id.slice(1), ri=+e.target.dataset.ri;
+    if(pdel[idx]){ pdel[idx].splice(ri,1); if(!pdel[idx].length) delete pdel[idx]; }
     renderTx(); sv(); hideSelBtn(); return;
   }
   setTimeout(()=>{
@@ -813,12 +823,33 @@ function delSel(){
   const txt=el&&el.closest('.r-txt'); if(!txt){ hideSelBtn(); return; }
   const idx=+txt.closest('.row').id.slice(1);
   const x=S.find(s=>s.idx===idx); if(!x||!x.w){ hideSelBtn(); return; }
-  let a=Infinity,b=-1;
-  txt.querySelectorAll('.w').forEach(sp=>{ if(range.intersectsNode(sp)){ const j=+sp.dataset.wi; a=Math.min(a,j); b=Math.max(b,j); } });
-  if(b<0){ hideSelBtn(); return; }
-  const ds = a>0 ? x.w[a-1].e : x.w[a].s;            // 前移到上一词结尾，吃掉 onset 间隙
-  const de = b<x.w.length-1 ? x.w[b+1].s : x.w[b].e; // 延到下一词开头，吃掉尾部间隙
-  (pdel[idx]=pdel[idx]||[]).push({a,b,s:ds,e:de});
+  const selText=sel.toString(); if(!selText.trim()){ hideSelBtn(); return; }
+
+  // 精确字符偏移：从 r-txt 起点到选区起点的文本长度（不依赖 indexOf，避免同字误匹配）
+  const pre=document.createRange(); pre.setStart(txt,0); pre.setEnd(range.startContainer, range.startOffset);
+  const pos=pre.toString().length;
+  const wt=x.w.map(w=>w.t); const full=wt.join('');
+  const delEnd=Math.min(pos+selText.length, full.length);
+  if(pos<0 || delEnd<=pos){ hideSelBtn(); return; }
+
+  // 字符区间 [pos,delEnd) → 词 + 词内偏移
+  let cc=0, sW=null, eW=null, sOff=0, eOff=0;
+  for(let i=0;i<wt.length;i++){
+    const wS=cc, wE=cc+wt[i].length;
+    if(sW===null && wE>pos){ sW=i; sOff=pos-wS; }
+    if(wE>=delEnd){ eW=i; eOff=wE-delEnd; break; }
+    cc=wE;
+  }
+  if(sW===null||eW===null){ hideSelBtn(); return; }
+  const sw=x.w[sW], ew=x.w[eW];
+  // 词内按字符比例插值时间（ASR 合词时也能切准）
+  let st=(sOff>0 && wt[sW].length>0) ? sw.s+(sw.e-sw.s)*(sOff/wt[sW].length) : sw.s;
+  let et=(eOff>0 && wt[eW].length>0) ? ew.e-(ew.e-ew.s)*(eOff/wt[eW].length) : ew.e;
+  // 有条件边界扩展（仅当选区正好落在词边界时）：起点 gap<0.2s 前移，终点 gap<2s 延后，吃掉死气间隙
+  if(sOff===0 && sW>0){ const pv=x.w[sW-1]; const g=st-pv.e; if(g>=0&&g<0.20) st=pv.e; }
+  if(eOff===0 && eW<x.w.length-1){ const nx=x.w[eW+1]; const g=nx.s-et; if(g>=0&&g<2.0) et=nx.s; }
+
+  (pdel[idx]=pdel[idx]||[]).push({cs:pos, ce:delEnd, s:Math.round(st*1000)/1000, e:Math.round(et*1000)/1000});
   um.add(idx);
   sel.removeAllRanges(); hideSelBtn(); renderTx(); sv();
 }
