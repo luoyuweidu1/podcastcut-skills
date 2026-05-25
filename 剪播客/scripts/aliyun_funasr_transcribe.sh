@@ -98,12 +98,18 @@ while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
     echo "$QUERY_RESPONSE" > aliyun_funasr_result.json
     echo "   已保存API响应: aliyun_funasr_result.json"
 
-    # 提取并下载转录URL
-    TRANSCRIPTION_URL=$(echo "$QUERY_RESPONSE" | grep -o '"transcription_url":"[^"]*"' | cut -d'"' -f4)
+    # 提取转录 URL —— 用 node 精确解析单个 URL
+    # （旧 bug：grep 会匹配到多个 transcription_url[output层+results嵌套层] → 变量多行多值 → curl 失败 → 静默 0 字节）
+    TRANSCRIPTION_URL=$(node -e "const r=JSON.parse(require('fs').readFileSync('aliyun_funasr_result.json','utf8'));process.stdout.write((r.output&&r.output.results&&r.output.results[0]&&r.output.results[0].transcription_url)||(r.output&&r.output.transcription_url)||'')")
 
     if [ -n "$TRANSCRIPTION_URL" ]; then
       echo "   下载转录内容..."
-      curl -s "$TRANSCRIPTION_URL" > aliyun_funasr_transcription.json
+      curl -sL "$TRANSCRIPTION_URL" -o aliyun_funasr_transcription.json   # -L 跟随 OSS 重定向
+      # 校验：非空且合法 JSON（旧版这里会静默产出 0 字节）
+      if [ ! -s aliyun_funasr_transcription.json ] || ! node -e "JSON.parse(require('fs').readFileSync('aliyun_funasr_transcription.json','utf8'))" 2>/dev/null; then
+        echo "❌ 转录结果下载失败或为空。transcription_url: $TRANSCRIPTION_URL"
+        exit 1
+      fi
       echo "   已保存转录结果: aliyun_funasr_transcription.json"
 
       # 统计信息
