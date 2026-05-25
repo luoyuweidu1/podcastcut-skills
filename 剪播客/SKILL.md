@@ -237,7 +237,19 @@ BASE_DIR="$SKILL_DIR/output/${DATE}_${AUDIO_NAME}/剪播客"
 
 # 创建子目录
 mkdir -p "$BASE_DIR/1_转录" "$BASE_DIR/2_分析" "$BASE_DIR/3_成品"
+
+# 初始化状态清单 project.json（拆分重构基石，见 docs/refactor/project-manifest.md）
+node "$SKILL_DIR/剪播客/scripts/manifest.js" init "$BASE_DIR" --audio "$AUDIO_PATH" --user "${PODCASTCUT_USER:-default}" --title "$AUDIO_NAME"
 ```
+
+> **📋 状态清单约定（阶段0）**：整个流程边跑边更新 `project.json`，让续跑/未来网页 stepper 有据可依。每个阶段在**末尾**调一次：
+> ```bash
+> node "$SKILL_DIR/剪播客/scripts/manifest.js" set-stage "$BASE_DIR" <阶段id> <状态> [--summary '<json>'] [--outputs '<json>']
+> ```
+> - 转录完成后：`set-stage "$BASE_DIR" transcribe done` + `set-speakers "$BASE_DIR" --count N --mapping '{...}' --verified`
+> - 生成粗剪审查页后：`set-stage "$BASE_DIR" roughcut awaiting_review`；用户确认导出后：`... roughcut approved`
+> - 精剪同理（`fine`）；执行成品后：`set-stage "$BASE_DIR" execute done`
+> - 阶段id：`transcribe / roughcut / fine / execute / qa / audio_quality / post`；状态：`pending/in_progress/awaiting_review/approved/done/skipped/failed`
 
 ##### 准备音频
 
