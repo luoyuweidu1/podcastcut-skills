@@ -389,6 +389,14 @@ body.preview .sug-reason { opacity: 0; }
 .r-tm { font-family:"SF Mono",monospace; font-size: 15px; color: var(--light); min-width: 52px; flex-shrink:0; margin-right: 16px; padding-top: 5px; cursor:pointer; }
 .r-tm:hover { color: var(--gold); }
 .r-txt { font-size: 18px; line-height: 1.9; color: var(--black); flex:1; min-width:0; }
+/* 句子序号列 */
+.r-num { font-family:"SF Mono",monospace; font-size: 12px; color: var(--light); min-width: 34px; flex-shrink:0; margin-right: 10px; padding-top: 7px; text-align:right; user-select:none; }
+/* 半句删除：逐词 span + 划线 */
+.r-txt .w { cursor: text; }
+.r-txt .w.pd { text-decoration: line-through; text-decoration-color: var(--gold-dark); text-decoration-thickness: 2px; color: var(--muted); background: var(--gold-dim); cursor: pointer; border-radius: 2px; }
+/* 选区浮动删除按钮 */
+#selbtn { position: fixed; z-index: 9999; display:none; background: var(--black); color:#fff; font-size: 13px; font-weight:600; padding: 6px 12px; border-radius: 6px; cursor:pointer; box-shadow: 0 3px 12px rgba(0,0,0,.25); user-select:none; }
+#selbtn:hover { background: var(--gold-dark); }
 
 /* ===== PLAYER ===== */
 .player {
@@ -651,16 +659,30 @@ S.forEach(x=>{ if(x.sp && !spCMap[x.sp]){ spCMap[x.sp]=spShades[spList.length%3]
 
 // State
 const del=new Set(), um=new Set();
+// 半句删除：sentenceIdx → [{a,b,s,e}]（a/b=词索引范围，s/e=删除时间段）
+const pdel={};
 let curIdx=-1, curNav=-1;
 S.forEach(x=>{ if(x.ai) del.add(x.idx); if(x.sug) del.add(x.idx); });
 
 function fm(s){ if(s<0)s=0; const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=Math.floor(s%60); return h>0?`${h}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`:`${m}:${String(sc).padStart(2,'0')}`; }
 function esc(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+// 半句删除：把句子文本渲染成逐词 span；落在 pdel 范围内的词加 .pd 划线
+function txtHtml(x){
+  if(!x.w || !x.w.length) return esc(x.t);  // 兼容无逐词时间的旧数据
+  const ranges = pdel[x.idx] || [];
+  return x.w.map((w,j)=>{
+    const isPd = ranges.some(r => j >= r.a && j <= r.b);
+    return `<span class="w${isPd?' pd':''}" data-wi="${j}">${esc(w.t)}</span>`;
+  }).join('');
+}
+
 // ===== STATS =====
 function computeStats() {
   const td=S.length?S[S.length-1].e:0; let rd=0; const rbt={}, sd={};
   S.forEach(x=>{const d=x.e-x.s;if(del.has(x.idx)){rd+=d;rbt[x.dt||'other']=(rbt[x.dt||'other']||0)+d}else if(x.sp){sd[x.sp]=(sd[x.sp]||0)+d}});
+  // 半句删除（仅对未整句删除的句子生效）
+  for(const k in pdel){ const idx=+k; if(del.has(idx))continue; const x=S.find(s=>s.idx===idx); pdel[k].forEach(r=>{const d=r.e-r.s; rd+=d; rbt.partial=(rbt.partial||0)+d; if(x&&x.sp&&sd[x.sp])sd[x.sp]=Math.max(0,sd[x.sp]-d);}); }
   return {td, rd, rc:td-rd, rbt, sd};
 }
 
@@ -742,7 +764,7 @@ function renderTx() {
     const isSug = x.sug && id; // suggested + currently deleted
     let cl='row';if(id)cl+=' del';if(isSug)cl+=' sug';if(x.idx===curIdx)cl+=' act';
     const reasonTag = (isSug && x.sugReason) ? `<span class="sug-reason">${esc(x.sugReason)}</span>` : '';
-    h+=`<div class="${cl}" id="r${x.idx}" onclick="goTo(${x.idx})"><div class="r-chk"><div class="chk ${id?'on':''}" onclick="event.stopPropagation();tgS(${x.idx})">✕</div></div><div class="r-sp">${x.sp}</div><div class="r-tm">${x.ts}</div><div class="r-txt">${esc(x.t)}${reasonTag}</div></div>`;
+    h+=`<div class="${cl}" id="r${x.idx}" onclick="goTo(${x.idx})"><div class="r-chk"><div class="chk ${id?'on':''}" onclick="event.stopPropagation();tgS(${x.idx})">✕</div></div><div class="r-num mono">${x.idx}</div><div class="r-sp">${x.sp}</div><div class="r-tm">${x.ts}</div><div class="r-txt">${txtHtml(x)}${reasonTag}</div></div>`;
   });
   c.innerHTML=h;
 }
@@ -753,6 +775,60 @@ function renderAll(){renderSidebar();renderTx()}
 // ===== INTERACTIONS =====
 function tgS(i){del.has(i)?del.delete(i):del.add(i);um.add(i);renderAll();sv()}
 function tgB(id){const b=BLK.find(x=>x.id===id);if(!b)return;const ad=isBD(b);for(let i=b.r[0];i<=b.r[1];i++){ad?del.delete(i):del.add(i);um.add(i)}renderAll();sv()}
+
+// ===== 半句删除（选区 → 词 → 时间段）=====
+const selbtn=document.createElement('div');
+selbtn.id='selbtn'; selbtn.textContent='✂ 删除选中';
+selbtn.onmousedown=e=>e.preventDefault();   // 防止点按钮时清空选区
+selbtn.onclick=delSel;
+document.body.appendChild(selbtn);
+function hideSelBtn(){ selbtn.style.display='none'; }
+document.addEventListener('mousedown',e=>{ if(e.target!==selbtn) hideSelBtn(); });
+
+document.getElementById('tx').addEventListener('mouseup',e=>{
+  // 点到已划掉的词 → 恢复该段
+  if(e.target.classList && e.target.classList.contains('pd')){
+    const row=e.target.closest('.row'); if(!row) return;
+    const idx=+row.id.slice(1), j=+e.target.dataset.wi;
+    pdel[idx]=(pdel[idx]||[]).filter(r=>!(j>=r.a&&j<=r.b));
+    if(!pdel[idx].length) delete pdel[idx];
+    renderTx(); sv(); hideSelBtn(); return;
+  }
+  setTimeout(()=>{
+    const sel=window.getSelection();
+    if(!sel||sel.isCollapsed||!sel.toString().trim()){ hideSelBtn(); return; }
+    const an=sel.anchorNode; const el=(an&&an.nodeType===1?an:an&&an.parentElement);
+    const txt=el&&el.closest('.r-txt'); if(!txt){ hideSelBtn(); return; }
+    const rect=sel.getRangeAt(0).getBoundingClientRect();
+    selbtn.style.left=Math.max(8,rect.left+rect.width/2-44)+'px';
+    selbtn.style.top=Math.max(8,rect.top-38)+'px';
+    selbtn.style.display='block';
+  },10);
+});
+
+function delSel(){
+  const sel=window.getSelection(); if(!sel||sel.isCollapsed) return;
+  const range=sel.getRangeAt(0);
+  const an=sel.anchorNode; const el=(an&&an.nodeType===1?an:an&&an.parentElement);
+  const txt=el&&el.closest('.r-txt'); if(!txt){ hideSelBtn(); return; }
+  const idx=+txt.closest('.row').id.slice(1);
+  const x=S.find(s=>s.idx===idx); if(!x||!x.w){ hideSelBtn(); return; }
+  let a=Infinity,b=-1;
+  txt.querySelectorAll('.w').forEach(sp=>{ if(range.intersectsNode(sp)){ const j=+sp.dataset.wi; a=Math.min(a,j); b=Math.max(b,j); } });
+  if(b<0){ hideSelBtn(); return; }
+  const ds = a>0 ? x.w[a-1].e : x.w[a].s;            // 前移到上一词结尾，吃掉 onset 间隙
+  const de = b<x.w.length-1 ? x.w[b+1].s : x.w[b].e; // 延到下一词开头，吃掉尾部间隙
+  (pdel[idx]=pdel[idx]||[]).push({a,b,s:ds,e:de});
+  um.add(idx);
+  sel.removeAllRanges(); hideSelBtn(); renderTx(); sv();
+}
+
+// 收集所有半句删除时间段（跳过整句已删的句子，避免重复）
+function pdelRanges(){
+  const out=[];
+  for(const k in pdel){ const idx=+k; if(del.has(idx)) continue; pdel[k].forEach(r=>out.push([r.s,r.e])); }
+  return out;
+}
 
 function goTo(idx){
   curIdx=idx;
@@ -952,12 +1028,19 @@ au.addEventListener('timeupdate',()=>{
   updateNav(t);
   // Always skip deleted segments during playback (both modes)
   if(pl)for(const x of S)if(del.has(x.idx)&&t>=x.s&&t<x.e){au.currentTime=x.e+.05;return}
+  if(pl)for(const r of pdelRanges())if(t>=r[0]&&t<r[1]){au.currentTime=r[1]+.02;return}
 });
 
 // ===== EXPORT =====
 function doExport(){
+  // 收集所有删除时间段：整句删除 + 半句删除，排序后合并相邻（间隙<1.5s）
+  let ranges=[];
+  S.forEach(x=>{ if(del.has(x.idx)) ranges.push([x.s,x.e]); });
+  ranges=ranges.concat(pdelRanges());
+  ranges.sort((p,q)=>p[0]-q[0]);
   const segs=[];let c=null;
-  S.forEach(x=>{if(del.has(x.idx)){if(c&&(x.s-c.end)<1.5)c.end=x.e;else{if(c)segs.push(c);c={start:x.s,end:x.e}}}else{if(c){segs.push(c);c=null}}});if(c)segs.push(c);
+  ranges.forEach(r=>{ if(c&&(r[0]-c.end)<1.5){ if(r[1]>c.end)c.end=r[1]; } else { if(c)segs.push(c); c={start:r[0],end:r[1]}; } });
+  if(c)segs.push(c);
   // Extend first segment to 0 to avoid opening artifacts
   if(segs.length>0 && segs[0].start<5) segs[0].start=0;
 
@@ -982,8 +1065,8 @@ function doExport(){
 // Version key = title + sentence count + delete count, so stale cache is ignored
 const DATA_VER = document.title + '_' + S.length + '_' + S.filter(x=>x.ai||x.sug).length;
 const SK='rc6_'+DATA_VER;
-function sv(){try{localStorage.setItem(SK,JSON.stringify({v:DATA_VER,d:Array.from(del),m:Array.from(um)}))}catch(e){}}
-function rs(){try{const r=localStorage.getItem(SK);if(!r)return;const s=JSON.parse(r);if(s.v!==DATA_VER)return;if(s.d){del.clear();s.d.forEach(i=>del.add(i))}if(s.m)s.m.forEach(i=>um.add(i))}catch(e){}}
+function sv(){try{localStorage.setItem(SK,JSON.stringify({v:DATA_VER,d:Array.from(del),m:Array.from(um),p:pdel}))}catch(e){}}
+function rs(){try{const r=localStorage.getItem(SK);if(!r)return;const s=JSON.parse(r);if(s.v!==DATA_VER)return;if(s.d){del.clear();s.d.forEach(i=>del.add(i))}if(s.m)s.m.forEach(i=>um.add(i));if(s.p){for(const k in pdel)delete pdel[k];Object.assign(pdel,s.p)}}catch(e){}}
 function showT(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('vis');setTimeout(()=>el.classList.remove('vis'),2000)}
 
 rs();renderAll();
