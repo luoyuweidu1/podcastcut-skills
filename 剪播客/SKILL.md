@@ -893,76 +893,15 @@ node "$SKILL_DIR/剪播客/scripts/append_eval_history.js" \
 
 > **交互规范**：阶段 3 包含 3.1 + 3.2 + 3.3 三步，应**���续执行、统一汇报**。3.1 完成后不要向用户展示中间产物或���告，直接继续 3.2。全部完成后再告知用户��终成品路径和时长统计。如开启质检（3.3），质检结果一并汇报。
 
-#### 3.1 一键剪辑生成精剪版
+#### 3.1 执行剪辑 → 委托 /podcastcut-执行
 
-使用 FFmpeg 剪辑音频。先解码为 WAV 确保采样级精确切割。
+调用**执行单元**：从 `delete_segments_edited.json`（精剪导出；无则回退粗剪导出）+ `audio_original.*` 切出成品，再做成品静音裁剪。
 
-```bash
-cd "$BASE_DIR/2_分析"
+- `cut_audio.py`：采样级精确、`--no-fade`、`--speakers-json` 音量对齐、≥192k
+- `trim_silences.py`：裁成品长静音 → `*_trimmed.mp3`
+- 写 `project.json`（execute=done，`products[]` 记版本历史）
 
-# 找到原始音频文件（阶段 1 保存的高质量原始文件）
-ORIGINAL_AUDIO=$(ls "$BASE_DIR/1_转录/audio_original."* 2>/dev/null | head -1)
-if [ -z "$ORIGINAL_AUDIO" ]; then
-  echo "⚠️ 未找到 audio_original.*，回退到 audio.mp3（音质会降低）"
-  ORIGINAL_AUDIO="$BASE_DIR/1_转录/audio.mp3"
-fi
-
-python3 "$SKILL_DIR/剪播客/scripts/cut_audio.py" \
-  "$BASE_DIR/3_成品/${AUDIO_NAME}_精剪版_v1.mp3" \
-  "$ORIGINAL_AUDIO" \
-  delete_segments_edited.json \
-  --speakers-json "$BASE_DIR/1_转录/subtitles_words.json" \
-  --no-fade
-```
-
-> `--speakers-json` 默认始终传入。脚本自动检测音量差异，< 0.5dB 时跳过补偿，无副作用。
-> **`--no-fade` 必须传**：默认自适应 fade（最大 0.3s）会吃掉紧邻切点的短音节。`--no-fade` 用 3ms 微 fade 替代，防爆破但不影响语音。
-
-**输出**：
-- `3_成品/播客名_精剪版_v1.mp3`
-- 如需调整：回到阶段 2 修改 → 重新导出 → 重新执行
-
-**剪辑特点**：
-- ✅ WAV 中间格式，采样级精确（无 MP3 帧边界偏移）
-- ✅ 3ms 微 fade（`--no-fade` 模式）：防 PCM 波形不连续的爆破，不影响语音
-  - ⚠️ 禁止用默认自适应 fade：最大 0.3s 会吃掉短音节（如 0.36s 的"很久"几乎整个被淡入）
-- ✅ 说话人音量对齐（`--speakers-json`）：检测各说话人平均响度，自动补偿差异（最大 +6dB）
-- ✅ 连续删除句自动分组，无碎片
-- ✅ 重编码确保精确 seek
-- ✅ 显示节省时间统计
-
-**⚠️ 必须使用 `cut_audio.py`**：不要手写 FFmpeg 命令或自行实现剪辑逻辑。见陷阱 17。
-
----
-
-#### 3.2 成品静音裁剪
-
-剪辑成品后，删除内容前后的短静音会合并成超阈值的长停顿。**必须在成品上再扫一遍。**
-
-**为什么不在 delete_segments 阶段处理？**
-- 用户手动编辑（恢复/删除）会产生新的合并间隙
-- merge_llm_fine.js 的 post-merge gap cleanup 是基于预测的，不够精确
-- **直接在成品音频上用 FFmpeg silencedetect 扫描最简单可靠**
-
-```bash
-python3 "$SKILL_DIR/剪播客/scripts/trim_silences.py" \
-  "$BASE_DIR/3_成品/${AUDIO_NAME}_精剪版_v1.mp3"
-# 默认: 检测 >0.8s 静音，裁剪到 0.6s
-# 输出: *_trimmed.mp3
-
-# 自定义参数:
-python3 "$SKILL_DIR/剪播客/scripts/trim_silences.py" \
-  input.mp3 output.mp3 \
-  --threshold 0.8 \   # 检测阈值
-  --target 0.6 \      # 每段静音保留的目标时长
-  --noise -30          # silencedetect 噪声阈值 dB
-```
-
-**关键设计**：
-- target 比 threshold 低 0.2s（保留 0.3+0.3=0.6s），因为 silencedetect 边界检测和裁切点不完全对齐（见陷阱 24）
-- 独立脚本，不依赖 delete_segments，任何 MP3 都能跑
-- 可迭代：用户不满意可以调参数重跑
-
+> 🔴 禁用 audio.mp3 出片（必须 audio_original.*）。重剪会自增 v2/v3。
 
 #### 3.3 AI 质检 → /podcastcut-质检
 
