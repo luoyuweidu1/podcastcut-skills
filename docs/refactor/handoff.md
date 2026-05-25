@@ -42,4 +42,4 @@
 - 剪辑必须用 `audio_original.*`，禁用 `audio.mp3`；成品 ≥192k。
 - 导出命名：粗剪 `delete_segments_roughcut.json`、精剪 `delete_segments_edited.json`（执行单元默认吃精剪的，回退粗剪的）。
 - 审查页模板用占位符注入（`__SENTENCES_DATA__` 等），生成后校验无 `雨林/潘潘` 样例残留。
-- **Phase 3 gap 已修（方案1/串行，commit `21a8d4f`）**：粗剪导出 `delete_segments_roughcut.json` 现带 `sentence_deletes`(用户整句决定)+`partial_deletes`；`run_fine_analysis.js`/`generate_review_enhanced.js` 优先读它（缺失回退 AI 的 semantic）。精剪只分析用户保留句。`semantic_deep_analysis.json` 不改写（反馈闭环靠它）。**仍待办（小）**：半句 `partial_deletes` 尚未叠进精剪页显示。
+- **Phase 3 gap 已修（方案1/串行，commit `21a8d4f`）**：粗剪导出 `delete_segments_roughcut.json` 现带 `sentence_deletes`(用户整句决定)+`partial_deletes`；`run_fine_analysis.js`/`generate_review_enhanced.js` 优先读它（缺失回退 AI 的 semantic）。精剪只分析用户保留句。`semantic_deep_analysis.json` 不改写（反馈闭环靠它）。半句 `partial_deletes` 也带入精剪页（commit `e613f2f`：转 ROUGHCUT_PARTIALS → 无存档时 seed 为初始 manualEdits）。**粗剪→精剪 交接整句+半句都打通。**
