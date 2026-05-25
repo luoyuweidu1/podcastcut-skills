@@ -1082,7 +1082,11 @@ function doExport(){
     original_duration: Math.round(stats.td),
     roughcut_duration: Math.round(stats.rc),
     removed_duration: Math.round(stats.rd),
-    segments: segs
+    segments: segs,
+    // 句子级决定（交给精剪单元当 keep/delete 底稿；cut_audio.py 忽略此字段）
+    sentence_deletes: [...del].sort((a,b)=>a-b),
+    // 半句删除（字符区间 + 时间），供精剪页未来叠加显示
+    partial_deletes: pdel
   };
 
   const bl=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});

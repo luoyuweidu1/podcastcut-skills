@@ -48,6 +48,7 @@ BASE_DIR="$SKILL_DIR/output/$PROJECT/剪播客"
 node "$SKILL_DIR/剪播客/scripts/manifest.js" set-stage "$BASE_DIR" fine in_progress
 ```
 > 上游契约：`2_分析/sentences.txt`、`semantic_deep_analysis.json`、`1_转录/subtitles_words.json`、`audio_seekable.mp3` 应已存在。缺 `semantic_deep_analysis.json` 则先跑 `/podcastcut-粗剪`。
+> **关键**：精剪以用户在粗剪页确认导出的 `2_分析/delete_segments_roughcut.json` 为「保留/删除」底稿（见下「数据流」）。若该文件缺失（用户未导出粗剪），下游脚本自动回退到 AI 的 `semantic_deep_analysis.json` 判断——但应提醒用户：那样精剪反映的是 AI 原始粗剪，不是你的手改。
 
 ### 1. 规则层 → `fine_analysis_rules.json`
 
@@ -55,6 +56,7 @@ node "$SKILL_DIR/剪播客/scripts/manifest.js" set-stage "$BASE_DIR" fine in_pr
 node "$SKILL_DIR/剪播客/scripts/run_fine_analysis.js" --analysis-dir "$BASE_DIR/2_分析"
 ```
 高 recall 规则检测：句首填充词（100% recall）、长静音、连续相同词卡顿、后缀匹配卡顿、句中孤立填充词、短语级句内重复、连续填充词、重启信号。部分标记 `needsReview=true` → 交 LLM 层审核。
+> 删除句来源：脚本自动优先读 `delete_segments_roughcut.json` 的 `sentence_deletes`（用户决定），否则回退 `semantic_deep_analysis.json`。**只分析用户保留的句子**——你删得越多越省 LLM token，你恢复的句子也能被分析到。运行时 stderr 会打印来源（`roughcut(user)` / `semantic(AI)`）。
 
 ### 2. LLM 层（Claude）→ `fine_analysis_llm.json`
 
@@ -107,12 +109,14 @@ node "$SKILL_DIR/剪播客/scripts/generate_review_enhanced.js" \
   --words "$BASE_DIR/1_转录/subtitles_words.json" \
   --analysis semantic_deep_analysis.json \
   --fine fine_analysis.json \
+  --roughcut delete_segments_roughcut.json \
   --audio "1_转录/audio_seekable.mp3" \
   --output "$BASE_DIR/review_enhanced.html" \
   --title "$PROJECT 精剪审查（可编辑）"
 
 open "$BASE_DIR/review_enhanced.html"
 ```
+> `--roughcut`：整句删除底稿用用户粗剪导出的 `sentence_deletes`（与规则层一致）；文件缺失则回退 AI 判断。stdout 打印来源。
 > 词索引用 `actual_words`（跳过 isGap/isSpeakerLabel）；精剪编辑预计算 `ds/de`；动态播放器实时跳过删除段（不预剪）。
 > 能力：整句删除/恢复、AI 精剪词级切换、**手动半句删除**（char 级精度，含陷阱42 修复）、修正说话人、Ctrl+Z 撤销、localStorage 自动保存。
 
@@ -139,7 +143,15 @@ node "$SKILL_DIR/剪播客/scripts/manifest.js" set-stage "$BASE_DIR" fine appro
 ---
 
 ## 数据流说明（粗剪 → 精剪）
-审查页的 **5a 块删除底稿来自 `semantic_deep_analysis.json`**（粗剪的 AI 分析），而非用户在粗剪页手动微调后的 `delete_segments_roughcut.json`。即：用户在粗剪页对整句的手动增删**不会自动叠加**到精剪页。当前为忠实迁移既有行为；若需把用户粗剪手改并入精剪底稿，是后续增强（让 generate_review_enhanced.js 叠加 `delete_segments_roughcut.json`）。**最终出片以精剪导出的 `delete_segments_edited.json` 为准。**
+精剪以用户在粗剪页确认导出的 **`delete_segments_roughcut.json` 为整句保留/删除底稿**：
+- 该导出在 `segments`（时间段，供 cut_audio）之外还带 **`sentence_deletes`**（句索引数组，用户的最终整句决定）与 `partial_deletes`（半句删除）。
+- `run_fine_analysis.js` 和 `generate_review_enhanced.js` 都**优先读 `sentence_deletes`**（用户决定），缺失才回退 `semantic_deep_analysis.json`（AI 判断）。
+- 因此用户在粗剪页的整句增删**会**反映到精剪：恢复的句子会被精剪分析并显示为保留，删掉的句子被跳过、不浪费 LLM token、也不出现在精剪页。
+- **`semantic_deep_analysis.json` 不被改写**——反馈/评估闭环（2.3/2.4）靠它对比「AI 原判 vs 用户修正」，改写会抹掉这个学习信号。
+
+> **仍待办（小）**：粗剪的**半句删除**(`partial_deletes`)目前只随导出保留，尚未叠加进精剪页显示——用户在粗剪做的半句切，需要在精剪页（词级，本就更适合做半句）按需重做。整句决定已完全打通。
+
+> **最终出片以精剪导出的 `delete_segments_edited.json` 为准。**
 
 ## 输出契约（交给 /podcastcut-执行）
 - `2_分析/fine_analysis.json`（词级编辑）

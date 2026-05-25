@@ -34,6 +34,7 @@ const sentencesFile = args.sentences || 'sentences.txt';
 const wordsFile = args.words || '../1_转录/subtitles_words.json';
 const analysisFile = args.analysis || 'semantic_deep_analysis.json';
 const fineFile = args.fine || 'fine_analysis.json';
+const roughcutFile = args.roughcut || 'delete_segments_roughcut.json';
 const audioSrc = args.audio || '1_转录/audio_seekable.mp3';
 const outputFile = args.output || '../review_enhanced.html';
 const title = args.title || '播客审查稿 (可编辑)';
@@ -84,6 +85,22 @@ if (analysis.sentences) {
     }
   });
 }
+
+// 整句删除底稿：优先用用户在粗剪页确认导出的 sentence_deletes（权威），
+// 否则保持 5a (semantic_deep_analysis) 的 AI 判断。semantic 文件不被改写（反馈/评估闭环依赖它）。
+let roughcutSource = 'semantic(AI)';
+if (fs.existsSync(roughcutFile)) {
+  try {
+    const rc = JSON.parse(fs.readFileSync(roughcutFile, 'utf8'));
+    if (Array.isArray(rc.sentence_deletes)) {
+      deletedSet.clear();
+      suggestedDeleteSet.clear();  // 用户已在粗剪页对建议删除做了取舍，不再保留 suggest 态
+      rc.sentence_deletes.forEach(i => deletedSet.add(i));
+      roughcutSource = 'roughcut(user)';
+    }
+  } catch (e) { /* 损坏则回退 AI 判断 */ }
+}
+console.log(`   整句删除底稿: ${roughcutSource} (${deletedSet.size} 句)`);
 
 if (analysis.blocks) {
   analysis.blocks.forEach(block => {
