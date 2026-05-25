@@ -1917,6 +1917,23 @@ if (r[0] >= ksStart && r[1] <= ksEnd) {
 
 **涉及文件**：`waveform_trim.py`（波形校准）、`cut_audio.py`（音源选择）。
 
+### 陷阱 42: 恢复整句后导出仍包含该句的 partial 删除
+
+**现象**：用户在 review_enhanced.html 中通过 block toggle 或单句点击恢复（取消删除）一个 AI 建议删除的句子，但导出的 delete_segments.json 中仍包含该句内 fine edit（stutter/filler）和 manual edit（手动选文本删除）的时间范围。
+
+**根因（三重遗漏）**：
+1. **`toggleBlockDeletion()` 只禁用 `scope==='whole'` segments**，partial fine edits 仍然 enabled。而 `toggleDeletion()`（单句点击）正确禁用了所有 segments。两条路径行为不一致。
+2. **`collectActiveRanges()` 没有"句级恢复"安全网**，即使 whole-scope 被禁用，partial segments 仍会出现在导出中。
+3. **`manualEdits` 是独立于 `segments` 的第二数据源**，恢复句子时没有禁用该句的 manual edits，且 `collectActiveRanges()` 处理 manual edits 的路径也没有句级恢复检查。
+
+**修复（两层防御）**：
+1. **变更层**：新增 `disableAllSegments(idx, batchChanges)` 统一函数，同时禁用 segments + manualEdits。`toggleBlockDeletion` 和 `toggleDeletion` 都复用此函数。
+2. **导出层**：`collectActiveRanges()` 构建 `restoredSentences` 集合（whole-scope disabled + isOriginal），在 segments 遍历和 manualEdits 遍历中都检查并抑制已恢复句子的所有删除范围。
+
+**教训**：修状态一致性 bug 时，先画"谁写、谁读"的完整数据流图，在读端（导出）加防御性校验，而不是逐个修写端（toggle 函数）。导出函数有多个独立数据源时（segments + manualEdits），安全网必须覆盖每一个。
+
+**涉及文件**：`review_enhanced.html`（`disableAllSegments`、`collectActiveRanges`、`toggleBlockDeletion`）、`merge_llm_fine.js`（silence_merged dependsOn）。
+
 ---
 
 ## 波形引导边界校准（waveform_trim.py）

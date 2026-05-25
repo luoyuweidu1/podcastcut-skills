@@ -6,7 +6,7 @@
       python3 cut_audio.py [output_name.mp3] [audio_file] [delete_segments.json] --speakers-json subtitles_words.json
 默认:
   - output_name: 播客_精剪版_v1.mp3
-  - audio_file: ../1_转录/audio.mp3
+  - audio_file: 自动检测 ../1_转录/audio_original.*（⚠️ 禁止用 audio.mp3）
   - delete_segments: delete_segments.json
 
 v4: 可选说话人音量对齐 — 检测各说话人平均响度，补偿音量差异（最大 +6dB）。
@@ -219,13 +219,35 @@ def main():
             i += 1
 
     output_name = positional_args[0] if len(positional_args) > 0 else '播客_精剪版_v1.mp3'
-    audio_file = positional_args[1] if len(positional_args) > 1 else '../1_转录/audio.mp3'
     delete_file = positional_args[2] if len(positional_args) > 2 else 'delete_segments.json'
+
+    # 音频文件：优先使用 audio_original.*（高质量原始音频）
+    if len(positional_args) > 1:
+        audio_file = positional_args[1]
+    else:
+        import glob
+        originals = glob.glob('../1_转录/audio_original.*')
+        if originals:
+            audio_file = originals[0]
+            print(f"🎵 自动检测到原始音频: {audio_file}")
+        else:
+            audio_file = '../1_转录/audio.mp3'
+            print("⚠️ 未找到 audio_original.*，回退到 audio.mp3（音质会降低）")
 
     # 检查文件
     if not os.path.exists(audio_file):
         print(f"找不到音频文件: {audio_file}")
         sys.exit(1)
+
+    # 安全检查：禁止在 audio_original.* 存在时使用 audio.mp3
+    audio_dir = os.path.dirname(os.path.abspath(audio_file))
+    audio_base = os.path.basename(audio_file)
+    if audio_base == 'audio.mp3':
+        originals_in_dir = [f for f in os.listdir(audio_dir) if f.startswith('audio_original.')]
+        if originals_in_dir:
+            print(f"❌ 错误: 检测到 {originals_in_dir[0]}，请使用原始音频而非 audio.mp3（16kHz 降采样版）")
+            print(f"   建议: 将第二个参数改为 1_转录/{originals_in_dir[0]}")
+            sys.exit(1)
 
     if not os.path.exists(delete_file):
         print(f"找不到删除片段文件: {delete_file}")
