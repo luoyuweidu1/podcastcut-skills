@@ -660,13 +660,28 @@ for (let i = 1; i < keptWords.length; i++) {
       }
     }
 
+    // 【陷阱 32/42】silence_merged 必须记录 dependsOn（引起间隙的 content edit idx）。
+    // 用户在审查稿中禁用 content edit 时，collectActiveRanges() 会检查 dependsOn
+    // 并自动抑制关联的 silence_merged。缺少 dependsOn 会导致恢复句子后仍被删。
+    const deps = [];
+    merged.forEach(e => {
+      if (e.type === 'silence' || e.type === 'silence_merged') return;
+      const eStart = e.deleteStart ?? e.ds ?? 0;
+      const eEnd = e.deleteEnd ?? e.de ?? 0;
+      // Check if this content edit is near/overlapping the gap
+      if (eEnd >= trimStart - 1.0 && eStart <= trimEnd + 1.0) {
+        if (e.idx !== undefined) deps.push(e.idx);
+      }
+    });
+
     gapEdits.push({
       sentenceIdx: sentIdx,
       type: 'silence_merged',
       deleteStart: trimStart,
       deleteEnd: trimEnd,
       duration: trimDur,
-      reason: `删除合并后间隙${gap.toFixed(2)}s→保留${SILENCE_THRESHOLD}s`
+      reason: `删除合并后间隙${gap.toFixed(2)}s→保留${SILENCE_THRESHOLD}s`,
+      dependsOn: deps.length > 0 ? deps : undefined
     });
   }
 }

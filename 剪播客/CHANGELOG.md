@@ -488,7 +488,7 @@ DASHSCOPE_API_KEY=sk-your-api-key  # 阿里云API Key
 
 2. **更新配置**
    ```bash
-   cd /Volumes/T9/claude_skill/podcastcut
+   cd "$SKILL_DIR"
    echo 'DASHSCOPE_API_KEY=sk-your-key' >> .env
    ```
 

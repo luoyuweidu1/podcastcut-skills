@@ -30,7 +30,8 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
   background: var(--gray-50);
   color: var(--gray-800);
-  line-height: 1.6;
+  line-height: 1.8;
+  font-size: 15px;
 }
 
 /* Fixed top audio bar */
@@ -40,8 +41,8 @@ body {
   z-index: 1000;
   background: white;
   border-bottom: 1px solid var(--gray-200);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  padding: 8px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 12px 20px;
 }
 
 .audio-bar-inner {
@@ -61,7 +62,7 @@ body {
 }
 
 .audio-player .label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--gray-600);
   white-space: nowrap;
@@ -69,7 +70,7 @@ body {
 }
 
 .audio-player .play-btn {
-  width: 32px; height: 32px;
+  width: 40px; height: 40px;
   border-radius: 50%;
   border: none;
   background: var(--blue);
@@ -79,7 +80,7 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .audio-player .play-btn:hover { background: #1d4ed8; }
@@ -95,9 +96,9 @@ body {
 
 .progress-bar {
   flex: 1;
-  height: 6px;
+  height: 10px;
   background: var(--gray-200);
-  border-radius: 3px;
+  border-radius: 5px;
   cursor: pointer;
   position: relative;
   min-width: 80px;
@@ -106,17 +107,17 @@ body {
 .progress-fill {
   height: 100%;
   background: var(--blue);
-  border-radius: 3px;
+  border-radius: 5px;
   width: 0%;
   transition: width 0.1s;
 }
 
 .time-display {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--gray-500);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-  min-width: 80px;
+  min-width: 90px;
 }
 
 .speed-btn {
@@ -133,10 +134,10 @@ body {
 .speed-btn:hover { background: var(--gray-100); }
 
 .export-btn {
-  font-size: 12px;
-  padding: 6px 14px;
+  font-size: 13px;
+  padding: 8px 18px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #059669;
   color: white;
   cursor: pointer;
@@ -247,10 +248,10 @@ body {
 
 /* Stats header */
 .stats-header {
-  margin-top: 56px;
+  margin-top: 64px;
   background: white;
   border-bottom: 1px solid var(--gray-200);
-  padding: 16px 24px;
+  padding: 20px 28px;
 }
 
 .stats-inner {
@@ -259,9 +260,9 @@ body {
 }
 
 .stats-title {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   color: var(--gray-900);
 }
 
@@ -274,20 +275,21 @@ body {
 .stat-card {
   background: var(--gray-50);
   border: 1px solid var(--gray-200);
-  border-radius: 8px;
-  padding: 8px 14px;
-  min-width: 100px;
+  border-radius: 10px;
+  padding: 12px 18px;
+  min-width: 120px;
 }
 
 .stat-value {
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 700;
   color: var(--gray-900);
 }
 
 .stat-label {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--gray-500);
+  margin-top: 2px;
 }
 
 .stat-card.dynamic {
@@ -335,19 +337,19 @@ body {
 .summary-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 14px;
 }
 .summary-table th {
   background: var(--gray-50);
   text-align: left;
-  padding: 8px 10px;
+  padding: 10px 12px;
   font-weight: 600;
   color: var(--gray-600);
   border-bottom: 2px solid var(--gray-200);
   white-space: nowrap;
 }
 .summary-table td {
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--gray-100);
   vertical-align: middle;
 }
@@ -376,9 +378,9 @@ body {
 .summary-table .st-reason { color: var(--gray-600); font-size: 12px; max-width: 400px; }
 .summary-type-tag {
   display: inline-block;
-  padding: 2px 8px;
-  border-radius: 3px;
-  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 12px;
   color: white;
   font-weight: 500;
   white-space: nowrap;
@@ -392,8 +394,8 @@ body {
   flex-wrap: wrap;
 }
 .sf-item { display: flex; align-items: baseline; gap: 6px; }
-.sf-label { color: var(--gray-500); font-size: 13px; }
-.sf-value { font-weight: 700; font-size: 18px; font-variant-numeric: tabular-nums; }
+.sf-label { color: var(--gray-500); font-size: 14px; }
+.sf-value { font-weight: 700; font-size: 22px; font-variant-numeric: tabular-nums; }
 .sf-value.cut { color: #dc2626; }
 .sf-value.result { color: #059669; }
 
@@ -401,9 +403,9 @@ body {
 .filter-bar {
   background: white;
   border-bottom: 1px solid var(--gray-200);
-  padding: 10px 24px;
+  padding: 12px 28px;
   position: sticky;
-  top: 56px;
+  top: 64px;
   z-index: 999;
 }
 
@@ -417,15 +419,15 @@ body {
 }
 
 .filter-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--gray-500);
-  margin-right: 4px;
+  margin-right: 6px;
 }
 
 .filter-btn {
-  font-size: 12px;
-  padding: 4px 10px;
+  font-size: 13px;
+  padding: 6px 14px;
   border: 1px solid var(--gray-300);
   border-radius: 16px;
   background: white;
@@ -480,9 +482,9 @@ body {
 
 /* Transcript container */
 .transcript {
-  max-width: 1400px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 16px 24px;
+  padding: 20px 32px;
   padding-bottom: 120px;
 }
 
@@ -490,9 +492,9 @@ body {
 .sentence-row {
   display: flex;
   align-items: flex-start;
-  padding: 6px 8px;
-  border-radius: 6px;
-  margin-bottom: 2px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 4px;
   transition: background 0.15s, border-color 0.15s;
   cursor: pointer;
   border: 2px solid transparent;
@@ -550,13 +552,13 @@ body {
 .block-bar {
   background: #fef2f2;
   border: 1px solid #fecaca;
-  border-radius: 8px;
-  padding: 8px 12px;
-  margin: 8px 0 4px 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 12px 0 6px 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: 10px;
+  font-size: 14px;
 }
 
 .block-bar.hidden { display: none; }
@@ -579,25 +581,25 @@ body {
 
 /* Sentence parts */
 .s-idx {
-  width: 40px;
+  width: 44px;
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--gray-400);
   text-align: right;
-  padding-right: 8px;
-  padding-top: 2px;
+  padding-right: 10px;
+  padding-top: 3px;
   font-variant-numeric: tabular-nums;
 }
 
 .s-speaker {
-  width: 56px;
+  width: 64px;
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  padding-top: 2px;
+  padding: 2px 6px;
   white-space: nowrap;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 4px;
   transition: background 0.15s;
 }
 .s-speaker:hover {
@@ -637,11 +639,11 @@ body {
 __SPEAKER_STYLES__
 
 .s-time {
-  width: 65px;
+  width: 70px;
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--gray-400);
-  padding-top: 2px;
+  padding-top: 3px;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
 }
@@ -650,8 +652,8 @@ __SPEAKER_STYLES__
 
 .s-text {
   flex: 1;
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: 16px;
+  line-height: 1.8;
   min-width: 0;
 }
 
@@ -672,21 +674,21 @@ __SPEAKER_STYLES__
 /* Tags */
 .tag {
   display: inline-block;
-  padding: 0 6px;
-  border-radius: 3px;
-  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
   font-weight: 600;
   color: white;
-  margin-left: 4px;
+  margin-left: 6px;
   vertical-align: middle;
   line-height: 18px;
 }
 
 .ai-badge {
   display: inline-block;
-  padding: 0 5px;
-  border-radius: 3px;
-  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 10px;
   font-weight: 700;
   background: #ef4444;
   color: white;
@@ -697,16 +699,16 @@ __SPEAKER_STYLES__
 
 .fine-tag {
   display: inline-block;
-  padding: 1px 7px;
-  border-radius: 3px;
-  font-size: 10px;
+  padding: 2px 9px;
+  border-radius: 10px;
+  font-size: 11px;
   font-weight: 600;
   background: #fff7ed;
   color: var(--orange);
   border: 1px solid #fed7aa;
   margin-right: 6px;
   vertical-align: middle;
-  line-height: 18px;
+  line-height: 20px;
   cursor: pointer;
   user-select: none;
   transition: all 0.15s;
@@ -787,10 +789,11 @@ __SPEAKER_STYLES__
 
 .fine-delete {
   text-decoration: line-through;
+  text-decoration-thickness: 2px;
   background: #fff7ed;
   color: var(--orange);
-  padding: 0 2px;
-  border-radius: 2px;
+  padding: 1px 3px;
+  border-radius: 3px;
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -1349,6 +1352,40 @@ function syncLegacySets() {
 
 // Initial sync
 syncLegacySets();
+
+// ===== UNIFIED SEGMENT STATE HELPERS =====
+// 【陷阱 42】恢复/删除句子有多条入口（toggleDeletion、toggleBlockDeletion、toggleAllBlocks、
+// toggleFineEdit、restoreState）。各入口必须通过下面的共享函数修改状态，不要各自实现。
+// 导出层 collectActiveRanges() 有 restoredSentences 安全网兜底（覆盖 segments + manualEdits）。
+// 修改这些函数时注意：manualEdits 是独立于 segments 的第二数据源，必须同步处理。
+
+// Disable ALL segments for a sentence (whole + partial + silence + manual edits)
+function disableAllSegments(idx, batchChanges) {
+  const segs = segmentsBySentence[idx] || [];
+  segs.forEach(seg => {
+    if (seg.enabled) {
+      batchChanges.push({ id: seg.id, wasEnabled: true });
+      seg.enabled = false;
+    }
+  });
+  // Also disable manual edits for this sentence
+  manualEdits.forEach(me => {
+    if (me.sentenceIdx === idx && !me.disabled) {
+      me.disabled = true;
+    }
+  });
+}
+
+// Re-enable all isOriginal segments for a sentence
+function enableOriginalSegments(idx, batchChanges) {
+  const segs = segmentsBySentence[idx] || [];
+  segs.forEach(seg => {
+    if (!seg.enabled && seg.isOriginal) {
+      batchChanges.push({ id: seg.id, wasEnabled: false });
+      seg.enabled = true;
+    }
+  });
+}
 
 // Undo stack
 const undoStack = [];
@@ -2297,16 +2334,11 @@ function toggleBlockDeletion(blockId, checked) {
   // Batch undo: collect all segment changes
   const batchChanges = [];
   for (let i = block.range[0]; i <= block.range[1]; i++) {
-    const segs = segmentsBySentence[i] || [];
     if (checked) {
-      // Enable all original segments
-      segs.forEach(seg => {
-        if (!seg.enabled && seg.isOriginal) {
-          batchChanges.push({ id: seg.id, wasEnabled: false });
-          seg.enabled = true;
-        }
-      });
-      // If no original segments, create one
+      // Re-enable all original segments (whole + partial + silence)
+      enableOriginalSegments(i, batchChanges);
+      // If no original segments, create a user whole-sentence deletion
+      const segs = segmentsBySentence[i] || [];
       if (segs.length === 0) {
         const s = sentencesData.find(s => s.idx === i);
         if (s) {
@@ -2328,24 +2360,22 @@ function toggleBlockDeletion(blockId, checked) {
         }
       }
     } else {
-      // Disable all whole-scope segments
-      segs.forEach(seg => {
-        if (seg.enabled && seg.scope === 'whole') {
-          batchChanges.push({ id: seg.id, wasEnabled: true });
-          seg.enabled = false;
-        }
-      });
+      // Disable ALL segments (whole + partial + silence) — not just whole-scope
+      disableAllSegments(i, batchChanges);
     }
   }
 
   if (batchChanges.length > 0) {
     undoStack.push({ type: 'segmentBatch', changes: batchChanges });
     syncLegacySets();
+    autoSave();
   }
 
   // Update row visuals for all sentences in block
   for (let i = block.range[0]; i <= block.range[1]; i++) {
     updateRowVisual(i);
+    const sent = sentencesData.find(s => s.idx === i);
+    if (sent) rebuildRowText(sent);
   }
 
   // Update summary row visual
@@ -2640,6 +2670,16 @@ function collectActiveRanges(opts) {
     if (seg.feIdx !== undefined) feIdxEnabled[seg.feIdx] = seg.enabled;
   });
 
+  // 【陷阱 42 安全网】如果句子的 whole-scope segment 被禁用（用户恢复了整句），
+  // 抑制该句所有 partial segments 和 manual edits — 即使某个 toggle 入口忘了禁用它们。
+  // 这是导出层的防御性校验，不依赖所有写入路径都正确。
+  const restoredSentences = new Set();
+  segments.forEach(seg => {
+    if (seg.scope === 'whole' && !seg.enabled && seg.isOriginal) {
+      restoredSentences.add(seg.sentenceIdx);
+    }
+  });
+
   // Collect disabled content edit ranges for fallback containment check.
   // dependsOn idx values may be stale (merge_llm_fine.js re-indexing bug),
   // so we also suppress silence segments that fall entirely within a disabled edit.
@@ -2656,6 +2696,11 @@ function collectActiveRanges(opts) {
     if (!seg.enabled) return;
     if (seg.start === undefined || seg.end === undefined) return;
 
+    // Safety net: sentence-level restore suppresses all partial segments
+    if (restoredSentences.has(seg.sentenceIdx) && seg.scope !== 'whole') {
+      return;
+    }
+
     // Suppress silence/silence_merged if ANY of its dependencies have been restored (disabled)
     if (seg.dependsOn && seg.dependsOn.length > 0) {
       if (seg.dependsOn.some(depIdx => feIdxEnabled[depIdx] === false)) {
@@ -2663,10 +2708,11 @@ function collectActiveRanges(opts) {
       }
     }
 
-    // Fallback: suppress silence/silence_merged if entirely contained within a disabled content edit
+    // Fallback: suppress silence/silence_merged if largely contained within a disabled content edit
+    // Use 1.0s tolerance on start (silence_merged can start well after content edit start)
     if (seg.type === 'silence' || seg.type === 'silence_merged') {
       const contained = disabledContentRanges.some(([ds, de]) =>
-        ds <= seg.start + 0.1 && de >= seg.end - 0.1
+        ds <= seg.start + 1.0 && de >= seg.end - 0.1
       );
       if (contained) return;
     }
@@ -2687,6 +2733,8 @@ function collectActiveRanges(opts) {
   // Manual edits
   manualEdits.forEach(me => {
     if (me.disabled) return;
+    // Note: do NOT check restoredSentences here — manual edits are user-explicit
+    // and must always take effect, even on restored sentences.
     const s = sentencesData.find(s => s.idx === me.sentenceIdx);
     if (!s || !s.words || s.words.length === 0) return;
     const wordTexts = s.words.map(w => w.t);
@@ -3101,6 +3149,7 @@ function markSelectionDeleted() {
   // Re-render the sentence
   rebuildRowWithManualEdits(sentenceIdx);
   updateStats();
+  autoSave();
 
   // If cut-mode is playing, reschedule skip to pick up the new range immediately
   const _meAudio = document.getElementById('audio-original');

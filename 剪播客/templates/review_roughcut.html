@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>__TITLE__</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700;900&display=swap');
+
+:root {
+  /* Fig Mint — 暖奶油 + 纯黑，零彩色 */
+  --sage: #EFECE6;           /* 主背景：暖奶油，如 Fig Mint */
+  --sage-light: #F7F5F0;     /* 侧边栏：略浅奶油 */
+  --sage-dark: #DDD8D0;      /* 边框 */
+  --sage-deep: #CEC8BD;      /* hover */
+  --black: #1A1A1A;          /* 正文黑 */
+  --dark: #2D2D2D;
+  --mid: #4A4A4A;
+  --muted: #6E6E6E;
+  --light: #9A9A9A;
+  --faint: #F2EFEA;
+  --white: #FAFAF7;
+  --gold: #1A1A1A;           /* 强调色 = 黑色本身 */
+  --gold-light: #4A4A4A;
+  --gold-dim: #F2EFEA;
+  --gold-dark: #1A1A1A;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  background: var(--sage);
+  color: var(--black);
+  -webkit-font-smoothing: antialiased;
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.serif {
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", Georgia, "Times New Roman", serif;
+}
+
+.mono {
+  font-family: "SF Mono", "Fira Code", Consolas, "Courier New", monospace;
+}
+
+/* ===== TOP BAR ===== */
+.topbar {
+  position: fixed; top:0; left:0; right:0; z-index:1000;
+  background: #1A1A1A;
+  height: 48px;
+  display: flex; align-items: center;
+  padding: 0 32px; gap: 24px;
+}
+.topbar .brand {
+  font-family: "Noto Serif SC", serif;
+  font-size: 16px; font-weight: 900; color: #EFECE6;
+  letter-spacing: 2px;
+}
+.topbar .proj { font-size: 13px; color: var(--light); letter-spacing: 1px; }
+.topbar .fill { flex:1; }
+.topbar .status { font-size: 11px; color: var(--muted); letter-spacing: 1.5px; font-family: "SF Mono", monospace; }
+.topbar .expbtn {
+  background: #EFECE6; color: #1A1A1A; border: none;
+  padding: 8px 24px; font-size: 13px; font-weight: 700;
+  letter-spacing: 2px; cursor: pointer; transition: all .12s; border-radius: 4px;
+}
+.topbar .expbtn:hover { background: #FFF; }
+
+/* ===== LAYOUT ===== */
+.layout {
+  display: flex;
+  margin-top: 48px;
+  margin-bottom: 72px;
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+  width: 360px; flex-shrink:0;
+  background: var(--sage-light);
+  border-right: 1px solid var(--sage-dark);
+  box-shadow: 2px 0 12px rgba(0,0,0,.04);
+  position: sticky; top: 48px;
+  height: calc(100vh - 120px);
+  overflow-y: auto;
+  padding: 36px 28px;
+  display: flex; flex-direction: column; gap: 32px;
+}
+
+.section-label {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--mid); margin-bottom: 16px;
+  font-family: "SF Mono", monospace;
+}
+
+/* Duration */
+.dur-block { padding-bottom: 28px; border-bottom: 1px solid var(--sage-dark); }
+
+.dur-main {
+  display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px;
+}
+.dur-from {
+  font-family: "Noto Serif SC", serif;
+  font-size: 24px; font-weight: 600;
+  color: var(--light); text-decoration: line-through; text-decoration-color: var(--sage-dark);
+}
+.dur-arrow { font-size: 20px; color: var(--sage-dark); }
+.dur-to {
+  font-family: "Noto Serif SC", serif;
+  font-size: 40px; font-weight: 900; color: var(--black);
+  line-height: 1.1;
+}
+.dur-meta { font-size: 15px; color: var(--mid); }
+.dur-meta strong { font-weight: 700; color: var(--gold); }
+
+/* Summary */
+.summary-text {
+  font-size: 15px; line-height: 1.9; color: var(--mid);
+  border-left: 3px solid var(--gold-light); padding-left: 16px;
+}
+
+/* Speakers */
+/* pie chart removed */
+.sp-legend { display:flex; flex-direction:column; gap: 8px; }
+.sp-row { display:flex; align-items:center; gap: 10px; }
+.sp-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink:0; }
+.sp-name { font-size: 16px; font-weight: 700; color: var(--dark); flex:1; }
+.sp-val { font-family: "SF Mono", monospace; font-size: 14px; color: var(--muted); }
+
+/* Navigator — editorial numbered list */
+.nav-section { flex:1; min-height:0; display:flex; flex-direction:column; }
+.nav-list { display:flex; flex-direction:column; gap:4px; overflow-y:auto; flex:1; }
+
+.nav-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 12px; border-radius: 6px;
+  cursor: pointer; transition: all .12s;
+  border-left: 3px solid transparent;
+}
+.nav-item:hover { background: var(--sage); }
+.nav-item.active { background: var(--sage); border-left-color: var(--black); }
+
+.nav-num {
+  font-family: "SF Mono", monospace;
+  font-size: 13px; color: var(--muted);
+  min-width: 22px; padding-top: 3px;
+}
+.nav-item.active .nav-num { color: var(--dark); }
+
+.nav-body { flex:1; }
+.nav-title {
+  font-family: "Noto Serif SC", serif;
+  font-size: 17px; font-weight: 700; color: var(--black);
+  line-height: 1.4; margin-bottom: 2px;
+}
+.nav-item.active .nav-title { text-decoration: underline; text-underline-offset: 3px; }
+
+.nav-ts {
+  font-family: "SF Mono", monospace;
+  font-size: 12px; color: var(--muted);
+}
+
+/* --- MAIN --- */
+.main { flex:1; min-width:0; padding: 40px 52px; }
+
+.main-hdr {
+  position: sticky; top: 48px; z-index: 99;
+  background: var(--sage);
+  padding: 24px 0 0;
+  margin: -24px -52px 0; padding-left: 52px; padding-right: 52px;
+  border-bottom: 1px solid var(--sage-dark);
+}
+
+.main-title {
+  font-family: "Noto Serif SC", serif;
+  font-size: 48px; font-weight: 900; color: var(--black);
+  line-height: 1.2; margin-bottom: 8px;
+}
+
+.main-sub {
+  font-size: 17px; color: var(--mid); line-height: 1.7; margin-bottom: 20px;
+}
+/* Preview mode toggle — prominent */
+.mode-bar {
+  display: flex; align-items: center; gap: 16px;
+  padding-bottom: 16px;
+}
+.mode-toggle {
+  display: flex; background: var(--sage-dark); border-radius: 10px; overflow: hidden;
+  padding: 4px;
+}
+.mode-btn {
+  padding: 12px 28px; font-size: 16px; font-weight: 700;
+  color: var(--muted); cursor: pointer; border: none; background: none;
+  transition: all .15s; letter-spacing: 0.3px; border-radius: 7px;
+}
+.mode-btn.active {
+  background: var(--gold-dark); color: white;
+  box-shadow: 0 2px 8px rgba(43,65,98,.25);
+}
+.mode-btn:hover:not(.active) { color: var(--dark); background: var(--sage-deep); }
+
+/* Preview mode: smooth transitions */
+.row.del, .blk, .sug-reason {
+  transition: opacity .3s ease, max-height .3s ease, padding .3s ease, margin .3s ease;
+  overflow: hidden;
+}
+
+body.preview .row.del {
+  opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; margin: 0;
+  pointer-events: none;
+}
+body.preview .blk {
+  opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; margin: 0;
+  pointer-events: none;
+}
+body.preview .sug-reason { opacity: 0; }
+
+/* Mode transition overlay */
+.mode-transition {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: var(--sage);
+  opacity: 0; pointer-events: none;
+  transition: opacity .25s ease;
+}
+.mode-transition.active {
+  opacity: 1; pointer-events: auto;
+}
+.mode-transition .mt-graphic {
+  margin-bottom: 24px;
+}
+.mode-transition .mt-label {
+  font-family: "Noto Serif SC", serif;
+  font-size: 22px; font-weight: 700; color: var(--black);
+  letter-spacing: 1px;
+}
+
+/* Cassette tape animation */
+.cassette { width: 120px; height: 80px; position: relative; }
+.cassette-body {
+  width: 120px; height: 72px; border: 2.5px solid var(--black);
+  border-radius: 8px; position: absolute; bottom: 0;
+  background: var(--faint);
+}
+.cassette-window {
+  position: absolute; top: 16px; left: 20px; right: 20px; height: 28px;
+  border: 2px solid var(--black); border-radius: 4px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 10px;
+  background: var(--sage);
+}
+.cassette-reel {
+  width: 20px; height: 20px; border: 2px solid var(--black); border-radius: 50%;
+  position: relative;
+}
+.cassette-reel::before {
+  content: ''; position: absolute;
+  top: 3px; left: 50%; width: 2px; height: 6px;
+  background: var(--black); transform: translateX(-50%);
+}
+.cassette-reel::after {
+  content: ''; position: absolute;
+  top: 50%; left: 3px; width: 6px; height: 2px;
+  background: var(--black); transform: translateY(-50%);
+}
+.mode-transition.active .cassette-reel {
+  animation: spin .4s linear infinite;
+}
+.cassette-label {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  font-family: "SF Mono", monospace; font-size: 8px; letter-spacing: 2px;
+  color: var(--muted); text-transform: uppercase;
+}
+.cassette-holes {
+  position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 24px;
+}
+.cassette-hole {
+  width: 6px; height: 6px; border: 1.5px solid var(--black); border-radius: 50%;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Pencil wiggle for edit mode */
+.pencil-wrap { display: inline-block; }
+.mode-transition.active .pencil-wrap {
+  animation: wiggle .6s ease-in-out;
+}
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-12deg); }
+  40% { transform: rotate(10deg); }
+  60% { transform: rotate(-8deg); }
+  80% { transform: rotate(5deg); }
+}
+
+.pencil-svg { width: 64px; height: 64px; }
+
+/* Toggle slider animation */
+.mode-toggle {
+  position: relative;
+}
+.mode-slider {
+  position: absolute;
+  top: 4px; left: 4px;
+  height: calc(100% - 8px);
+  border-radius: 7px;
+  background: var(--black);
+  transition: transform .25s cubic-bezier(.4, 0, .2, 1), width .25s cubic-bezier(.4, 0, .2, 1);
+  z-index: 0;
+}
+.mode-btn { position: relative; z-index: 1; }
+
+.hint-tag {
+  display: inline-block; background: var(--faint); color: var(--dark);
+  padding: 2px 10px; border-radius: 3px; font-size: 14px; font-weight: 600;
+}
+
+/* Block header */
+/* Chapter header — content section divider */
+.chap-hdr {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 20px 16px 10px; margin: 32px 0 8px;
+  border-bottom: 1px solid var(--sage-dark);
+}
+.chap-num {
+  font-family: "SF Mono", monospace;
+  font-size: 13px; color: var(--light); min-width: 24px;
+}
+.chap-title {
+  font-family: "Noto Serif SC", serif;
+  font-size: 22px; font-weight: 700; color: var(--black);
+}
+.chap-desc {
+  font-size: 13px; color: var(--muted); margin-left: auto;
+}
+
+/* Block header — deleted section */
+.blk {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; margin: 24px 0 6px;
+  background: var(--sage-dark);
+  border-left: 3px solid var(--gold-light);
+  border-radius: 0 6px 6px 0;
+}
+.blk-tag {
+  font-size: 12px; font-weight: 700; letter-spacing: .5px;
+  text-transform: uppercase; color: var(--gold);
+}
+.blk-rsn { color: var(--mid); font-size: 15px; flex:1; }
+.blk-dur { font-family: "SF Mono", monospace; font-size: 13px; color: var(--muted); }
+
+/* Toggle */
+.chk {
+  width: 22px; height: 22px; border: 2px solid var(--sage-dark); border-radius: 4px;
+  cursor: pointer; display:flex; align-items:center; justify-content:center;
+  font-size: 13px; color: transparent; transition: all .1s; flex-shrink:0;
+  background: var(--sage-light);
+}
+.chk:hover { border-color: var(--mid); }
+.chk.on { border-color: var(--dark); background: var(--dark); color: var(--sage-light); }
+
+/* Sentence row */
+.row {
+  display: flex; align-items: flex-start;
+  padding: 12px 16px; border-radius: 6px; margin-bottom: 2px;
+  cursor: pointer; transition: background .08s;
+  border-left: 3px solid transparent;
+}
+.row:hover { background: var(--sage-light); }
+.row.act { background: var(--sage-light); border-left-color: var(--black); }
+.row.del { opacity: .55; }
+.row.del:hover { opacity: .7; }
+.row.del .r-txt { text-decoration: line-through; text-decoration-color: var(--mid); color: var(--muted); }
+.row.sug { border-left: 3px dashed var(--gold-light); }
+.row.sug .r-txt { text-decoration-style: dashed; }
+.sug-reason {
+  display: inline-block; margin-left: 8px;
+  font-size: 12px; color: var(--gold-dark); font-weight: 600;
+  background: var(--gold-dim); padding: 1px 8px; border-radius: 3px;
+  vertical-align: middle;
+}
+
+.r-chk { margin-right: 12px; padding-top: 3px; }
+.r-sp { font-size: 16px; font-weight: 800; min-width: 56px; flex-shrink:0; margin-right: 14px; padding-top: 4px; color: var(--dark); }
+.r-tm { font-family:"SF Mono",monospace; font-size: 15px; color: var(--light); min-width: 52px; flex-shrink:0; margin-right: 16px; padding-top: 5px; cursor:pointer; }
+.r-tm:hover { color: var(--gold); }
+.r-txt { font-size: 18px; line-height: 1.9; color: var(--black); flex:1; min-width:0; }
+
+/* ===== PLAYER ===== */
+.player {
+  position: fixed; bottom:0; left:0; right:0; z-index:1000;
+  background: #1A1A1A; height: 72px;
+  display: flex; align-items: center; padding: 0 32px; gap: 24px;
+}
+
+.p-time {
+  font-family: "SF Mono", monospace;
+  font-size: 15px; color: var(--sage-light); min-width: 60px;
+}
+.p-total {
+  font-family: "SF Mono", monospace;
+  font-size: 15px; color: var(--muted); min-width: 60px;
+}
+
+.p-track { flex:1; height: 4px; background: var(--dark); cursor:pointer; position:relative; border-radius:2px; }
+.p-fill { height:100%; background: #EFECE6; width:0%; transition:width .05s; border-radius:2px; position:relative; }
+.p-leaf {
+  position:absolute; right:-6px; top:-5px;
+  width:14px; height:14px;
+  background: #EFECE6; border-radius: 50%;
+  transition: right .05s;
+  box-shadow: 0 0 0 2px #1A1A1A;
+}
+.p-track:active .p-fill { transition:none; }
+.p-track:active .p-leaf { transition:none; }
+
+.p-btn {
+  background: transparent; color: var(--sage-light);
+  border: 1.5px solid var(--muted);
+  padding: 7px 24px; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; cursor: pointer; transition: all .12s;
+}
+.p-btn:hover { background: var(--sage-light); color: var(--black); border-color: var(--sage-light); }
+
+.p-spd {
+  font-family: "SF Mono", monospace;
+  font-size: 12px; color: var(--muted); background: none;
+  border: none; cursor: pointer; letter-spacing: 1px;
+}
+.p-spd:hover { color: var(--sage-light); }
+
+/* Info icon */
+.info-icon {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1.5px solid var(--muted); color: var(--muted);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  font-style: italic; font-family: Georgia, serif;
+  transition: all .12s;
+}
+.info-icon:hover { border-color: var(--sage-light); color: var(--sage-light); }
+
+/* Info popup */
+.info-popup {
+  position: fixed; top: 56px; right: 20px; z-index: 2001;
+  background: white; border: 1px solid var(--sage-dark);
+  border-radius: 8px; padding: 20px; width: 320px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  font-size: 14px; line-height: 1.7; color: var(--dark);
+  display: none;
+}
+.info-popup.vis { display: block; }
+.info-popup-title { font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+.info-popup p { margin-bottom: 8px; }
+.info-close {
+  margin-top: 8px; padding: 6px 16px; background: var(--dark); color: var(--sage-light);
+  border: none; border-radius: 4px; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+
+/* Export success modal */
+.export-modal {
+  position: fixed; inset: 0; z-index: 3000;
+  background: rgba(12,10,9,.6); display: none;
+  align-items: center; justify-content: center;
+}
+.export-modal.vis { display: flex; }
+.export-modal-inner {
+  background: white; border-radius: 12px; padding: 32px;
+  max-width: 440px; width: 90%;
+}
+.export-modal-title {
+  font-family: "Noto Serif SC", serif;
+  font-size: 22px; font-weight: 700; margin-bottom: 20px; color: var(--dark);
+}
+.export-modal-steps { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
+.export-step {
+  display: flex; align-items: flex-start; gap: 12px;
+  font-size: 15px; line-height: 1.6; color: var(--mid);
+}
+.export-step em { color: var(--gold-dark); font-style: normal; font-weight: 600; }
+.export-step-num {
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+  background: var(--gold-dim); color: var(--gold-dark);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; margin-top: 2px;
+}
+.export-modal-btn {
+  width: 100%; padding: 10px; background: var(--dark); color: var(--sage-light);
+  border: none; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer;
+}
+.export-modal-btn:hover { background: var(--black); }
+
+.toast {
+  position:fixed; top:60px; right:28px; background:var(--black); color:var(--sage-light);
+  padding:12px 24px; font-size:15px; font-weight:600; z-index:2000;
+  opacity:0; transition:opacity .3s; pointer-events:none; border-radius:4px;
+}
+.toast.vis { opacity:1; }
+
+@media(max-width:960px) {
+  .layout { flex-direction:column; }
+  .sidebar { width:100%; position:relative; height:auto; border-right:none; border-bottom:1px solid var(--sage-dark); }
+  .main-title { font-size:32px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">辟客</span>
+  <span class="proj">__PROJECT_NAME__</span>
+  <span class="fill"></span>
+  <span class="status" id="sv">自动保存：已保存</span>
+  <span class="info-icon" onclick="document.getElementById('info-tip').classList.toggle('vis')" title="关于导出">?</span>
+  <button class="expbtn" onclick="doExport()">导出</button>
+</div>
+
+<!-- Info tooltip -->
+<div class="info-popup" id="info-tip">
+  <div class="info-popup-title">导出说明</div>
+  <p>导出的是一份 <strong>delete_segments_edited.json</strong> 文件，包含所有标记删除的时间段。</p>
+  <p>导出后，将文件拖入 Claude Code 对话框，即可执行剪辑生成 MP3 成品，并继续后续的精剪（口癖词、卡顿等）和音质处理。</p>
+  <button class="info-close" onclick="document.getElementById('info-tip').classList.remove('vis')">明白了</button>
+</div>
+
+<!-- Export success modal -->
+<div class="export-modal" id="export-modal">
+  <div class="export-modal-inner">
+    <div class="export-modal-title">导出成功</div>
+    <div class="export-modal-steps">
+      <div class="export-step">
+        <span class="export-step-num">1</span>
+        <span>打开 Claude Code，将下载的 <strong>delete_segments_edited.json</strong> 拖入对话框</span>
+      </div>
+      <div class="export-step">
+        <span class="export-step-num">2</span>
+        <span>输入：<em>「用这个文件剪辑音频」</em></span>
+      </div>
+      <div class="export-step">
+        <span class="export-step-num">3</span>
+        <span>Claude 会执行剪辑，然后可以继续精剪口癖词、音质处理、加片头音乐等</span>
+      </div>
+    </div>
+    <button class="export-modal-btn" onclick="document.getElementById('export-modal').classList.remove('vis')">好的</button>
+  </div>
+</div>
+
+<div class="layout">
+<aside class="sidebar">
+
+  <div class="dur-block">
+    <div class="section-label">时长</div>
+    <div class="dur-main">
+      <span class="dur-from serif" id="d-from">0:00</span>
+      <span class="dur-arrow">→</span>
+      <span class="dur-to serif" id="d-to">0:00</span>
+    </div>
+    <div class="dur-meta">删减了 <strong id="d-rm">0:00</strong></div>
+  </div>
+
+  <div>
+    <div class="section-label">删减概要</div>
+    <div class="summary-text" id="summ"></div>
+  </div>
+
+  <div>
+    <div class="section-label">说话人</div>
+    <div class="sp-legend" id="spleg"></div>
+  </div>
+
+  <div class="nav-section">
+    <div class="section-label">章节导航</div>
+    <div class="nav-list" id="nav"></div>
+  </div>
+
+
+</aside>
+
+<main class="main">
+  <div class="main-hdr">
+    <h1 class="main-title">粗剪逐字稿</h1>
+    <p class="main-sub">
+      审阅并编辑你的播客内容。点击句子跳转播放，使用 <span class="hint-tag">☐</span> 删除或恢复段落，所有操作自动保存。
+    </p>
+    <div class="mode-bar">
+      <div class="mode-toggle" id="mode-toggle">
+        <div class="mode-slider" id="mode-slider"></div>
+        <button class="mode-btn active" id="mode-edit" onclick="setMode('edit')">✎ 编辑模式</button>
+        <button class="mode-btn" id="mode-preview" onclick="setMode('preview')">▶ 粗剪预览</button>
+      </div>
+    </div>
+  </div>
+  <div id="tx" style="padding-top:16px"></div>
+</main>
+</div>
+
+<div class="player">
+  <span class="p-time mono" id="ptm">0:00</span>
+  <div class="p-track" id="ptrk" onmousedown="startDrag(event)"><div class="p-fill" id="pfill"><span class="p-leaf"></span></div></div>
+  <span class="p-total mono" id="pdur">0:00</span>
+  <button class="p-btn" id="pbtn" onclick="tgPlay()">播放</button>
+  <button class="p-spd" id="pspd" onclick="cySpd()">1.0×</button>
+</div>
+
+
+<div class="mode-transition" id="mode-trans">
+  <div class="mt-graphic" id="mt-graphic">
+    <!-- Edit mode: pencil -->
+    <div class="pencil-wrap" id="mt-pencil" style="display:none">
+      <svg class="pencil-svg" viewBox="0 0 64 64" fill="none">
+        <path d="M14 50 L44 20 L50 26 L20 56 L12 58 Z" stroke="#1A1A1A" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+        <path d="M44 20 L48 16 C50 14 53 14 55 16 L55 16 C57 18 57 21 55 23 L50 26" stroke="#1A1A1A" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+        <path d="M14 50 L20 56" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="13" cy="57" r="2" fill="#1A1A1A"/>
+      </svg>
+    </div>
+    <!-- Preview mode: cassette tape -->
+    <div class="cassette" id="mt-cassette" style="display:none">
+      <div class="cassette-body">
+        <div class="cassette-window">
+          <div class="cassette-reel"></div>
+          <div class="cassette-reel"></div>
+        </div>
+        <div class="cassette-label">ROUGH CUT</div>
+      </div>
+    </div>
+  </div>
+  <div class="mt-label" id="mt-text">编辑模式</div>
+</div>
+<div class="toast" id="toast"></div>
+<audio id="au" src="__AUDIO_SRC__" preload="auto"></audio>
+
+<script>
+
+const S = [{"idx":0,"sp":"阿司","t":"要有分音轨哇哦。","s":0.36,"e":3.16,"ts":"0:00","ai":1,"dt":"pre_show"},{"idx":1,"sp":"潘潘","t":"这边行你们听我的觉得有噪音什么的吗？","s":3.28,"e":6.8,"ts":"0:03","ai":1,"dt":"pre_show"},{"idx":2,"sp":"潘潘","t":"目前没有吧应该OK. ","s":7.4,"e":9.16,"ts":"0:07","ai":1,"dt":"pre_show"},{"idx":3,"sp":"阿司","t":" OK没有对。","s":9.16,"e":10.52,"ts":"0:09","ai":1,"dt":"pre_show"},{"idx":4,"sp":"雨林","t":"对ZOOM那个还不错啊。","s":10.52,"e":13.04,"ts":"0:10","ai":1,"dt":"pre_show"},{"idx":5,"sp":"潘潘","t":"然后然后然后我比如说这样嗯拿水杯什么的会会有声音吗？","s":13.32,"e":18.72,"ts":"0:13","ai":1,"dt":"pre_show"},{"idx":6,"sp":"雨林","t":"这些其实都还好。","s":19.49,"e":20.69,"ts":"0:19","ai":1,"dt":"pre_show"},{"idx":7,"sp":"阿司","t":"都还行，OK，我没有听到反正，OK. ","s":20.93,"e":23.97,"ts":"0:20","ai":1,"dt":"pre_show"},{"idx":8,"sp":"潘潘","t":"对。","s":24.45,"e":24.73,"ts":"0:24","ai":1,"dt":"pre_show"},{"idx":9,"sp":"雨林","t":"那就就我们以前的经验肯定是要喝水的，所以没有问题。","s":24.93,"e":29.73,"ts":"0:24","ai":1,"dt":"pre_show"},{"idx":10,"sp":"阿司","t":"我比较担心的是因为我我的那个鼠标，有你们看不到那鼠标的声音，原来我们录制的时候经常是这样。","s":30.93,"e":39.41,"ts":"0:30","ai":1,"dt":"pre_show"},{"idx":11,"sp":"潘潘","t":"就是能听到我的鼠标在背后。","s":39.61,"e":41.21,"ts":"0:39","ai":1,"dt":"pre_show"},{"idx":12,"sp":"雨林","t":"喜欢拆看你是鼠标用是吗？","s":41.45,"e":44.25,"ts":"0:41","ai":1,"dt":"pre_show"},{"idx":13,"sp":"阿司","t":"呃，CHROMEBOOK的关键我现在桌子太小了，换一个桌子的话，就是对都可以用。","s":45.2,"e":50.08,"ts":"0:45","ai":1,"dt":"pre_show"},{"idx":14,"sp":"潘潘","t":"嗯。","s":51.28,"e":51.64,"ts":"0:51","ai":1,"dt":"pre_show"},{"idx":15,"sp":"雨林","t":"呃呃对，他为什么要戴耳机呢？","s":52.36,"e":54.28,"ts":"0:52","ai":1,"dt":"pre_show"},{"idx":16,"sp":"雨林","t":"是因为BACKUP录的时候，你你现在手机有内存吗？","s":54.36,"e":57.68,"ts":"0:54","ai":1,"dt":"pre_show"},{"idx":17,"sp":"雨林","t":"可以打开手机的那个自带的呃录音器。","s":57.76,"e":61.72,"ts":"0:57","ai":1,"dt":"pre_show"},{"idx":18,"sp":"雨林","t":"就变成我们各各自录各自的声音。","s":62.95,"e":66.31,"ts":"1:02","ai":1,"dt":"pre_show"},{"idx":19,"sp":"潘潘","t":"哦。","s":66.43,"e":66.91,"ts":"1:06","ai":1,"dt":"pre_show"},{"idx":20,"sp":"雨林","t":"ok ok如果你外放就会乱嘛，所以就戴耳机就真的有道理，声音这样就放在自己面前就好了啊。","s":67.11,"e":73.87,"ts":"1:07","ai":1,"dt":"pre_show"},{"idx":21,"sp":"潘潘","t":"行。","s":73.99,"e":74.59,"ts":"1:13","ai":1,"dt":"pre_show"},{"idx":22,"sp":"潘潘","t":"嗯一般我打开看一下。","s":75.25,"e":77.61,"ts":"1:15","ai":1,"dt":"pre_show"},{"idx":23,"sp":"潘潘","t":"嗯我看就是。","s":77.89,"e":79.21,"ts":"1:17","ai":1,"dt":"pre_show"},{"idx":24,"sp":"雨林","t":"自带的那个叫。","s":79.21,"e":80.41,"ts":"1:19","ai":1,"dt":"pre_show"},{"idx":25,"sp":"潘潘","t":"没呃呃我我选。","s":81.13,"e":82.81,"ts":"1:21","ai":1,"dt":"pre_show"},{"idx":26,"sp":"雨林","t":"了OK对你可以就开了放在旁边。","s":82.81,"e":85.45,"ts":"1:22","ai":1,"dt":"pre_show"},{"idx":27,"sp":"雨林","t":"嗯。","s":86.05,"e":86.57,"ts":"1:26","ai":1,"dt":"pre_show"},{"idx":28,"sp":"潘潘","t":"好我想问一下。","s":87.17,"e":88.45,"ts":"1:27","ai":1,"dt":"pre_show"},{"idx":29,"sp":"阿司","t":"我们那个嗯TEAM呃这不是TEAM叫什么ZIM里面的MICROPHONE. ","s":88.45,"e":93.97,"ts":"1:28","ai":1,"dt":"pre_show"},{"idx":30,"sp":"雨林","t":"应该选哪个。","s":93.97,"e":95.17,"ts":"1:33","ai":1,"dt":"pre_show"},{"idx":31,"sp":"雨林","t":"你刚才声音比较清楚现在你是不是换了一个。","s":95.33,"e":97.85,"ts":"1:35","ai":1,"dt":"pre_show"},{"idx":32,"sp":"阿司","t":"现在不太清楚对我换了一个。","s":97.93,"e":99.41,"ts":"1:37","ai":1,"dt":"pre_show"},{"idx":33,"sp":"雨林","t":"没有那可能就不一样嗯最好是选电脑就是你们打开这里啊拍拍AUDIO旁边有个箭头朝上。","s":99.45,"e":107.17,"ts":"1:39","ai":1,"dt":"pre_show"},{"idx":34,"sp":"雨林","t":"嗯嗯应该也是然后点AUDIO SETTINGS. ","s":107.37,"e":110.37,"ts":"1:47","ai":1,"dt":"pre_show"},{"idx":35,"sp":"雨林","t":"然后在AUDIO那里你的MICROPHONE最好选自己的电脑就是MAC或者是就不要选AIRPODS. ","s":110.77,"e":119.01,"ts":"1:50","ai":1,"dt":"pre_show"},{"idx":36,"sp":"潘潘","t":"哦OK. ","s":119.01,"e":120.13,"ts":"1:59","ai":1,"dt":"pre_show"},{"idx":37,"sp":"雨林","t":"对然后。","s":120.13,"e":121.05,"ts":"2:00","ai":1,"dt":"pre_show"},{"idx":38,"sp":"阿司","t":"你的我现在的声音比较清楚吗。","s":121.05,"e":123.41,"ts":"2:01","ai":1,"dt":"pre_show"},{"idx":39,"sp":"雨林","t":"嗯现在又清楚了。","s":123.41,"e":125.09,"ts":"2:03","ai":1,"dt":"pre_show"},{"idx":40,"sp":"阿司","t":"我这个是耳机。","s":125.09,"e":126.21,"ts":"2:05","ai":1,"dt":"pre_show"},{"idx":41,"sp":"雨林","t":"的哦我就不知道录出来效果怎么样但是我听就是就其实都很好了就是有一个。","s":126.21,"e":133.69,"ts":"2:06","ai":1,"dt":"pre_show"},{"idx":42,"sp":"阿司","t":"镜要不然我们先录一小段然后你你听听。","s":133.69,"e":137.33,"ts":"2:13","ai":1,"dt":"pre_show"},{"idx":43,"sp":"雨林","t":"看啊也可以。","s":137.33,"e":139.93,"ts":"2:17","ai":1,"dt":"pre_show"},{"idx":44,"sp":"阿司","t":"嗯但是刚才你再说句话。","s":140.62,"e":142.66,"ts":"2:20","ai":1,"dt":"pre_show"},{"idx":45,"sp":"潘潘","t":"我刚这样呢现在呢啊特别清楚。","s":142.82,"e":146.42,"ts":"2:22","ai":1,"dt":"pre_show"},{"idx":46,"sp":"阿司","t":"特别。","s":146.42,"e":146.74,"ts":"2:26","ai":1,"dt":"pre_show"},{"idx":47,"sp":"潘潘","t":"清楚。","s":146.74,"e":147.26,"ts":"2:26","ai":1,"dt":"pre_show"},{"idx":48,"sp":"雨林","t":"OK嗯阿四我觉得两个都行你看看是吧对你要不你自己那里能录吗就是你自己用你的那个QUICKTIMEPLAYER录这两个试试看因为ZOOM这边它要结束它才好。","s":147.26,"e":162.46,"ts":"2:27","ai":1,"dt":"pre_show"},{"idx":49,"sp":"阿司","t":"导出啊，我我想说我自己录的话应该没差，因为我是手机录的嘛，它直接就是捕捉到。","s":163.71,"e":170.11,"ts":"2:43","ai":1,"dt":"pre_show"},{"idx":50,"sp":"雨林","t":"我的那zoom这边呢，zoom这个。","s":170.11,"e":173.31,"ts":"2:50","ai":1,"dt":"pre_show"},{"idx":51,"sp":"阿司","t":"zoom这个我现在是耳机耳机的microphone行。","s":173.79,"e":177.87,"ts":"2:53","ai":1,"dt":"pre_show"},{"idx":52,"sp":"雨林","t":"反正挺清楚的。","s":177.99,"e":178.75,"ts":"2:57","ai":1,"dt":"pre_show"},{"idx":53,"sp":"阿司","t":"我觉得是吧？","s":178.83,"e":179.91,"ts":"2:58","ai":1,"dt":"pre_show"},{"idx":54,"sp":"阿司","t":"行，那那我们就gamble一下。","s":180.31,"e":182.87,"ts":"3:00","ai":1,"dt":"pre_show"},{"idx":55,"sp":"雨林","t":"这两个反正都是非常清楚的情况下可能要。","s":183.03,"e":186.43,"ts":"3:03","ai":1,"dt":"pre_show"},{"idx":56,"sp":"雨林","t":"但是我知道airpods就很一般，所以我会选电我的电脑，就是我的ok。","s":186.95,"e":192.31,"ts":"3:06","ai":1,"dt":"pre_show"},{"idx":57,"sp":"雨林","t":"对，OK，那我们现在可以来那个拍一下。","s":193.45,"e":197.81,"ts":"3:13","ai":1,"dt":"pre_show"},{"idx":58,"sp":"阿司","t":"就是拍个手。","s":198.09,"e":199.25,"ts":"3:18","ai":1,"dt":"pre_show"},{"idx":59,"sp":"阿司","t":"等一下，等一下，我们可不可以那个共享屏幕，然后就是把把我们的稿子给行哦，放到公屏上。","s":199.29,"e":209.41,"ts":"3:19","ai":1,"dt":"pre_show"},{"idx":60,"sp":"阿司","t":"OK。","s":210.01,"e":210.49,"ts":"3:30","ai":1,"dt":"pre_show"},{"idx":61,"sp":"雨林","t":"自己也可以打开一次。","s":211.47,"e":212.79,"ts":"3:31","ai":1,"dt":"pre_show"},{"idx":62,"sp":"潘潘","t":"对我是自己分了个屏，然后就好啊。","s":212.87,"e":216.27,"ts":"3:32","ai":1,"dt":"pre_show"},{"idx":63,"sp":"阿司","t":"我是想说这样放放在公屏上，我可能减少我的鼠标的那个。","s":216.63,"e":221.27,"ts":"3:36","ai":1,"dt":"pre_show"},{"idx":64,"sp":"潘潘","t":"啊有道理也可以。","s":221.75,"e":223.51,"ts":"3:41","ai":1,"dt":"pre_show"},{"idx":65,"sp":"雨林","t":"嗯，那你事方面还是说不要你自己事比较方便。","s":224.07,"e":229.15,"ts":"3:44","ai":1,"dt":"pre_show"},{"idx":66,"sp":"阿司","t":"啊，说我吗？","s":231.01,"e":231.77,"ts":"3:51","ai":1,"dt":"pre_show"},{"idx":67,"sp":"阿司","t":"对嗯，雨林雨林事儿吧。","s":232.05,"e":233.73,"ts":"3:52","ai":1,"dt":"pre_show"},{"idx":68,"sp":"雨林","t":"好，我来分享一下。","s":234.21,"e":236.01,"ts":"3:54","ai":1,"dt":"pre_show"},{"idx":69,"sp":"雨林","t":"应该是这个。","s":236.82,"e":238.02,"ts":"3:56","ai":1,"dt":"pre_show"},{"idx":70,"sp":"雨林","t":"还有 as background over the shoulder 哇，好多新哦，哇，还有这种东西，你们看到了吗？","s":239.04,"e":245.76,"ts":"3:59","ai":1,"dt":"pre_show"},{"idx":71,"sp":"雨林","t":"oh my god 是什么？","s":245.84,"e":247.56,"ts":"4:05","ai":1,"dt":"pre_show"},{"idx":72,"sp":"潘潘","t":"没有。","s":248.04,"e":248.4,"ts":"4:08","ai":1,"dt":"pre_show"},{"idx":73,"sp":"雨林","t":"啊，等等等等，我我我试一下，你们看一下，我要笑死了。","s":248.48,"e":251.52,"ts":"4:08","ai":1,"dt":"pre_show"},{"idx":74,"sp":"潘潘","t":"啊。","s":253.24,"e":253.76,"ts":"4:13","ai":1,"dt":"pre_show"},{"idx":75,"sp":"雨林","t":"就他问我要一个。","s":254.48,"e":255.72,"ts":"4:14","ai":1,"dt":"pre_show"},{"idx":76,"sp":"潘潘","t":"哇，这好可爱哦。","s":255.84,"e":257,"ts":"4:15","ai":1,"dt":"pre_show"},{"idx":77,"sp":"雨林","t":"对。","s":257.92,"e":258.16,"ts":"4:17","ai":1,"dt":"pre_show"},{"idx":78,"sp":"潘潘","t":"我也会关掉它。","s":258.2,"e":259,"ts":"4:18","ai":1,"dt":"pre_show"},{"idx":79,"sp":"潘潘","t":"这可以直接录视频吗？","s":259.12,"e":260.68,"ts":"4:19","ai":1,"dt":"pre_show"},{"idx":80,"sp":"潘潘","t":"对，你可以把你。","s":261.04,"e":262.04,"ts":"4:21","ai":1,"dt":"pre_show"},{"idx":81,"sp":"阿司","t":"把你移到右边吗？","s":262.04,"e":264,"ts":"4:22","ai":1,"dt":"pre_show"},{"idx":82,"sp":"阿司","t":"把这个雨林就是放到右边。","s":265.96,"e":268.32,"ts":"4:25","ai":1,"dt":"pre_show"},{"idx":83,"sp":"雨林","t":"控制了嗯LAYOUT哦，可以。","s":268.68,"e":272.68,"ts":"4:28","ai":1,"dt":"pre_show"},{"idx":84,"sp":"潘潘","t":"哇。","s":274.24,"e":274.84,"ts":"4:34","ai":1,"dt":"pre_show"},{"idx":85,"sp":"雨林","t":"完了呀，差点把我关掉了。","s":275.2,"e":277.36,"ts":"4:35","ai":1,"dt":"pre_show"},{"idx":86,"sp":"潘潘","t":"反正我学到了。","s":277.64,"e":278.76,"ts":"4:37","ai":1,"dt":"pre_show"},{"idx":87,"sp":"潘潘","t":"嗯。","s":279.16,"e":279.36,"ts":"4:39","ai":1,"dt":"pre_show"},{"idx":88,"sp":"雨林","t":"他就是SHARE之前他会问我，然后我他叫AS BACKGROUND，对好玩吧。","s":279.48,"e":285.12,"ts":"4:39","ai":1,"dt":"pre_show"},{"idx":89,"sp":"雨林","t":"好，那我把这个这样看得清楚吗？","s":286.13,"e":289.01,"ts":"4:46","ai":1,"dt":"pre_show"},{"idx":90,"sp":"雨林","t":"我把这个收起来稍等。","s":289.09,"e":290.73,"ts":"4:49","ai":1,"dt":"pre_show"},{"idx":91,"sp":"雨林","t":"嗯，然后。","s":292.36,"e":294.2,"ts":"4:52","ai":1,"dt":"pre_show"},{"idx":92,"sp":"阿司","t":"这样可以嗯可。","s":297.09,"e":299.41,"ts":"4:57","ai":1,"dt":"pre_show"},{"idx":93,"sp":"潘潘","t":"可以。","s":299.41,"e":300.13,"ts":"4:59","ai":1,"dt":"pre_show"},{"idx":94,"sp":"雨林","t":"O K好可以。","s":300.13,"e":301.93,"ts":"5:00","ai":1,"dt":"pre_show"},{"idx":95,"sp":"潘潘","t":"然后就是我我有个问题啊，嗯就是嗯。","s":302.29,"e":307.13,"ts":"5:02","ai":1,"dt":"pre_show"},{"idx":96,"sp":"潘潘","t":"大概就是录制的过程当中呃，是怎么说呢？","s":309.31,"e":315.67,"ts":"5:09","ai":1,"dt":"pre_show"},{"idx":97,"sp":"潘潘","t":"尽量按照稿子还是也有可以一，就是比如说想到什么可以一定的发挥。","s":316.03,"e":327.39,"ts":"5:16","ai":1,"dt":"pre_show"},{"idx":98,"sp":"潘潘","t":"然后不。","s":328.6,"e":329.2,"ts":"5:28","ai":1,"dt":"pre_show"},{"idx":99,"sp":"雨林","t":"然后。","s":329.2,"e":329.84,"ts":"5:29","ai":1,"dt":"pre_show"},{"idx":100,"sp":"潘潘","t":"嗯后者。","s":330.4,"e":331.24,"ts":"5:30","ai":1,"dt":"pre_show"},{"idx":101,"sp":"雨林","t":"嘛就是可以发挥，然后稿子就是你遇到那个问题你想要。","s":331.24,"e":336.24,"ts":"5:31","ai":1,"dt":"pre_show"},{"idx":102,"sp":"潘潘","t":"嗯OK那那OK OK嗯我的我因为我没有录过播客嘛，就是如果比如说嗯。","s":336.44,"e":346.76,"ts":"5:36","ai":1,"dt":"pre_show"},{"idx":103,"sp":"潘潘","t":"因为我感觉我的，就如果按照稿子的话，我写的回答都有点长嘛。","s":348.4,"e":353.6,"ts":"5:48","ai":1,"dt":"pre_show"},{"idx":104,"sp":"潘潘","t":"然后比如说我觉得说到一部分，我也不知道，就是你比如说你们有有没有一些 follow up 问题想问的话，就是你会，就是 like。","s":354.28,"e":366.04,"ts":"5:54","ai":1,"dt":"pre_show"},{"idx":105,"sp":"潘潘","t":"给我回复什么之类的，你有想说的话，这样这样子吗？","s":366.84,"e":370.48,"ts":"6:06","ai":1,"dt":"pre_show"},{"idx":106,"sp":"雨林","t":"我觉得是可以这样的，阿斯呢？","s":371.67,"e":373.39,"ts":"6:11","ai":1,"dt":"pre_show"},{"idx":107,"sp":"阿司","t":"我我去我不知道我可能感觉有稿子会更有安全感一点，因为我今天可能我今天姨妈第一天我可能脑子转的不是很快，所以所以可能多多包涵我我我就觉得如果我能拽回稿子的话我会更倾向于用稿子，但是你们可以就是发挥一下。","s":375.37,"e":396.81,"ts":"6:15","ai":1,"dt":"pre_show"},{"idx":108,"sp":"潘潘","t":"好好好好好我只是我只是我我我只是想到说就是之后剪辑上面。","s":396.81,"e":402.86,"ts":"6:36","ai":1,"dt":"pre_show"},{"idx":109,"sp":"潘潘","t":"如果中间有一些停顿啊什么之类的就比较大段的停顿这样。","s":403.18,"e":407.54,"ts":"6:43","ai":1,"dt":"pre_show"},{"idx":110,"sp":"雨林","t":"哦我们可以停顿。","s":407.78,"e":408.82,"ts":"6:47","ai":1,"dt":"pre_show"},{"idx":111,"sp":"潘潘","t":"应该没问题就是。","s":408.82,"e":410.02,"ts":"6:48","ai":1,"dt":"pre_show"},{"idx":112,"sp":"阿司","t":"我们还可以停一下就比如说先短暂的呃Recap或者嗯嗯嗯嗯嗯一下然后我们说哦那我们拉回到这个稿子上再开始然后或者就是你们想Water Break或者什么都可以很灵活对因为这回我我认识了一个小红书上那个朋友他是用做了一个AI AI Agent. ","s":410.02,"e":429.39,"ts":"6:50","ai":1,"dt":"pre_show"},{"idx":113,"sp":"阿司","t":"他是专门来剪播客的，然后他想让我试一下，我就想说我们这次的稿可以就直接丢给他，所以一会，所以，就是我们录完之后也可以聊一下，就是大家想怎么剪，就是哪一段大家想要剪掉或者什么的。","s":429.51,"e":445.35,"ts":"7:09","ai":1,"dt":"pre_show"},{"idx":114,"sp":"阿司","t":"都提前跟我说，我到时候直接让他对。","s":445.79,"e":448.23,"ts":"7:25","ai":1,"dt":"pre_show"},{"idx":115,"sp":"阿司","t":"嗯。","s":448.31,"e":448.43,"ts":"7:28","ai":1,"dt":"pre_show"},{"idx":116,"sp":"雨林","t":"好的，谢谢。","s":448.87,"e":449.55,"ts":"7:28","ai":1,"dt":"pre_show"},{"idx":117,"sp":"雨林","t":"没问题。","s":449.71,"e":450.27,"ts":"7:29","ai":1,"dt":"pre_show"},{"idx":118,"sp":"雨林","t":"对，虽然这是你第一次，但是我们也是第一次用这个稿子，其实就也期待，也，但是也可以接受有变化，灵活处理，好，没问题的。","s":450.43,"e":460.55,"ts":"7:30","ai":1,"dt":"pre_show"},{"idx":119,"sp":"雨林","t":"这你已经花了很多精力准备了。","s":460.67,"e":462.55,"ts":"7:40","ai":1,"dt":"pre_show"},{"idx":120,"sp":"潘潘","t":"这这个已经，对。","s":462.63,"e":463.59,"ts":"7:42","ai":1,"dt":"pre_show"},{"idx":121,"sp":"阿司","t":"还行，就非常感谢。","s":463.71,"e":465.23,"ts":"7:43","ai":1,"dt":"pre_show"},{"idx":122,"sp":"雨林","t":"嗯，还有阿思，我感觉声音那边还是有点，你能不能换回？","s":465.47,"e":469.87,"ts":"7:45","ai":1,"dt":"pre_show"},{"idx":123,"sp":"雨林","t":"你的电脑，我能再听一下吗？","s":470.13,"e":472.17,"ts":"7:50","ai":1,"dt":"pre_show"},{"idx":124,"sp":"雨林","t":"哦，对。","s":472.29,"e":472.93,"ts":"7:52","ai":1,"dt":"pre_show"},{"idx":125,"sp":"阿司","t":"对，再听一下。","s":473.21,"e":474.17,"ts":"7:53","ai":1,"dt":"pre_show"},{"idx":126,"sp":"雨林","t":"嗯，你你换回来这个是电脑。","s":474.41,"e":476.81,"ts":"7:54","ai":1,"dt":"pre_show"},{"idx":127,"sp":"阿司","t":"呃，现在是电脑。","s":477.21,"e":478.41,"ts":"7:57","ai":1,"dt":"pre_show"},{"idx":128,"sp":"潘潘","t":"呃，我觉得还是耳机。","s":479.25,"e":482.09,"ts":"7:59","ai":1,"dt":"pre_show"},{"idx":129,"sp":"雨林","t":"好一点。","s":482.25,"e":482.93,"ts":"8:02","ai":1,"dt":"pre_show"},{"idx":130,"sp":"阿司","t":"好像对耳机电脑。","s":483.53,"e":485.33,"ts":"8:03","ai":1,"dt":"pre_show"},{"idx":131,"sp":"阿司","t":"我看一下，现在又换回。","s":485.53,"e":487.61,"ts":"8:05","ai":1,"dt":"pre_show"},{"idx":132,"sp":"阿司","t":"现在应该是耳机。","s":489.32,"e":490.8,"ts":"8:09","ai":1,"dt":"pre_show"},{"idx":133,"sp":"雨林","t":"耳耳机好，那是耳机好一点嗯，密的感觉。","s":491,"e":493.8,"ts":"8:11","ai":1,"dt":"pre_show"},{"idx":134,"sp":"潘潘","t":"对对对对。","s":493.92,"e":494.56,"ts":"8:13","ai":1,"dt":"pre_show"},{"idx":135,"sp":"阿司","t":"私密的感觉。","s":494.84,"e":495.88,"ts":"8:14","ai":1,"dt":"pre_show"},{"idx":136,"sp":"雨林","t":"就是那种有一个在录音棚，就是有声音罩着的那种。","s":495.88,"e":499.4,"ts":"8:15","ai":1,"dt":"pre_show"},{"idx":137,"sp":"阿司","t":"感觉哦，那我的音质会跟你们两个不一样吗？","s":499.4,"e":502.72,"ts":"8:19","ai":1,"dt":"pre_show"},{"idx":138,"sp":"雨林","t":"嗯，我我觉得zoom好的好，就它它会有一个平衡的东西，所以还蛮好的。","s":503.28,"e":508.64,"ts":"8:23","ai":1,"dt":"pre_show"},{"idx":139,"sp":"雨林","t":"好，你到时候可以听一下。","s":508.84,"e":510.16,"ts":"8:28","ai":1,"dt":"pre_show"},{"idx":140,"sp":"雨林","t":"对，然后我们手机这边开了吧。","s":510.24,"e":512.64,"ts":"8:30","ai":1,"dt":"pre_show"},{"idx":141,"sp":"阿司","t":"手机开了。","s":512.88,"e":514.2,"ts":"8:32","ai":1,"dt":"pre_show"},{"idx":142,"sp":"雨林","t":"好然后我们来就是做一个叫做三二一拍手的视频潘潘就是因为因为手机那个音轨我们对不齐的嘛。","s":514.47,"e":522.87,"ts":"8:34","ai":1,"dt":"pre_show"},{"idx":143,"sp":"潘潘","t":"如果对对对我知道。","s":522.87,"e":524.35,"ts":"8:42","ai":1,"dt":"pre_show"},{"idx":144,"sp":"雨林","t":"嗯啊我说三二一拍我们就拍手啊就三二一拍啊三二一拍好再来一次啊好三二一。","s":524.35,"e":534.91,"ts":"8:44","ai":1,"dt":"pre_show"},{"idx":145,"sp":"雨林","t":"好OK很好你听到的你拍和我拍声音不一样但是没关系OK嗯OK还有最后一个事情本来今天小孩是上学的但是他就是昨天有点不舒服所以老师今天就让他待家里但是他现在在睡午觉然后我老公也在家如果有事他应该会可以吧好好但是如果很吵的话我可能就中间要嗯。","s":536.16,"e":560.2,"ts":"8:56","ai":1,"dt":"pre_show"},{"idx":146,"sp":"雨林","t":"希望不要不好意思。","s":560.56,"e":562.24,"ts":"9:20","ai":1,"dt":"pre_show"},{"idx":147,"sp":"阿司","t":"就是在潘潘潘潘突然说的很激情的时候然后突然宝宝。","s":563.2,"e":567.56,"ts":"9:23","ai":1,"dt":"pre_show"},{"idx":148,"sp":"潘潘","t":"在啊。","s":567.56,"e":568.4,"ts":"9:27","ai":1,"dt":"pre_show"},{"idx":149,"sp":"雨林","t":"所以这个要分开。","s":569.6,"e":570.72,"ts":"9:29","ai":1,"dt":"pre_show"},{"idx":150,"sp":"潘潘","t":"音轨录就是安全。","s":570.72,"e":572.32,"ts":"9:30","ai":1,"dt":"pre_show"},{"idx":151,"sp":"潘潘","t":"可以。","s":573.2,"e":573.48,"ts":"9:33","ai":1,"dt":"pre_show"},{"idx":152,"sp":"潘潘","t":"没事我刚好把我猫赶出去。","s":573.64,"e":575.52,"ts":"9:33","ai":1,"dt":"pre_show"},{"idx":153,"sp":"雨林","t":"哎呦。","s":575.96,"e":576.36,"ts":"9:35","ai":1,"dt":"pre_show"},{"idx":154,"sp":"雨林","t":"也可以作为baby。","s":578.16,"e":579.56,"ts":"9:38","ai":1,"dt":"pre_show"},{"idx":155,"sp":"雨林","t":"好的，好的，好，那我们就开始吧。","s":580.49,"e":586.25,"ts":"9:40","ai":1,"dt":"pre_show"},{"idx":156,"sp":"雨林","t":"好那我我读这个怎么样？","s":587.89,"e":590.05,"ts":"9:47","ai":1,"dt":"pre_show"},{"idx":157,"sp":"雨林","t":"还是阿斯你来。","s":590.17,"e":591.53,"ts":"9:50","ai":1,"dt":"pre_show"},{"idx":158,"sp":"阿司","t":"来呗雨林来吧我觉得开头可能大部分都是雨林。","s":592.45,"e":595.85,"ts":"9:52","ai":1,"dt":"pre_show"},{"idx":159,"sp":"雨林","t":"嗯好啊大家好欢迎来到P课我是主播雨林。","s":596.17,"e":601.65,"ts":"9:56"},{"idx":160,"sp":"阿司","t":"我是主播阿斯。","s":602.33,"e":603.73,"ts":"10:02"},{"idx":161,"sp":"雨林","t":"今天做客P课的还有潘潘潘。","s":604.41,"e":608.21,"ts":"10:04"},{"idx":162,"sp":"潘潘","t":"潘大家好我是潘潘。","s":608.21,"e":609.89,"ts":"10:08"},{"idx":163,"sp":"阿司","t":"好耶。","s":611.08,"e":612.08,"ts":"10:11"},{"idx":164,"sp":"雨林","t":"但潘潘可能不知道为什么被我喊来录节目，你觉得是为什么呢？","s":612.88,"e":619.24,"ts":"10:12"},{"idx":165,"sp":"雨林","t":"我又把问题扔回给你。","s":619.68,"e":621.08,"ts":"10:19"},{"idx":166,"sp":"潘潘","t":"我觉得是当然最明显的理由可能是因为云知道我之前学过人类学啊，所以可能和这个博客的主题比较契合吧。","s":622.16,"e":637.36,"ts":"10:22"},{"idx":167,"sp":"潘潘","t":"然后，嗯，所以雨林一开始去年吧来邀请我的时候，嗯，怎么说我就是一口就答应下了，然后也没多想。","s":638.06,"e":649.94,"ts":"10:38"},{"idx":168,"sp":"潘潘","t":"然后也是在准备这个，嗯，最最近这两周在准备的过程当中，哎，突然想说。","s":650.22,"e":656.62,"ts":"10:50"},{"idx":169,"sp":"潘潘","t":"哎我是为什么要来为什么要来来嗯来上这个博客呢然后就想问问。","s":657.43,"e":666.15,"ts":"10:57"},{"idx":170,"sp":"雨林","t":"于林太感谢了对我最早我发现我以为你是研究生读的人类学就我想来我是不是把能身边我认识的不认识的但是我知道读了人类学研究生的人都或者博士都找来录节目了。","s":666.15,"e":682.37,"ts":"11:06"},{"idx":171,"sp":"雨林","t":"但后来发现，原来你是本科就读了人类学，好像就更难得一点。","s":682.45,"e":687.09,"ts":"11:22"},{"idx":172,"sp":"雨林","t":"其实嗯，对，所以非常感谢，就是要就是一口答应，非常开心。","s":687.17,"e":694.97,"ts":"11:27"},{"idx":173,"sp":"雨林","t":"感觉就是呃，对我们的信任。","s":695.17,"e":697.73,"ts":"11:35"},{"idx":174,"sp":"雨林","t":"那也也也希望以后有更多的呃，对人类学感兴趣，或者说有人类学背景的朋友可以来加入这个播客。","s":697.85,"e":705.89,"ts":"11:37"},{"idx":175,"sp":"雨林","t":"嗯，谢谢你的。","s":706.01,"e":707.65,"ts":"11:46"},{"idx":176,"sp":"雨林","t":"展。","s":708.1,"e":708.7,"ts":"11:48"},{"idx":177,"sp":"潘潘","t":"嗯，很高兴来到毕克。","s":709.93,"e":712.29,"ts":"11:49"},{"idx":178,"sp":"雨林","t":"你也对我我我之前看到你后面什么海报我现在你好像挡住还在吗啊哦在那里啊阿斯能看到吗他是就是在那个书架的右边现在比较小了但是乍眼看我当时以为是那种瑜伽动作因为我知道他那种跳舞嘛我想哎可能练瑜伽是不是有那种。","s":713.07,"e":737.27,"ts":"11:53"},{"idx":179,"sp":"雨林","t":"嗯，这是什么可以给我们介绍一下？","s":737.46,"e":739.98,"ts":"12:17"},{"idx":180,"sp":"潘潘","t":" 嗯，好的，这个呢是呃它其实是一张年历，嗯，是我去年在纽约的艺术书展上买的。","s":740.66,"e":750.58,"ts":"12:20"},{"idx":181,"sp":"潘潘","t":"然后他的作者呢，是我最近这几年一直在 follow 然后我很喜欢的一位嗯中国艺术家叫常雨辰。","s":751.06,"e":760.14,"ts":"12:31"},{"idx":182,"sp":"潘潘","t":"然后这张年历上面呢，不知道你们看不看得到，嗯，有12种不同形状的珊瑚的图案。","s":760.66,"e":769.22,"ts":"12:40"},{"idx":183,"sp":"潘潘","t":"然后他们分别对应12个月份，然后在每个图案下面呢，除了这个月份之外还标注了一组词语。","s":769.68,"e":779.32,"ts":"12:49"},{"idx":184,"sp":"潘潘","t":"然后他们分别是呃一个马来文的单词，然后以及和它对应的嗯相同意思的这个一个英文单词和一个中文单词。","s":779.8,"e":790.36,"ts":"12:59"},{"idx":185,"sp":"潘潘","t":"比如说1月份啊，这个下面马来文叫MULA，呃英文是BEGINNING，然后中文是开始。","s":791,"e":798.92,"ts":"13:11"},{"idx":186,"sp":"潘潘","t":"呃，再比如说九月，马来文是巴拉哈尔，呃，英文是STUDY，中文是学习。","s":799.51,"e":806.51,"ts":"13:19"},{"idx":187,"sp":"潘潘","t":"然后嗯，这个整个排版吧，然后和我们平常用的词典，呃，或者说应该不是平常用的词典了，现在谁还用纸本词典的？","s":807.03,"e":820.27,"ts":"13:27"},{"idx":188,"sp":"潘潘","t":"嗯，我们小时候吧，用的词典，呃，或者说这个背单词用的单词表的排版挺像的。","s":820.79,"e":827.07,"ts":"13:40"},{"idx":189,"sp":"潘潘","t":"然后它有一个不同语言的词汇一一对应的感觉。","s":827.48,"e":831.24,"ts":"13:47"},{"idx":190,"sp":"潘潘","t":"然后在这个词汇上面呢，雨晨又为每一组词汇搭配了一个珊瑚的图案。","s":832.08,"e":838.84,"ts":"13:52"},{"idx":191,"sp":"潘潘","t":"然后比如说我我在这里面我最喜欢的是那个九月的这一块珊瑚，它代表学习，然后形状上呢，它对开学了，然后很像就是。","s":839.24,"e":851.28,"ts":"13:59"},{"idx":192,"sp":"潘潘","t":"呃，形状上吧，它很像一块就是呃，它又像一块就是用的很久的粗糙的海绵，然后里面有很多破洞，然后边边角角也都嗯，碎碎的、烂烂的。","s":851.58,"e":863.22,"ts":"14:11"},{"idx":193,"sp":"潘潘","t":"然后呢，它与此同时也很像一片九月开学时期的落叶。","s":863.62,"e":868.5,"ts":"14:23","sug":1,"sugReason":"落叶想象展开过多"},{"idx":194,"sp":"潘潘","t":"然后呢，我会想象它可能之前掉在地上，然后被踩过。","s":868.86,"e":874.02,"ts":"14:28","sug":1,"sugReason":"落叶想象展开过多"},{"idx":195,"sp":"潘潘","t":"它它它九月的落叶会有怎样的嗯？","s":874.14,"e":878.1,"ts":"14:34","sug":1,"sugReason":"落叶想象展开过多"},{"idx":196,"sp":"潘潘","t":"经历过怎样的啊日子，然后到它最终呈现的现在这样，也是像海绵一样非常不完整、破破烂烂的啊这么一个状态。","s":878.67,"e":888.71,"ts":"14:38","sug":1,"sugReason":"落叶想象展开过多"},{"idx":197,"sp":"潘潘","t":"嗯，我不知道就是艺术家本人是怎么想的，但是我对这个月份和图案的理解就像雨林刚刚说的一样，九月是开学的日子。","s":889.23,"e":897.99,"ts":"14:49"},{"idx":198,"sp":"潘潘","t":"然后嗯，我也知道我们三个人好像都是日语人，然后日语里面有那个对DOCKSHONAKI，就是读书之秋这个说法。","s":898.43,"e":908.95,"ts":"14:58"},{"idx":199,"sp":"潘潘","t":"所以好像就是9月和秋天，就是沉下心来读书充电，然后把自己当成像海绵一样去吸收知识的日子。","s":909.2,"e":921.16,"ts":"15:09"},{"idx":200,"sp":"潘潘","t":"然后又好又好像像落叶一样代表那个季节。","s":921.64,"e":924.84,"ts":"15:21","sug":1,"sugReason":"重复提问"},{"idx":201,"sp":"潘潘","t":"至于说为什么是珊瑚呢？","s":925.6,"e":927.72,"ts":"15:25","sug":1,"sugReason":"重复提问"},{"idx":202,"sp":"潘潘","t":"为什么要用珊瑚去搭配这个词语呢？","s":927.8,"e":930.2,"ts":"15:27","sug":1,"sugReason":"重复提问"},{"idx":203,"sp":"潘潘","t":"其实嗯，这张年历是雨晨他一个更大的项目衍生出来的一件小作品。","s":930.56,"e":937.2,"ts":"15:30"},{"idx":204,"sp":"潘潘","t":"然后这个大项目，母项目吧，叫珊瑚词典。","s":937.76,"e":941.56,"ts":"15:37"},{"idx":205,"sp":"潘潘","t":"这些珊瑚呢，是雨晨呃，可能疫情之前吧，前几年嗯，参加嗯，去马来西亚参加在那边的一个嗯，海岛上面的一个艺术驻地项目。","s":942.36,"e":956.28,"ts":"15:42","sug":1,"sugReason":"艺术驻地背景+珊瑚采集细节"},{"idx":206,"sp":"潘潘","t":"然后在嗯，那个还在在那个呃期间呢，雨晨。","s":956.8,"e":961.96,"ts":"15:56","sug":1,"sugReason":"艺术驻地背景+珊瑚采集细节"},{"idx":207,"sp":"潘潘","t":"啊，从那边的海滩上捡来可能有上百块嗯不同形状的白色珊瑚。","s":962.27,"e":970.15,"ts":"16:02","sug":1,"sugReason":"艺术驻地背景+珊瑚采集细节"},{"idx":208,"sp":"潘潘","t":"然后在这个珊瑚词典里面，雨晨他把不同的嗯词语啊，马来文、英文和中文的，然后和那些珊瑚一一对应起来。","s":970.59,"e":982.95,"ts":"16:10","sug":1,"sugReason":"艺术驻地背景+珊瑚采集细节"},{"idx":209,"sp":"潘潘","t":"然后整个感觉有点像是带着我们像学语言、学单词一样去读那些珊瑚。","s":983.35,"e":990.55,"ts":"16:23","sug":1,"sugReason":"艺术驻地背景+珊瑚采集细节"},{"idx":210,"sp":"潘潘","t":"嗯，比如说，嗯，我其实其实他后来又呃呃出了一本小书，就真的是把整个所所有作品合集做成像词典一样的小书。","s":990.82,"e":1001.46,"ts":"16:30","sug":1,"sugReason":"珊瑚词典逐个举例+重复表达喜爱"},{"idx":211,"sp":"潘潘","t":"嗯，我现在不在手边吧，但是呃那个书里面有呃其他各种各样的词语，比如说呃有一块就是小小的，像有点像鹌鹑蛋一个形状大小的珊瑚，然后雨晨把它和那个。","s":1001.86,"e":1017.58,"ts":"16:41","sug":1,"sugReason":"珊瑚词典逐个举例+重复表达喜爱"},{"idx":212,"sp":"潘潘","t":"这个这个这个单词对应起来，然后英文是 this，然后马来文是 ini，对。","s":1018.2,"e":1023.28,"ts":"16:58","sug":1,"sugReason":"珊瑚词典逐个举例+重复表达喜爱"},{"idx":213,"sp":"潘潘","t":"然后另外还有一块是一更大一点的，然后里面有两个对称的洞。","s":1023.72,"e":1031.04,"ts":"17:03","sug":1,"sugReason":"珊瑚词典逐个举例+重复表达喜爱"},{"idx":214,"sp":"潘潘","t":"这个词，雨晨觉得它是 same，就是一样的。","s":1032.44,"e":1036.24,"ts":"17:12","sug":1,"sugReason":"珊瑚词典逐个举例+重复表达喜爱"},{"idx":215,"sp":"潘潘","t":"然后马来文是 sama，然后所以就是当然就是每个人我觉得拿，看到这个项目之后，对这个词汇和珊瑚的一一对应，都会有自己不同的理解吧。","s":1036.6,"e":1049.28,"ts":"17:16","sug":1,"sugReason":"珊瑚词典逐个举例+重复表达喜爱"},{"idx":216,"sp":"潘潘","t":"然后有些呃有些他有些。","s":1049.64,"e":1052.64,"ts":"17:29","sug":1,"sugReason":"珊瑚词典逐个举例+重复表达喜爱"},{"idx":217,"sp":"潘潘","t":"有些对应他们的这个，有些联系他们非常具象，然后有些又挺抽象。","s":1053.84,"e":1060.92,"ts":"17:33","sug":1,"sugReason":"珊瑚词典逐个举例+重复表达喜爱"},{"idx":218,"sp":"潘潘","t":"所以就很像嗯，我们去学语言的时候，就是不同的语言带给我们的感受一样。","s":1061.04,"e":1069.2,"ts":"17:41","sug":1,"sugReason":"珊瑚词典逐个举例+重复表达喜爱"},{"idx":219,"sp":"潘潘","t":"嗯，我自己是特别特别喜欢这个项目，然后也一直在关注他的雨晨的整个。","s":1069.84,"e":1077,"ts":"17:49","sug":1,"sugReason":"珊瑚词典逐个举例+重复表达喜爱"},{"idx":220,"sp":"潘潘","t":"嗯，艺术实践吧。","s":1077.52,"e":1078.68,"ts":"17:57","sug":1,"sugReason":"珊瑚词典逐个举例+重复表达喜爱"},{"idx":221,"sp":"潘潘","t":"因为嗯，他这个项目把我可能最感兴趣的一些东西都串起来了，比如说语言、比如说翻译、比如说嗯，学习语言的过程、翻译语言的过程，嗯，甚至是就是词典这个这个书本身、这个物这部件本身，然后包括啊，珊瑚他们啊，这个人与自然，珊瑚代表的就是人与自然环境的一个互动。","s":1079.04,"e":1106.96,"ts":"17:59","sug":1,"sugReason":"珊瑚词典逐个举例+重复表达喜爱"},{"idx":222,"sp":"潘潘","t":"嗯，到到这种书籍的排版排版装帧，以及这个artist book就是艺术家书的制作售卖等等。","s":1107.48,"e":1117.52,"ts":"18:27","sug":1,"sugReason":"珊瑚词典逐个举例+重复表达喜爱"},{"idx":223,"sp":"潘潘","t":"所以嗯就是这几年一直在关注这个项目。","s":1117.64,"e":1121.2,"ts":"18:37","sug":1,"sugReason":"珊瑚词典逐个举例+重复表达喜爱"},{"idx":224,"sp":"阿司","t":"哇哦可以给我们讲讲是怎么发现的这位宝藏艺术家吗嗯。","s":1122.19,"e":1128.15,"ts":"18:42"},{"idx":225,"sp":"潘潘","t":"呃我最早应该是在。","s":1128.15,"e":1131.71,"ts":"18:48"},{"idx":226,"sp":"潘潘","t":"嗯。","s":1134.08,"e":1134.68,"ts":"18:54","sug":1,"sugReason":"回忆过程反复犹豫"},{"idx":227,"sp":"潘潘","t":"我想想啊，嗯，雨晨算是在我现在生活在就是啊纽约嘛。","s":1136.68,"e":1143.64,"ts":"18:56","sug":1,"sugReason":"回忆过程反复犹豫"},{"idx":228,"sp":"潘潘","t":"然后雨晨应该算是在纽约比较活跃的，嗯，中国艺术家，可能可能最活跃的年轻的中国艺术家之一。","s":1143.76,"e":1153.68,"ts":"19:03","sug":1,"sugReason":"回忆过程反复犹豫"},{"idx":229,"sp":"潘潘","t":"我有点想不起来我最早是怎么认识他的了，嗯。","s":1154.56,"e":1159.32,"ts":"19:14","sug":1,"sugReason":"回忆过程反复犹豫"},{"idx":230,"sp":"潘潘","t":"可能也是在社交媒体上吧，就是刷到。","s":1161.22,"e":1164.66,"ts":"19:21","sug":1,"sugReason":"回忆过程反复犹豫"},{"idx":231,"sp":"潘潘","t":"然后嗯，对对对，因为这个项目，嗯，疫情之前好像是疫情之前就开始了吧？","s":1164.94,"e":1170.86,"ts":"19:24","sug":1,"sugReason":"回忆过程反复犹豫"},{"idx":232,"sp":"潘潘","t":"应该是应该是疫情的时候，就是在网上刷到他，然后嗯，看了他过往的一些作品。","s":1170.94,"e":1177.58,"ts":"19:30","sug":1,"sugReason":"回忆过程反复犹豫"},{"idx":233,"sp":"潘潘","t":"然后呢，是嗯……大概是21年、22年的时候，我还跟他上了一节网课，专门去学了。","s":1177.82,"e":1188.28,"ts":"19:37"},{"idx":234,"sp":"潘潘","t":"对对对，那节网课叫INTRODUCTION TO BOOKBINDING，就是嗯书籍装帧入门，可以这么说理解吧？","s":1188.4,"e":1196.48,"ts":"19:48","sug":1,"sugReason":"网课细节过多（6周/8周/材料寄送）"},{"idx":235,"sp":"潘潘","t":"嗯，然后对对对，然后就是一个好像是6周还是8周的呃网课。","s":1196.76,"e":1205.88,"ts":"19:56","sug":1,"sugReason":"网课细节过多（6周/8周/材料寄送）"},{"idx":236,"sp":"潘潘","t":"然后当时因为还在疫情期间嘛，所以嗯 host 的那个网课的机构，他们就把需要的材料寄给我们，然后我们就 zoom 然后在家里做。","s":1206.11,"e":1217.95,"ts":"20:06","sug":1,"sugReason":"网课细节过多（6周/8周/材料寄送）"},{"idx":237,"sp":"潘潘","t":"呃，每周会学习一种就是线装书的不同的 binding 的方法。","s":1218.19,"e":1222.95,"ts":"20:18","sug":1,"sugReason":"网课细节过多（6周/8周/材料寄送）"},{"idx":238,"sp":"潘潘","t":"对，然后就最后就做，最后就做大概七八种不同各种各样不同的小册子。","s":1223.55,"e":1229.23,"ts":"20:23","sug":1,"sugReason":"网课细节过多（6周/8周/材料寄送）"},{"idx":239,"sp":"雨林","t":"哇！","s":1229.95,"e":1230.47,"ts":"20:29"},{"idx":240,"sp":"阿司","t":"对，天呐！","s":1230.71,"e":1231.63,"ts":"20:30"},{"idx":241,"sp":"雨林","t":"所以你可能应该跟他还有联系吧？","s":1231.75,"e":1234.11,"ts":"20:31"},{"idx":242,"sp":"潘潘","t":"对对对对对，我就是去年去买了这张年历的时候，也跟他打了招呼。","s":1234.55,"e":1239.59,"ts":"20:34"},{"idx":243,"sp":"潘潘","t":"对。","s":1240.02,"e":1240.3,"ts":"20:40"},{"idx":244,"sp":"阿司","t":"好棒。","s":1240.54,"e":1241.34,"ts":"20:40"},{"idx":245,"sp":"雨林","t":"这个对潘潘，我我我感觉潘潘就是兴趣特别广泛的。","s":1241.86,"e":1246.46,"ts":"20:41"},{"idx":246,"sp":"雨林","t":"因为我当时最早认识他，还是在一个网课。","s":1246.82,"e":1249.58,"ts":"20:46"},{"idx":247,"sp":"潘潘","t":"疫情前的一个翻译课。","s":1249.7,"e":1251.22,"ts":"20:49"},{"idx":248,"sp":"潘潘","t":"说到网课，触动了关键词。","s":1251.26,"e":1254.18,"ts":"20:51"},{"idx":249,"sp":"雨林","t":"翻译课，我们一会儿可以再聊一聊你跟语言的啊，你对语言的兴趣和热情。","s":1254.54,"e":1260.98,"ts":"20:54"},{"idx":250,"sp":"雨林","t":"嗯，那要不让潘潘介绍一下你跟你学人类学，你是怎么接触到人类学的？","s":1261.5,"e":1268.18,"ts":"21:01"},{"idx":251,"sp":"雨林","t":"你会怎么描述自己跟人类学的关系？","s":1268.26,"e":1271.26,"ts":"21:08"},{"idx":252,"sp":"潘潘","t":"嗯，是的。","s":1272.51,"e":1273.19,"ts":"21:12"},{"idx":253,"sp":"潘潘","t":"我说实话也是在准备这一期播客的过程当中好好想了想这个问题，因为我觉得嗯，可能在嗯，虽然说我本科的专业是人类学，但是我从来没有嗯，哪怕是当时选择人类学的时候。","s":1273.59,"e":1296.99,"ts":"21:13"},{"idx":254,"sp":"潘潘","t":"也说实话，真的是没有把它没有想过要往这个人类学，就是作为一个职业方向去发展。","s":1297.25,"e":1306.17,"ts":"21:37"},{"idx":255,"sp":"潘潘","t":"嗯，为什么这么说呢？","s":1306.73,"e":1308.65,"ts":"21:46"},{"idx":256,"sp":"潘潘","t":"呃，一方面我觉得是呃，这个学科本身就是人类学，它不是一个和某一个行业就是深度挂钩的学科。","s":1309.21,"e":1320.05,"ts":"21:49"},{"idx":257,"sp":"潘潘","t":"你比如说像。","s":1320.29,"e":1321.45,"ts":"22:00","sug":1,"sugReason":"职业对比举例展开"},{"idx":258,"sp":"潘潘","t":"你如果学计算机，你如果学建筑，甚至你如果学一些，甚至可能说社会学吧，都有一个嗯特别具体的行业和一些具体的职位在等着你。","s":1321.57,"e":1333.29,"ts":"22:01","sug":1,"sugReason":"职业对比举例展开"},{"idx":259,"sp":"潘潘","t":"但是人类学至少给我的感觉是，你除了留在学术界当一个人类学家之外，他可能从你一开始选择这个专业的时候，你就要去寻找。","s":1333.65,"e":1348.25,"ts":"22:13"},{"idx":260,"sp":"潘潘","t":"这个呃，答案就是你今后想要做什么对吧？","s":1348.75,"e":1353.35,"ts":"22:28"},{"idx":261,"sp":"潘潘","t":"因为因为虽然我们也之后会聊到，就是人类学的应用特别的广泛。","s":1353.47,"e":1358.39,"ts":"22:33"},{"idx":262,"sp":"潘潘","t":"但是呃，就是到底能应用在哪儿，就是可能你从一开始就得去思考这个问题，要要怎么样和他把你的嗯，和你的职业去挂钩。","s":1358.51,"e":1369.47,"ts":"22:38"},{"idx":263,"sp":"潘潘","t":"嗯，所以就是。","s":1370.07,"e":1372.27,"ts":"22:50"},{"idx":264,"sp":"潘潘","t":"嗯，人类学对我来说，它嗯很像一个工具箱。","s":1372.89,"e":1378.77,"ts":"22:52"},{"idx":265,"sp":"潘潘","t":"它有一个，它为我们提供了很多文化研究的方法。","s":1378.89,"e":1382.69,"ts":"22:58"},{"idx":266,"sp":"潘潘","t":"嗯，但对我来说，嗯，它更像是一个灵感盒。","s":1383.25,"e":1388.21,"ts":"23:03"},{"idx":267,"sp":"潘潘","t":"因为我觉得这个学科它特别的包容。","s":1388.33,"e":1391.65,"ts":"23:08"},{"idx":268,"sp":"潘潘","t":"嗯，从学科本身来说，它有很多分支。","s":1392.17,"e":1395.81,"ts":"23:12"},{"idx":269,"sp":"潘潘","t":"嗯，这个是可能我。","s":1396.25,"e":1398.59,"ts":"23:16","sug":1,"sugReason":"分支列举+学术会议提及"},{"idx":270,"sp":"潘潘","t":"本科大概是人类学第一节课的时候，我们就学说啊，它有哪些分支？","s":1398.91,"e":1404.07,"ts":"23:18","sug":1,"sugReason":"分支列举+学术会议提及"},{"idx":271,"sp":"潘潘","t":"有文化人类学、有语言人类学、有医学人类学等等。","s":1404.19,"e":1408.19,"ts":"23:24","sug":1,"sugReason":"分支列举+学术会议提及"},{"idx":272,"sp":"潘潘","t":"嗯，其他应用类的分支。","s":1408.39,"e":1410.03,"ts":"23:28","sug":1,"sugReason":"分支列举+学术会议提及"},{"idx":273,"sp":"潘潘","t":"然后后来呢，又上了更多的课，然后去参加一些啊学术会议啊之类的。","s":1410.79,"e":1417.27,"ts":"23:30","sug":1,"sugReason":"分支列举+学术会议提及"},{"idx":274,"sp":"潘潘","t":"然后我就会……然后然后去看人类学到底能研究什么东西。","s":1417.35,"e":1422.31,"ts":"23:37","sug":1,"sugReason":"分支列举+学术会议提及"},{"idx":275,"sp":"潘潘","t":"有的时候真的会有一种就是事事皆可人类学的感觉。","s":1422.43,"e":1426.15,"ts":"23:42"},{"idx":276,"sp":"潘潘","t":"嗯，什么都可以研究。","s":1426.47,"e":1427.95,"ts":"23:46"},{"idx":277,"sp":"潘潘","t":"然后嗯，为你自己的个人职业发展也好，兴趣发展也好，就是至少对我来说，它给了我很多方向上的灵感。","s":1428.07,"e":1437.67,"ts":"23:48"},{"idx":278,"sp":"潘潘","t":"嗯，所以说我觉得我个人是非常受益于人类学的这种开放性吧，因为嗯…. ","s":1438.03,"e":1446.01,"ts":"23:58"},{"idx":279,"sp":"潘潘","t":"…. ","s":1446.01,"e":1446.01,"ts":"24:06","sug":1,"sugReason":"过渡停顿+铺垫过长"},{"idx":280,"sp":"阿司","t":"…. ","s":1446.01,"e":1446.51,"ts":"24:06","sug":1,"sugReason":"过渡停顿+铺垫过长"},{"idx":281,"sp":"潘潘","t":"我我现在想想，就当初为什么要学人类学？","s":1446.51,"e":1449.39,"ts":"24:06","sug":1,"sugReason":"过渡停顿+铺垫过长"},{"idx":282,"sp":"潘潘","t":"嗯，与其说是我作为一个大学生去选择人类学，现在想起来其实更像是人类学接纳了当时的我。","s":1449.87,"e":1460.83,"ts":"24:09","sug":1,"sugReason":"过渡停顿+铺垫过长"},{"idx":283,"sp":"潘潘","t":"因为嗯，就像雨林刚刚说的，我我是一个兴趣爱好特别广泛的人，然后我现在想来那个时候嗯…. ","s":1461.19,"e":1470.65,"ts":"24:21","sug":1,"sugReason":"过渡停顿+铺垫过长"},{"idx":284,"sp":"潘潘","t":"…. ","s":1470.65,"e":1470.65,"ts":"24:30","sug":1,"sugReason":"过渡停顿+铺垫过长"},{"idx":285,"sp":"阿司","t":"…. ","s":1470.65,"e":1470.81,"ts":"24:30","sug":1,"sugReason":"过渡停顿+铺垫过长"},{"idx":286,"sp":"潘潘","t":"就是大一大二的我吧，就刚来到美国，然后刚开始上大学，然后嗯不像高中，就是上大学了有可以自己选课的自由，就是什么都想试试，然后真的是什么都想上。","s":1470.81,"e":1484.05,"ts":"24:30","sug":1,"sugReason":"过渡停顿+铺垫过长"},{"idx":287,"sp":"潘潘","t":"然后呃我本科学的是，我本科读的是一所嗯美国东部的文理学院，然后文理学院它普遍比较小，而且呢对于就是选课啊，包括你选专业啊，包括你怎么样去搭建自己大学四年的课程，都是整体的氛围是比较自由的。","s":1484.69,"e":1505.89,"ts":"24:44","sug":1,"sugReason":"文理学院介绍+选课列表"},{"idx":288,"sp":"潘潘","t":"然后像我们当时最晚可以在大二下半学期选大三的课之前定专业就好了。","s":1506.36,"e":1512.52,"ts":"25:06","sug":1,"sugReason":"文理学院介绍+选课列表"},{"idx":289,"sp":"潘潘","t":"所以嗯那个时候我大一的选课是完全放飞自我，就是想什么都想上上上历史课、美术史课。","s":1512.92,"e":1525.08,"ts":"25:12","sug":1,"sugReason":"文理学院介绍+选课列表"},{"idx":290,"sp":"潘潘","t":"文学课、生物也上了一点，然后还有像是必修的写写写作课，嗯，以及语言上面我学了一点点的梵语，然后还上了一点呃，还上了两节踢踏舞的课。","s":1526.03,"e":1540.31,"ts":"25:26","sug":1,"sugReason":"文理学院介绍+选课列表"},{"idx":291,"sp":"潘潘","t":"嗯，所以就是什么什么都想试一试。","s":1540.95,"e":1544.19,"ts":"25:40","sug":1,"sugReason":"文理学院介绍+选课列表"},{"idx":292,"sp":"潘潘","t":"然后后来好像是和当时的呃，我的ADVISOR，嗯，我的导师，就是他会我们我们至少每个学期会嗯面谈大概一到两次，然后去讨论下个学期要选择什么样的课，包括你对什么样的专业感兴趣，今后要要定哪个专业之类的。","s":1544.43,"e":1562.87,"ts":"25:44","sug":1,"sugReason":"文理学院介绍+选课列表"},{"idx":293,"sp":"潘潘","t":"然后他嗯，是那个教授。","s":1563.36,"e":1565.6,"ts":"26:03"},{"idx":294,"sp":"潘潘","t":"他当时向我推荐人类学，因为嗯，我记得他就说：‘诶，就是感觉你兴趣爱好很多，这也想试试，那也想试试。","s":1565.72,"e":1575.68,"ts":"26:05"},{"idx":295,"sp":"潘潘","t":"’就是嗯，你有没有想过？","s":1575.72,"e":1579.24,"ts":"26:15"},{"idx":296,"sp":"潘潘","t":"你有没有考虑过人类学？","s":1579.36,"e":1580.72,"ts":"26:19","sug":1,"sugReason":"对话细节过多"},{"idx":297,"sp":"潘潘","t":"然后我就想说：‘嗯，没有，就是也不知道是是什么。","s":1581.28,"e":1586.64,"ts":"26:21","sug":1,"sugReason":"对话细节过多"},{"idx":298,"sp":"潘潘","t":"’就是嗯，很好，大概可大概大概是个社科类的专业吧，但就是完全没有任何的概念。","s":1587.04,"e":1593.72,"ts":"26:27","sug":1,"sugReason":"对话细节过多"},{"idx":299,"sp":"潘潘","t":"所以，嗯，后来我就在大二的。","s":1594.37,"e":1598.25,"ts":"26:34","sug":1,"sugReason":"对话细节过多"},{"idx":300,"sp":"潘潘","t":"我现在有点不记得上学期还是下学期，选择了那个呃文化人类学101。","s":1598.57,"e":1604.73,"ts":"26:38","sug":1,"sugReason":"对话细节过多"},{"idx":301,"sp":"潘潘","t":"然后后来，嗯，我记得是应该就是第一节课吧，然后呃，我们就开始讲一些，讲完那个SYLLABUS，讲完讲完教学大纲之后，我们就。","s":1605.45,"e":1618.81,"ts":"26:45","sug":1,"sugReason":"对话细节过多"},{"idx":302,"sp":"潘潘","t":"开始说啊，人类学到底是什么？","s":1619.21,"e":1621.69,"ts":"26:59"},{"idx":303,"sp":"潘潘","t":"文化人类学到底是什么？","s":1621.77,"e":1623.17,"ts":"27:01"},{"idx":304,"sp":"潘潘","t":"然后就开始学了一些嗯，文化人类学的非常非常基础的概念，比如说啊，习俗啊、信仰啊、宗教啊、宗族啊、性别啊、家庭啊、身份啊等等。","s":1623.57,"e":1637.09,"ts":"27:03","sug":1,"sugReason":"概念复述"},{"idx":305,"sp":"潘潘","t":"然后我记得那个时候我就突然想起来了，小时候最喜欢看的一本啊，非常小开本，然后是蓝白封面的一个一本世界百科。","s":1637.49,"e":1649.05,"ts":"27:17"},{"idx":306,"sp":"潘潘","t":"嗯，然后我记得那本书是按大洲分类，然后再以国家为单元去给你介绍啊世界各地的，就是地理风风貌啊、人文风土啊、啊名胜古迹啊之类的。","s":1650,"e":1663.28,"ts":"27:30"},{"idx":307,"sp":"潘潘","t":"然后我小时候翻这本书的时候，会在脑子里有一张世界地图，然后每然后就每看到一点什么啊新的啊文化风俗之类的，我就会想说诶，就是脑子里的这个世界地图又感觉像是添了一笔。","s":1663.68,"e":1682.32,"ts":"27:43"},{"idx":308,"sp":"潘潘","t":"然后我那个时候就是非常非常对那本书真是爱不释手，然后会去还会还会给自己补课，然后去会会去查里面很多的呃语言啊、地理上的专有名词。","s":1682.66,"e":1695.3,"ts":"28:02"},{"idx":309,"sp":"潘潘","t":"所以嗯，就对于对于当时的我来说，就是通过那本《小小的世界百科》去了解这个世界，就是一件特别幸福的事情。","s":1696.42,"e":1707.18,"ts":"28:16"},{"idx":310,"sp":"潘潘","t":"然后后来，嗯，在文化人类学101的课堂上面，然后就就开始学那些呃……诶，就是习俗它到底是什么？","s":1708,"e":1717.12,"ts":"28:28"},{"idx":311,"sp":"潘潘","t":"呃，人类的族群它它除了有这些分类之外，它这些分类到底代表了什么意义。","s":1717.48,"e":1723.64,"ts":"28:37"},{"idx":312,"sp":"潘潘","t":"然后我就诶，突然想到小时候翻世界百科的那个体验，嗯嗯，就感觉好像……兜兜转转，就重新找回了那一份当时嗯，就是小时候想要去探索世界的那个心情吧。","s":1724.04,"e":1741.17,"ts":"28:44"},{"idx":313,"sp":"潘潘","t":"然后我觉得后来，当然后来就是上了不同的课，嗯，人类学的学习，其实是嗯，在用一种更复杂、更深入、更有层次的方式去去丰富我脑子每个人自己脑中的那张世界地图。","s":1741.49,"e":1757.17,"ts":"29:01"},{"idx":314,"sp":"潘潘","t":"所以嗯，对我来说呃…. ","s":1757.29,"e":1760.79,"ts":"29:17"},{"idx":315,"sp":"潘潘","t":"…. ","s":1760.79,"e":1760.79,"ts":"29:20"},{"idx":316,"sp":"阿司","t":"…. ","s":1760.79,"e":1761.15,"ts":"29:20"},{"idx":317,"sp":"潘潘","t":"后来选择了人类学，能够能够找到人类学这个大家庭，就很像是找到了一个嗯知识和兴趣上兴趣上的归宿的感觉。","s":1761.15,"e":1774.31,"ts":"29:21"},{"idx":318,"sp":"雨林","t":"嗯有种就是双向。","s":1775.11,"e":1777.55,"ts":"29:35"},{"idx":319,"sp":"潘潘","t":"你在双向奔赴。","s":1777.75,"e":1779.47,"ts":"29:37"},{"idx":320,"sp":"雨林","t":"有点肉麻但是对感觉，哎可以问一下你就对在美国选专业或者上大学朋友不呃不了解的朋友，你当时申请这文理学院的时候你有。","s":1780.51,"e":1791.39,"ts":"29:40","sug":1,"sugReason":"选专业流程讨论偏离主题"},{"idx":321,"sp":"雨林","t":"说你想要学什么专业嘛，我知道有的学校会有这个要求，或者说希望你是一个带着目的来的人，对吧？","s":1791.83,"e":1799.87,"ts":"29:51","sug":1,"sugReason":"选专业流程讨论偏离主题"},{"idx":322,"sp":"雨林","t":"但有的学校就是我也改过好几次专业这样。","s":1799.95,"e":1802.31,"ts":"29:59","sug":1,"sugReason":"选专业流程讨论偏离主题"},{"idx":323,"sp":"潘潘","t":"是的，我们学校也是属于比较嗯。","s":1803.23,"e":1807.79,"ts":"30:03","sug":1,"sugReason":"选专业流程讨论偏离主题"},{"idx":324,"sp":"潘潘","t":"要求比较松的类型吧，他是会问我。","s":1809.6,"e":1812.48,"ts":"30:09","sug":1,"sugReason":"选专业流程讨论偏离主题"},{"idx":325,"sp":"潘潘","t":"记得我有填一个那种嗯调查表，然后我可能当时填的是我我记得我填的是历史和生物，因为我对嗯那个时候我是对做像新闻啊或者是拍纪录片啊之类的传媒类的感兴趣。","s":1812.56,"e":1830.84,"ts":"30:12","sug":1,"sugReason":"选专业流程讨论偏离主题"},{"idx":326,"sp":"潘潘","t":"嗯，说是感兴趣，其实我觉得也有点像怎么说呢？","s":1831.28,"e":1837.08,"ts":"30:31","sug":1,"sugReason":"选专业流程讨论偏离主题"},{"idx":327,"sp":"潘潘","t":"嗯，其实并不知道自己。","s":1837.83,"e":1840.23,"ts":"30:37","sug":1,"sugReason":"选专业流程讨论偏离主题"},{"idx":328,"sp":"阿司","t":"到底。","s":1841.39,"e":1841.87,"ts":"30:41","sug":1,"sugReason":"选专业流程讨论偏离主题"},{"idx":329,"sp":"潘潘","t":"对什么感兴趣，但就觉得说这个职业方向好像有点酷。","s":1841.87,"e":1845.99,"ts":"30:41","sug":1,"sugReason":"选专业流程讨论偏离主题"},{"idx":330,"sp":"潘潘","t":"然后呢，嗯呃，就也是随便填了一个。","s":1846.23,"e":1852.67,"ts":"30:46","sug":1,"sugReason":"选专业流程讨论偏离主题"},{"idx":331,"sp":"潘潘","t":"然后但是真的上了大学之后，就然后看到了就是CATALOG里面不同各种各样的课程，就是完全就完全把之前填的那个东西抛到脑后了。","s":1852.91,"e":1862.47,"ts":"30:52","sug":1,"sugReason":"选专业流程讨论偏离主题"},{"idx":332,"sp":"雨林","t":"哇，真的就有一个其实我们不知道的东西。","s":1862.63,"e":1865.43,"ts":"31:02","sug":1,"sugReason":"选专业流程讨论偏离主题"},{"idx":333,"sp":"雨林","t":"有的人就会自然觉得不感兴趣，但是对你来说可能哎，你没有排除掉这个选项。","s":1865.66,"e":1870.38,"ts":"31:05","sug":1,"sugReason":"选专业流程讨论偏离主题"},{"idx":334,"sp":"潘潘","t":"所以其实是对，嗯，对，是的，是的。","s":1870.78,"e":1874.22,"ts":"31:10","sug":1,"sugReason":"选专业流程讨论偏离主题"},{"idx":335,"sp":"潘潘","t":"因为我嗯，这又让我想起来当时和就是推荐我去学人类学的那个教授的一次谈话。","s":1874.34,"e":1882.38,"ts":"31:14"},{"idx":336,"sp":"潘潘","t":"嗯，可能我当时我当时是放飞选课了之后，选了一大堆课，然后就是把那个一个学期能上的学分拉满了。","s":1882.7,"e":1893.22,"ts":"31:22"},{"idx":337,"sp":"潘潘","t":"然后，但我心里又会觉得，因为就是也可也有可能是看到周边的同学就是早早的就定了专业，或者是嗯可能有一些怎么说呢，就是比较东亚的思维方式的影响吧，就觉得上了大学就是应该选一个专业。","s":1893.52,"e":1911.24,"ts":"31:33","sug":1,"sugReason":"东亚思维/自由焦虑展开过多"},{"idx":338,"sp":"潘潘","t":"嗯，所以我我当时心态上也有一种。","s":1911.84,"e":1915.36,"ts":"31:51","sug":1,"sugReason":"东亚思维/自由焦虑展开过多"},{"idx":339,"sp":"潘潘","t":"拥有了自由想要去拥抱这种自由，但是又真的去拥抱他又觉得哎就是是不是不太好是不是还是应该呃找点实际的实际的事情做。","s":1915.95,"e":1926.59,"ts":"31:55","sug":1,"sugReason":"东亚思维/自由焦虑展开过多"},{"idx":340,"sp":"雨林","t":"一做，对对对这学期不上A你就B就下学期上不了。","s":1926.59,"e":1932.03,"ts":"32:06","sug":1,"sugReason":"东亚思维/自由焦虑展开过多"},{"idx":341,"sp":"潘潘","t":"你就没错没错，然后嗯我就把我这个嗯concern跟我的教授说了，然后我教授就说。","s":1932.03,"e":1940.87,"ts":"32:12"},{"idx":342,"sp":"潘潘","t":"我记得他就是这样，就是本来是可能认真的听我讲话，然后就往椅背上一靠，然后就说：‘嗯，那你学这么多东西，你觉得累吗？","s":1941.39,"e":1951.19,"ts":"32:21"},{"idx":343,"sp":"潘潘","t":"’我说：‘嗯，就是可能期中期末要有作业要交的时候挺累的，但是周中也还行。","s":1952.03,"e":1960.07,"ts":"32:32"},{"idx":344,"sp":"潘潘","t":"’然后他就说：‘SO WHAT'S THE PROBLEM？","s":1960.27,"e":1962.75,"ts":"32:40"},{"idx":345,"sp":"潘潘","t":"’然后我就……’就是就是那那你就是有什么好顾虑的你就先学着呗然后我就哦行那我就先学着就是嗯好像就是既然你想尝试既然你有这个时间和空间这个机会去尝试那那不然先去试试再说吧。","s":1963.07,"e":1987.13,"ts":"32:43"},{"idx":346,"sp":"阿司","t":"就嗯我觉得最难的还是这股热忱吧。","s":1987.13,"e":1992.05,"ts":"33:07"},{"idx":347,"sp":"阿司","t":"就是好多人可能学着学着就发现，哎，我可能不太适合，我不太喜欢。","s":1992.43,"e":1997.35,"ts":"33:12"},{"idx":348,"sp":"阿司","t":"但是你的情况是非常非常的喜欢，非常觉得幸福，以及觉得这件事很酷。","s":1997.75,"e":2003.67,"ts":"33:17"},{"idx":349,"sp":"阿司","t":"所以作为教授来讲，确实没毛病。","s":2003.95,"e":2007.15,"ts":"33:23"},{"idx":350,"sp":"潘潘","t":"没有任何问题。","s":2008.07,"e":2009.07,"ts":"33:28"},{"idx":351,"sp":"雨林","t":"是他没有被我们所局限住，是个教授。","s":2009.79,"e":2014.71,"ts":"33:29"},{"idx":352,"sp":"雨林","t":"嗯，那毕业也有几年了，是吗？","s":2015.29,"e":2018.45,"ts":"33:35"},{"idx":353,"sp":"雨林","t":"潘潘也工作有几年了。","s":2018.53,"e":2020.49,"ts":"33:38"},{"idx":354,"sp":"潘潘","t":"是吧？","s":2020.61,"e":2020.77,"ts":"33:40"},{"idx":355,"sp":"潘潘","t":"暴露年龄没有，工作了。","s":2020.89,"e":2023.01,"ts":"33:40"},{"idx":356,"sp":"雨林","t":"有几年了，对，没有说几对，那来潘潘揭晓一下，你现在是我记我记得你你的工作蛮特别的啊，所以可能还要请你多介绍一下你是做什么。","s":2023.09,"e":2035.89,"ts":"33:43"},{"idx":357,"sp":"潘潘","t":"嗯嗯，好的，呃，对我的工作可能确实是比较小众。","s":2036.21,"e":2041.73,"ts":"33:56"},{"idx":358,"sp":"潘潘","t":"呃，我呢后来人类学毕业了之后呢，我是先在嗯先实习工作了一年，然后呢去读了研究生。","s":2042.08,"e":2053.48,"ts":"34:02"},{"idx":359,"sp":"潘潘","t":"我研究生读的是啊图书馆学和美术史的一个双硕士学位，然后毕业了之后呢，呃我就呃往图书馆和嗯。","s":2053.8,"e":2069,"ts":"34:13"},{"idx":360,"sp":"潘潘","t":"可能大类就是文博行业发展吧，嗯，和人类学也还是有一点挂钩的。","s":2069.44,"e":2074.68,"ts":"34:29"},{"idx":361,"sp":"雨林","t":"对。","s":2074.8,"e":2074.96,"ts":"34:34"},{"idx":362,"sp":"潘潘","t":"文博是吧？","s":2075.64,"e":2076.52,"ts":"34:35","sug":1,"sugReason":"文博行业+图书馆分类重复解释"},{"idx":363,"sp":"潘潘","t":"文博行业就是呃，像文化、文化类啊，呃，美术馆啊、博物馆啊、图书馆啊这样的大类。","s":2076.64,"e":2084.32,"ts":"34:36","sug":1,"sugReason":"文博行业+图书馆分类重复解释"},{"idx":364,"sp":"潘潘","t":"对，对，对。","s":2084.4,"e":2084.96,"ts":"34:44","sug":1,"sugReason":"文博行业+图书馆分类重复解释"},{"idx":365,"sp":"潘潘","t":"嗯，然后在一些美术馆、博物馆，嗯，历史方面的文化机构工作了一会会之后，呃，我目前最近这三年是在呃，美国东部某一所大学的东亚图书馆。","s":2085.44,"e":2103.36,"ts":"34:45","sug":1,"sugReason":"文博行业+图书馆分类重复解释"},{"idx":366,"sp":"潘潘","t":"呃，做这个processing archivist，呃，也就是一名学术类档案的档案管理员。","s":2103.71,"e":2110.71,"ts":"35:03"},{"idx":367,"sp":"雨林","t":"啊，我补充一下，就是说美国很多大学都会有好几个图书馆，对吧？","s":2111.19,"e":2115.31,"ts":"35:11","sug":1,"sugReason":"图书馆系统层级逐一列举"},{"idx":368,"sp":"雨林","t":"不像可能就是有的学校国内可能大部分只有一个。","s":2115.39,"e":2118.91,"ts":"35:15","sug":1,"sugReason":"图书馆系统层级逐一列举"},{"idx":369,"sp":"雨林","t":"我我猜啊，呃如果美国大学有好几个图书馆，有的大有的图书馆会细分到有东亚，就是东方亚洲，是这个意思吗？","s":2118.99,"e":2127.47,"ts":"35:18","sug":1,"sugReason":"图书馆系统层级逐一列举"},{"idx":370,"sp":"雨林","t":"东亚。","s":2127.63,"e":2128.31,"ts":"35:27","sug":1,"sugReason":"图书馆系统层级逐一列举"},{"idx":371,"sp":"雨林","t":"东亚图书馆，然后你是在东亚某个高校的。","s":2128.44,"e":2132.36,"ts":"35:28","sug":1,"sugReason":"图书馆系统层级逐一列举"},{"idx":372,"sp":"雨林","t":"东亚图书馆做管理员。","s":2133.06,"e":2135.62,"ts":"35:33","sug":1,"sugReason":"图书馆系统层级逐一列举"},{"idx":373,"sp":"潘潘","t":"对啊，对做档案管理员。","s":2136.45,"e":2138.73,"ts":"35:36","sug":1,"sugReason":"图书馆系统层级逐一列举"},{"idx":374,"sp":"潘潘","t":"嗯，像对像嗯，大学的像我们整个图书馆系统的话，会有一个呃主管，然后会有一个比如说艺术史类的图书馆，然后会有东亚图书馆，然后也会有啊，像嗯，社科类的图书馆，呃，包括像工程啊，嗯，科学类的图书馆之类的。","s":2139.33,"e":2160.81,"ts":"35:39","sug":1,"sugReason":"图书馆系统层级逐一列举"},{"idx":375,"sp":"潘潘","t":"对对。","s":2161.05,"e":2162.81,"ts":"36:01","sug":1,"sugReason":"图书馆系统层级逐一列举"},{"idx":376,"sp":"潘潘","t":"呃，然后我的我作为一名呃档案管理员，我的主要工作是管理我们馆收藏的关于嗯各种各样的关于东亚文化历史的一些资料和档案。","s":2163.06,"e":2178.42,"ts":"36:03"},{"idx":377,"sp":"潘潘","t":"然后具体的工作会包括嗯馆藏的收录、馆藏的整理、取用，包括可能一些一小部分的馆藏会嗯被我们电子化。","s":2179.02,"e":2190.1,"ts":"36:19"},{"idx":378,"sp":"潘潘","t":"然后这其中这这当中的嗯各个环节。","s":2190.42,"e":2194.26,"ts":"36:30","sug":1,"sugReason":"工作内容逐条列举"},{"idx":379,"sp":"潘潘","t":"嗯，然后因为嗯，不仅是我们我们馆吧，就整个嗯，大学的图书馆系统收藏的档案大部分是对外开放的。","s":2194.74,"e":2204.1,"ts":"36:34","sug":1,"sugReason":"工作内容逐条列举"},{"idx":380,"sp":"潘潘","t":"然后嗯，除了学生和教授之外，其实任何人都可以预约来使用、来浏览这些材料。","s":2204.5,"e":2212.14,"ts":"36:44","sug":1,"sugReason":"工作内容逐条列举"},{"idx":381,"sp":"潘潘","t":"所以嗯，除了嗯，校内的用户吧，我还需要和不同背景的研究者，有些是在北美的，有些是在海外的。","s":2212.26,"e":2222.1,"ts":"36:52","sug":1,"sugReason":"工作内容逐条列举"},{"idx":382,"sp":"潘潘","t":"嗯，跟他们进行一些沟通，然后帮他们寻找啊，符合他们研究档案课、研究课题的一些嗯，档案材料。","s":2222.58,"e":2231.74,"ts":"37:02","sug":1,"sugReason":"工作内容逐条列举"},{"idx":383,"sp":"潘潘","t":"然后对，然后除除了嗯，呃，除此之外呢，我还会和我的档案员同事呃，每个学期一起组织几次不同主题的嗯，关于。","s":2232.46,"e":2246.62,"ts":"37:12"},{"idx":384,"sp":"潘潘","t":"嗯，关于档案怎样使用、怎样嗯嗯展示档案的一些工作坊吧。","s":2246.9,"e":2254.66,"ts":"37:26"},{"idx":385,"sp":"潘潘","t":"呃，然后有些对这其中呢，有些是面向本科生，或者是一些比如说研究生新生的档案研究入门。","s":2255.22,"e":2265.1,"ts":"37:35","sug":1,"sugReason":"工作坊类型逐一介绍"},{"idx":386,"sp":"潘潘","t":"然后在档案研究入门里面，我们会从什么是档案、它的定义讲起，然后会讲一讲怎么样去检索档案信息，在我们那个图书馆的系统里面。","s":2265.62,"e":2277.58,"ts":"37:45","sug":1,"sugReason":"工作坊类型逐一介绍"},{"idx":387,"sp":"潘潘","t":"嗯，然后大家一般也很好奇的是啊，我找到了我想要的、想我想看的材料，然后怎么样去真正的预约去取用啊？","s":2277.95,"e":2287.23,"ts":"37:57","sug":1,"sugReason":"工作坊类型逐一介绍"},{"idx":388,"sp":"潘潘","t":"这个流程是怎么样的？","s":2287.43,"e":2288.91,"ts":"38:07","sug":1,"sugReason":"工作坊类型逐一介绍"},{"idx":389,"sp":"潘潘","t":"然后呃，其他一类的工作坊呢，会更偏向于就是SHOW AND TELL，一个展示的性质啊。","s":2289.71,"e":2296.99,"ts":"38:09","sug":1,"sugReason":"工作坊类型逐一介绍"},{"idx":390,"sp":"潘潘","t":"比如说给大家介绍一下我们馆啊，有哪些比较有趣、比较珍贵、比较少见的档案材料。","s":2297.07,"e":2304.87,"ts":"38:17","sug":1,"sugReason":"工作坊类型逐一介绍"},{"idx":391,"sp":"潘潘","t":"然后，嗯，当然也会介绍一些啊，这些材料他们分别和他们的历史背景是怎样的，和东和东亚历史的哪方面有关啊等等。","s":2305.05,"e":2314.65,"ts":"38:25","sug":1,"sugReason":"工作坊类型逐一介绍"},{"idx":392,"sp":"潘潘","t":"对，然后，嗯，最近的话呢，我还嗯，得到了一个在学校内部做一个呃小展览的机会啊，然后这个展览系列叫ARCHIVE PICK，呃，也就是档案员推荐。","s":2315.37,"e":2331.09,"ts":"38:35"},{"idx":393,"sp":"潘潘","t":"然后我喜欢叫档案员严选，嗯，然后然后这个嗯小展览的话呢，呃，我需要自己去确定一个主题，然后从我在最近这两三年在整理过程当中接触过的材料里面挑选可能六七件吧，不多，呃，我觉得比较有意思的藏品，比如说啊照片啊、相册啊、嗯，手稿啊等等之类的，然后进行大概三四个月的展出。","s":2331.24,"e":2361.36,"ts":"38:51"},{"idx":394,"sp":"潘潘","t":"然后在这个准备、准备这个展览的过程当中，我需要和整个嗯图书馆系统的CONSERVATION，就是我们的修复部门对接。","s":2362.17,"e":2373.33,"ts":"39:22","sug":1,"sugReason":"展览修复部门对接流程过细"},{"idx":395,"sp":"潘潘","t":"呃，在因为我们图书馆系统里面，只要有藏品参与展览，不管是呃我们图书馆内部或者校内举办的展览，还是外界给其他的机构。","s":2373.81,"e":2386.09,"ts":"39:33","sug":1,"sugReason":"展览修复部门对接流程过细"},{"idx":396,"sp":"潘潘","t":"嗯，都需要由修复部门去先去审核啊。","s":2386.54,"e":2390.98,"ts":"39:46","sug":1,"sugReason":"展览修复部门对接流程过细"},{"idx":397,"sp":"潘潘","t":"参展的藏品，那么有些藏品如果嗯保存状况不太理想，他们就会嗯评估，比如说是嗯适不适合参展啊，或者说给出一些在嗯展成期间应该如何保护的建议。","s":2391.14,"e":2406.7,"ts":"39:51","sug":1,"sugReason":"展览修复部门对接流程过细"},{"idx":398,"sp":"潘潘","t":"嗯，然后如果是要呃运到校外，呃要外界给其他机构的话，那么在运输和送展的过程当中需要注意什么等等等等。","s":2407.06,"e":2418.1,"ts":"40:07","sug":1,"sugReason":"展览修复部门对接流程过细"},{"idx":399,"sp":"潘潘","t":"然后嗯所以我我最近因为在准备这个小展览，所以也从呃修复部门的同事那里学到了很多。","s":2418.71,"e":2426.95,"ts":"40:18","sug":1,"sugReason":"展览修复部门对接流程过细"},{"idx":400,"sp":"雨林","t":"嗯，哇，这些都是加入工作之后才学的吗？","s":2427.55,"e":2433.67,"ts":"40:27"},{"idx":401,"sp":"雨林","t":"你觉得大部分东西。","s":2433.75,"e":2435.15,"ts":"40:33"},{"idx":402,"sp":"潘潘","t":"对对，嗯，我的我刚开始的时候是还是以整理为主，呃，之后在最后的最最近的一年半左右吧，然后嗯啊会就是。","s":2435.75,"e":2452.95,"ts":"40:35"},{"idx":403,"sp":"潘潘","t":"争取到了其他7788的很多机会。","s":2453.75,"e":2456.03,"ts":"40:53"},{"idx":404,"sp":"潘潘","t":"对，所以现在做的对会会更多元一点。","s":2456.19,"e":2459.87,"ts":"40:56"},{"idx":405,"sp":"雨林","t":"好呀，那要不就给我们先介绍一下，你说是整理档案整理材料这些还是对可以介绍一下整理的流程吗？","s":2460.39,"e":2469.59,"ts":"41:00"},{"idx":406,"sp":"潘潘","t":"可以啊可以嗯，像嗯。","s":2470.07,"e":2473.35,"ts":"41:10"},{"idx":407,"sp":"潘潘","t":"对嗯。","s":2474.94,"e":2476.14,"ts":"41:14"},{"idx":408,"sp":"潘潘","t":"档案整理呢，嗯，简单来说其实就是一批材料从嗯到达我们馆，被我们的馆长啊、策展人啊收进来，到最终开放，就是研究者可以来预约来使用这些材料。","s":2478.11,"e":2494.79,"ts":"41:18"},{"idx":409,"sp":"潘潘","t":"它这个中间这个过程，然后这个过程嗯时间有长有短，然后要看档案的规模。","s":2494.91,"e":2503.03,"ts":"41:34"},{"idx":410,"sp":"潘潘","t":"嗯，小的话可能几个月，嗯，一两个月就能完成。","s":2503.46,"e":2507.54,"ts":"41:43"},{"idx":411,"sp":"潘潘","t":"大的话呢，可能要几年。","s":2507.7,"e":2509.62,"ts":"41:47"},{"idx":412,"sp":"潘潘","t":"呃，有的时候遇到特别大型的馆藏，呃，我们也会分批整理，那么先开放一部分，让研究者可以尽早的去使用。","s":2510.18,"e":2520.7,"ts":"41:50"},{"idx":413,"sp":"潘潘","t":"嗯。","s":2521.3,"e":2521.9,"ts":"42:01","sug":1,"sugReason":"馆员人数/合作情况"},{"idx":414,"sp":"潘潘","t":"目前我们，我们东大馆是目前只有我一位档案管理员。","s":2522.74,"e":2526.98,"ts":"42:02","sug":1,"sugReason":"馆员人数/合作情况"},{"idx":415,"sp":"潘潘","t":"嗯，不过在学校内的其他图书馆，或者说我之前工作过的一些更大规模的机构里面，也经常会有啊几位档案员一起合作来处理这个嗯一批大型档案的情况。","s":2527.38,"e":2543.38,"ts":"42:07","sug":1,"sugReason":"馆员人数/合作情况"},{"idx":416,"sp":"潘潘","t":"嗯，具体的整理流程的话呢，一般它分为几个阶段。","s":2544.62,"e":2549.82,"ts":"42:24","sug":1,"sugReason":"馆员人数/合作情况"},{"idx":417,"sp":"潘潘","t":"嗯，第一步是先去简单熟悉一下这批材料。","s":2550.39,"e":2555.27,"ts":"42:30"},{"idx":418,"sp":"潘潘","t":"嗯，在我们接受一批材料的捐赠的时候，我们会和捐赠者签署一份这个捐赠捐赠协议。","s":2555.71,"e":2563.91,"ts":"42:35"},{"idx":419,"sp":"潘潘","t":"呃，里面通常会有一个对捐赠内容的说明。","s":2564.55,"e":2568.31,"ts":"42:44","sug":1,"sugReason":"档案来源类型逐一列举"},{"idx":420,"sp":"潘潘","t":"呃，所以我会先从这份文件入手，做一些非常基础的了解吧。","s":2568.71,"e":2574.03,"ts":"42:48","sug":1,"sugReason":"档案来源类型逐一列举"},{"idx":421,"sp":"潘潘","t":"比如说这批至少要知道这批档案它来自谁，这个人是谁。","s":2574.11,"e":2579.79,"ts":"42:54","sug":1,"sugReason":"档案来源类型逐一列举"},{"idx":422,"sp":"潘潘","t":"嗯，这个人他的整个职业和生平是怎样的？","s":2580.08,"e":2584.44,"ts":"43:00","sug":1,"sugReason":"档案来源类型逐一列举"},{"idx":423,"sp":"潘潘","t":"他可能呃职业过程当中有哪些重要的事件，嗯，参与过哪些重要的项目，然后这些项目又和哪些可能历史上比较重要的事件相关。","s":2584.6,"e":2596.28,"ts":"43:04","sug":1,"sugReason":"档案来源类型逐一列举"},{"idx":424,"sp":"潘潘","t":"嗯，那么做完这个呃比较基础的了解之后呢，你大概就会有一个概念，就是这批档案里面可能会包含怎么样类型的材料。","s":2597.28,"e":2608.12,"ts":"43:17","sug":1,"sugReason":"档案来源类型逐一列举"},{"idx":425,"sp":"潘潘","t":"嗯，比如说这个档案的主体，它是一个他他来自于一位作家。","s":2608.42,"e":2614.1,"ts":"43:28","sug":1,"sugReason":"档案来源类型逐一列举"},{"idx":426,"sp":"潘潘","t":"那么这个很可能这个档案里面就会有很多啊一手的手稿啊，嗯之类的。","s":2614.5,"e":2620.82,"ts":"43:34","sug":1,"sugReason":"档案来源类型逐一列举"},{"idx":427,"sp":"潘潘","t":"如果说这个档案是来自于一位学者，那么可能会有一些也会有一些手稿，可能是论文的手稿，或者是一些研究笔记。","s":2621.34,"e":2630.98,"ts":"43:41","sug":1,"sugReason":"档案来源类型逐一列举"},{"idx":428,"sp":"潘潘","t":"那么嗯通常情况下还会有很多的通信记录，那个参与一些学术会议的记录，呃或者说嗯一些教学、教学呃相关的材料等等。","s":2631.38,"e":2644.7,"ts":"43:51","sug":1,"sugReason":"档案来源类型逐一列举"},{"idx":429,"sp":"潘潘","t":"然后嗯除了个人档案之之外，我们也会接收嗯机构的档案，然后机构的档案里面通常会有比较多的会议记录啊，行政文件啊，或者说这个机构他们以前举办过的一些活动相关资料，比如说照片啊，邀请函啊，海报啊，有的时候也会有一些录音或者录像带之类的。","s":2645.67,"e":2671.35,"ts":"44:05","sug":1,"sugReason":"档案来源类型逐一列举"},{"idx":430,"sp":"雨林","t":"哇谁都可以捐吗？","s":2672.42,"e":2674.46,"ts":"44:32"},{"idx":431,"sp":"雨林","t":"就是像我我虽然也不是这个。","s":2674.54,"e":2678.06,"ts":"44:34","sug":1,"sugReason":"谁都可以捐的闲聊"},{"idx":432,"sp":"阿司","t":"我们也可以捐吗？","s":2678.66,"e":2679.74,"ts":"44:38","sug":1,"sugReason":"谁都可以捐的闲聊"},{"idx":433,"sp":"雨林","t":"对那你要多很多处理的。","s":2679.94,"e":2681.7,"ts":"44:39","sug":1,"sugReason":"谁都可以捐的闲聊"},{"idx":434,"sp":"潘潘","t":"我们欢迎大家捐，但当然不可能是什么都拿进来，嗯像对像我的工作我目前的工作的话呢是还不太和我们的捐赠者接触，就是我我比较负责后面那个过程。","s":2682.38,"e":2698.3,"ts":"44:42","sug":1,"sugReason":"谁都可以捐的闲聊"},{"idx":435,"sp":"潘潘","t":"但是呢，据对，但据我了解的是，我们目前嗯呃收录的很多馆藏还是以比如说和嗯东亚历史的某方面相关啊，还是还是以20世纪、上世纪所出产的材料为主。","s":2698.64,"e":2716.44,"ts":"44:58","sug":1,"sugReason":"谁都可以捐的闲聊"},{"idx":436,"sp":"潘潘","t":"然后嗯可能是某一位名人啊，也也也不是那么有名吧，就是。","s":2716.76,"e":2722.84,"ts":"45:16","sug":1,"sugReason":"谁都可以捐的闲聊"},{"idx":437,"sp":"潘潘","t":"嗯，或者是一些呃啊也会有，嗯比如说之前在我们这个大学任教的教授啊、学者啊、校友啊之类的。","s":2723,"e":2732.6,"ts":"45:23","sug":1,"sugReason":"谁都可以捐的闲聊"},{"idx":438,"sp":"阿司","t":"对，OK，那我们回家翻一翻，如果有合适的话就，哈哈哈。","s":2732.84,"e":2738.2,"ts":"45:32"},{"idx":439,"sp":"潘潘","t":"发给你，发给相关部门。","s":2738.36,"e":2740.76,"ts":"45:38"},{"idx":440,"sp":"雨林","t":"对的嗯好哎呀我看一下进度啊好那我们那对潘潘你还是先啊继续说一下那这个材料都要到你手里已经是听下来已经是有人可能筛选过一一些。","s":2742.67,"e":2758.27,"ts":"45:42","sug":1,"sugReason":"进度讨论过渡"},{"idx":441,"sp":"阿司","t":"了啊对啊这关过的。","s":2758.27,"e":2760.79,"ts":"45:58","sug":1,"sugReason":"进度讨论过渡"},{"idx":442,"sp":"雨林","t":"对那接下来你要做什么呢。","s":2760.79,"e":2762.98,"ts":"46:00"},{"idx":443,"sp":"潘潘","t":"对，嗯，在先是大致的了解呃一遍之后呢，呃，我们会逐箱的打开，然后呃，呃，逐一的开箱，然后去快速的把整批材料过一遍浏览一遍，然后呢去做了一份清单。","s":2764.06,"e":2783.7,"ts":"46:04"},{"idx":444,"sp":"潘潘","t":"嗯，有的时候呢，是之前像那个阿斯说的会有捐赠者。","s":2784.18,"e":2789.7,"ts":"46:24","sug":1,"sugReason":"清单制作方法展开过细"},{"idx":445,"sp":"潘潘","t":"他自己可能已经做过了一些，成立已经把关过了。","s":2789.8,"e":2793.08,"ts":"46:29","sug":1,"sugReason":"清单制作方法展开过细"},{"idx":446,"sp":"潘潘","t":"那么已经给我们提供了一份比较详细的目录也好、清单也好。","s":2793.36,"e":2798.16,"ts":"46:33","sug":1,"sugReason":"清单制作方法展开过细"},{"idx":447,"sp":"潘潘","t":"那那个当然是最理想的情况。","s":2798.4,"e":2800.84,"ts":"46:38","sug":1,"sugReason":"清单制作方法展开过细"},{"idx":448,"sp":"潘潘","t":"呃，如果是没有一份目录，然后的话呢，我就需要自己啊拆箱，一个一个拆箱整理，就是整个整个感觉还挺像拆快递的。","s":2801.84,"e":2816.36,"ts":"46:41","sug":1,"sugReason":"清单制作方法展开过细"},{"idx":449,"sp":"潘潘","t":"就是虽然对，就是虽然之前你已经对这批材料大概有个印象，你大概知道你买了什么，但是真正看到实物，就是拿在手里的感觉还是完全不一样。","s":2816.7,"e":2829.9,"ts":"46:56","sug":1,"sugReason":"清单制作方法展开过细"},{"idx":450,"sp":"潘潘","t":"嗯，然后嗯，具体来说，在做清单的时候，我通常会关注两个方面，呃，一个是比较抽象的内容层面、信息层面。","s":2831.06,"e":2842.58,"ts":"47:11","sug":1,"sugReason":"清单制作方法展开过细"},{"idx":451,"sp":"潘潘","t":"一个是比较具体的材料状态，那个内容层面上呢，我会啊记录每一箱它大概包含了哪些类型的材料，呃，这些材料它们涵盖的时间范围大致是怎样等等啊，以及这些材料是不是集中和某一个事件、某一个项目有关啊，或者说箱子和箱子的内容之间上有没有啊，内容上有没有关联。","s":2842.78,"e":2870.7,"ts":"47:22","sug":1,"sugReason":"清单制作方法展开过细"},{"idx":452,"sp":"潘潘","t":"呃，具体的材料呃层面上呢，我会检查检查这个材料它本身的状况，比如说啊保存情况啊，它是不是需要呃另外就比较特别的保存方式，或者是需要我们修复部门介入。","s":2871.69,"e":2889.65,"ts":"47:51","sug":1,"sugReason":"清单制作方法展开过细"},{"idx":453,"sp":"潘潘","t":"嗯，比如说我印象比较深的是大概两年前吧，我开过一箱上个世纪三十年代的信件。","s":2890.17,"e":2898.05,"ts":"48:10"},{"idx":454,"sp":"潘潘","t":"然后那个纸箱打开来，里面全部都是已经酸化发黄的木浆纸。","s":2898.31,"e":2905.03,"ts":"48:18"},{"idx":455,"sp":"潘潘","t":"然后它的那个颜色呢，有一点像呃放了两天的可颂，不是那么不是那么新鲜的可颂，是那种比较暗沉的褐色。","s":2905.47,"e":2916.43,"ts":"48:25"},{"idx":456,"sp":"潘潘","t":"然后为什么我想到用可颂来比喻呢？","s":2916.87,"e":2919.55,"ts":"48:36"},{"idx":457,"sp":"潘潘","t":"是因为这些纸本身又非常的脆。","s":2919.63,"e":2922.51,"ts":"48:39"},{"idx":458,"sp":"潘潘","t":"就脆的那种感觉，就像是你你咬一口一个刚出炉的可颂，然后那些渣渣都掉在你的衣服上这种感觉。","s":2922.6,"e":2930,"ts":"48:42"},{"idx":459,"sp":"潘潘","t":"嗯，所以那一箱信件就是我记得我几乎只能是一张一张就是把它拿出来。","s":2930.64,"e":2938.04,"ts":"48:50"},{"idx":460,"sp":"潘潘","t":"如果你像普通的嗯材料一样，比如说一摞纸这样搬出来的话，你的手那个压到了一些边边角角，它就会碎开。","s":2938.76,"e":2948.24,"ts":"48:58"},{"idx":461,"sp":"阿司","t":"然后就是你都会戴手套吗？","s":2948.36,"e":2950.4,"ts":"49:08"},{"idx":462,"sp":"阿司","t":"还是就是。","s":2950.52,"e":2951.8,"ts":"49:10"},{"idx":463,"sp":"潘潘","t":"我们有的时候会，有的时候嗯就是用这个看这个其实看嗯档案员他自己的工作工作。","s":2951.8,"e":2963.56,"ts":"49:11","sug":1,"sugReason":"戴手套讨论"},{"idx":464,"sp":"潘潘","t":"看看自己的习习惯吧，因为对，因为戴手套的话，它是它可以保护你自己的手。","s":2964.4,"e":2971.24,"ts":"49:24","sug":1,"sugReason":"戴手套讨论"},{"idx":465,"sp":"潘潘","t":"首先呃，但是呢，有的时候戴手套它会会让我们这个抓力不是那么的敏感，所以呃，对，所以有的时候比较像纸啊，或者是比较小的东西，我可能还是会习惯就先洗手，然后再再去精细化的嗯，对对对。","s":2971.36,"e":2989.64,"ts":"49:31","sug":1,"sugReason":"戴手套讨论"},{"idx":466,"sp":"潘潘","t":"嗯，然后我就记得那一箱、那一箱纸，就是花了我很长时间啊。","s":2990.26,"e":2997.14,"ts":"49:50","sug":1,"sugReason":"戴手套讨论"},{"idx":467,"sp":"潘潘","t":"而且通常这样子的材料里面还会就是灰尘非常多，所以就是有的时候我会开玩笑说我的慢性鼻炎是工伤。","s":2997.26,"e":3007.14,"ts":"49:57"},{"idx":468,"sp":"潘潘","t":"真的。","s":3007.7,"e":3008.46,"ts":"50:07"},{"idx":469,"sp":"雨林","t":"我现在平时都接触不到什么。","s":3009.62,"e":3011.9,"ts":"50:09"},{"idx":470,"sp":"雨林","t":"就是这种材料，或者说是。","s":3012.75,"e":3015.23,"ts":"50:12"},{"idx":471,"sp":"阿司","t":"对这种纸质的东西，让我们去去摸去把玩，就是已经很少有这样的媒介了。","s":3015.31,"e":3023.23,"ts":"50:15"},{"idx":472,"sp":"阿司","t":"所以我觉得真的非常非常的幸运的一份工作。","s":3023.31,"e":3027.07,"ts":"50:23"},{"idx":473,"sp":"阿司","t":"在我看来，可能对我们大部分听众听起来也是蛮好玩的。","s":3027.15,"e":3031.87,"ts":"50:27"},{"idx":474,"sp":"潘潘","t":"是的，是的。","s":3032.34,"e":3033.1,"ts":"50:32","sug":1,"sugReason":"重复表达HANDS ON偏好"},{"idx":475,"sp":"潘潘","t":"我自己个人就是当初选择这个嗯档案管理这个方向吧，或者说或者说图书馆这个方向。","s":3033.22,"e":3041.62,"ts":"50:33","sug":1,"sugReason":"重复表达HANDS ON偏好"},{"idx":476,"sp":"潘潘","t":"嗯，我自己也是比较希望我的工作当中有一些这种嗯HANDS ON，有一些这种实践的，能够去触摸一些实体东西的机会。","s":3041.98,"e":3052.62,"ts":"50:41","sug":1,"sugReason":"重复表达HANDS ON偏好"},{"idx":477,"sp":"潘潘","t":"嗯，像像比如说我觉得我是完全做不了像程序员的工作，就是我没办法只对着电脑工作。","s":3053.02,"e":3061.38,"ts":"50:53","sug":1,"sugReason":"重复表达HANDS ON偏好"},{"idx":478,"sp":"潘潘","t":"对，然后呃我我还虽然怎么说呢很脏，然后很有的时候特别的花时间，但是我还挺享受这种能和食物接触的过程的。","s":3061.76,"e":3075.12,"ts":"51:01","sug":1,"sugReason":"重复表达HANDS ON偏好"},{"idx":479,"sp":"雨林","t":"嗯，而且是那种跨越时间和人物的，我甚至想到就这东西不断的进来，然后你会有这种什么要断舍离啊，这个当然这是断舍离这个词不太合适。","s":3075.68,"e":3089.36,"ts":"51:15"},{"idx":480,"sp":"潘潘","t":"会离吗？","s":3089.64,"e":3090.4,"ts":"51:29"},{"idx":481,"sp":"阿司","t":"会舍吗？","s":3091.89,"e":3092.81,"ts":"51:31"},{"idx":482,"sp":"潘潘","t":"会舍，会舍。","s":3093.85,"e":3095.13,"ts":"51:33"},{"idx":483,"sp":"潘潘","t":"还是有一些具体情况会舍的，比如说嗯，像呃，像我们叫DUPLICATE，就比如说一封信，它可能嗯，信可能这个这个例子不太好，比如说像活动的邀请函，嗯，一般你在一个机构档案里面，因为。","s":3095.29,"e":3115.29,"ts":"51:35","sug":1,"sugReason":"断舍离/duplicates例子展开过多"},{"idx":484,"sp":"潘潘","t":"当时在整理档案的时候，可能就是啊，我们剩下哪些没发出去的，我们就一股脑全部塞到这个箱子里面。","s":3115.83,"e":3121.99,"ts":"51:55","sug":1,"sugReason":"断舍离/duplicates例子展开过多"},{"idx":485,"sp":"潘潘","t":"然后你就可能会有比如说100张明信片。","s":3122.27,"e":3126.59,"ts":"52:02","sug":1,"sugReason":"断舍离/duplicates例子展开过多"},{"idx":486,"sp":"潘潘","t":"但是你档案的做档案的过程当中，你其实只需要我们一般来说是保存像这样情况的话，保存平均三份就够了。","s":3126.91,"e":3136.87,"ts":"52:06","sug":1,"sugReason":"断舍离/duplicates例子展开过多"},{"idx":487,"sp":"潘潘","t":"嗯，因为你去保存了100张就是一模一样的东西，其实就是不太现实，而且也有一点浪费空间。","s":3137.4,"e":3145.84,"ts":"52:17","sug":1,"sugReason":"断舍离/duplicates例子展开过多"},{"idx":488,"sp":"潘潘","t":"所以嗯，虽然我们的工作大部分是把东西留下来，但是偶尔也会有就就是筛选，这样把把东西舍弃的过程。","s":3146.04,"e":3158.6,"ts":"52:26","sug":1,"sugReason":"断舍离/duplicates例子展开过多"},{"idx":489,"sp":"雨林","t":"的嗯。","s":3158.6,"e":3159.76,"ts":"52:38","sug":1,"sugReason":"断舍离/duplicates例子展开过多"},{"idx":490,"sp":"雨林","t":"好，哎，我们对我想问问你们，接下来我们现在还有半个多小时这样嗯往哪个方向是我们是按这个走呢，还是说啊聊一下，看一下下面。","s":3161.55,"e":3175.31,"ts":"52:41","ai":1,"dt":"production_talk"},{"idx":491,"sp":"雨林","t":"这部分我们讲哦，就要不就接下来讲一下工作上的性格调理，这些应该就还算比较自然吧。","s":3178.03,"e":3186.07,"ts":"52:58","ai":1,"dt":"production_talk"},{"idx":492,"sp":"潘潘","t":"可以，你们你们觉得呢？","s":3187.44,"e":3189.08,"ts":"53:07","ai":1,"dt":"production_talk"},{"idx":493,"sp":"潘潘","t":"我我都行。","s":3189.76,"e":3191.04,"ts":"53:09","ai":1,"dt":"production_talk"},{"idx":494,"sp":"阿司","t":"我觉得今天我们可能没有办法走完这个稿子，就是这个规定是林雨林有事儿，是不是？","s":3191.12,"e":3197.12,"ts":"53:11","ai":1,"dt":"production_talk"},{"idx":495,"sp":"雨林","t":"哦，其实我我还好。","s":3197.48,"e":3198.68,"ts":"53:17","ai":1,"dt":"production_talk"},{"idx":496,"sp":"阿司","t":"我也我也灵活啊，是吗？","s":3198.76,"e":3200.2,"ts":"53:18","ai":1,"dt":"production_talk"},{"idx":497,"sp":"阿司","t":"对。","s":3200.48,"e":3200.76,"ts":"53:20","ai":1,"dt":"production_talk"},{"idx":498,"sp":"雨林","t":"呃，多1520min应该没问题。","s":3201.08,"e":3204.04,"ts":"53:21","ai":1,"dt":"production_talk"},{"idx":499,"sp":"阿司","t":"对我我也没问题。","s":3204.36,"e":3205.56,"ts":"53:24","ai":1,"dt":"production_talk"},{"idx":500,"sp":"阿司","t":"O K O K那我们也可以按照这个往下，但是可能要稍微的就是剪辑的时候，可能要稍微的精简一点点。","s":3206.12,"e":3214.68,"ts":"53:26","ai":1,"dt":"production_talk"},{"idx":501,"sp":"雨林","t":"嗯，有的部分应该，就刚才其实也有一些部分 cover 了，就可以记一下。","s":3215,"e":3219.56,"ts":"53:35","ai":1,"dt":"production_talk"},{"idx":502,"sp":"雨林","t":"好，那我试一下，q 一下到这里。","s":3219.72,"e":3223.72,"ts":"53:39","ai":1,"dt":"production_talk"},{"idx":503,"sp":"雨林","t":"稍等啊，嗯，好，我我看一下这里自不自然。","s":3230.31,"e":3233.71,"ts":"53:50","ai":1,"dt":"production_talk"},{"idx":504,"sp":"雨林","t":"那我我们试一下，嗯，对，潘潘听你啊，刚才说整理东西，我觉得听起来像是一个嗯，很需要一个人静下来，然后花很多时间去处理很细节的东西的一个过程。","s":3233.87,"e":3248.11,"ts":"53:53","sug":1,"sugReason":"MBTI测试结果讨论"},{"idx":505,"sp":"雨林","t":"你会说你是一个很有条理的人吗？","s":3248.31,"e":3251.15,"ts":"54:08","sug":1,"sugReason":"MBTI测试结果讨论"},{"idx":506,"sp":"雨林","t":"什么样的人适合这份工作呢？","s":3251.79,"e":3254.31,"ts":"54:11","sug":1,"sugReason":"MBTI测试结果讨论"},{"idx":507,"sp":"潘潘","t":"嗯。","s":3255.68,"e":3256.28,"ts":"54:15","sug":1,"sugReason":"MBTI测试结果讨论"},{"idx":508,"sp":"潘潘","t":"我会觉得。","s":3258.68,"e":3260.08,"ts":"54:18","sug":1,"sugReason":"MBTI测试结果讨论"},{"idx":509,"sp":"潘潘","t":"我还算是一个比较有条理的人吧。","s":3261.77,"e":3264.85,"ts":"54:21","sug":1,"sugReason":"MBTI测试结果讨论"},{"idx":510,"sp":"阿司","t":"嗯，这个。","s":3265.37,"e":3266.25,"ts":"54:25","sug":1,"sugReason":"MBTI测试结果讨论"},{"idx":511,"sp":"潘潘","t":"我其实是p人来着哦，呃，我是我是属于在j p当中摇摆，就是可能ok过两年测一测，就是又又转到另一边这样子。","s":3267.37,"e":3281.49,"ts":"54:27"},{"idx":512,"sp":"潘潘","t":"然后今年今年最新一次测试j，但是是百分之五十一的j。","s":3281.89,"e":3287.13,"ts":"54:41"},{"idx":513,"sp":"潘潘","t":"对，嗯，对。","s":3289.58,"e":3291.7,"ts":"54:49"},{"idx":514,"sp":"潘潘","t":"然后我确实是，我觉得大家一般想到像图书馆的，嗯，工作啊，档案馆的工作啊，可能会觉得比较适合J人，比较适合I人，嗯，这样，嗯，确实是，我觉得，嗯，我我确实是非常。","s":3291.86,"e":3309.82,"ts":"54:51"},{"idx":515,"sp":"潘潘","t":"非常典型的爱人吧。","s":3310.64,"e":3313.24,"ts":"55:10","sug":1,"sugReason":"美术馆实习经历细节"},{"idx":516,"sp":"潘潘","t":"嗯，因为呃当初选择这条呃选择就是档案档案管理这个职业方向，也是嗯因为我在那之前先尝试了一些嗯其他的像美术馆啊、博物馆之类的实习。","s":3313.6,"e":3333.2,"ts":"55:13","sug":1,"sugReason":"美术馆实习经历细节"},{"idx":517,"sp":"潘潘","t":"嗯，最早是因为我本科的学校里面有一个美术馆，然后我就一直从大二开始一直一直在那边。","s":3333.48,"e":3340.56,"ts":"55:33","sug":1,"sugReason":"美术馆实习经历细节"},{"idx":518,"sp":"潘潘","t":"然后做了嗯，美术馆里面各种各样方向的尝试了。","s":3340.84,"e":3346.6,"ts":"55:40","sug":1,"sugReason":"美术馆实习经历细节"},{"idx":519,"sp":"潘潘","t":"各种各样方向的工作吧，比如说从策展开始到嗯，到就是EDUCATION，就是办一些活动啊，面向、面向、面向大学生的，也面向就是当时呃，我们那个学校附近一些就是小孩子的。","s":3346.68,"e":3364.28,"ts":"55:46","sug":1,"sugReason":"美术馆实习经历细节"},{"idx":520,"sp":"潘潘","t":"嗯，COMMUNITY的那种。","s":3364.76,"e":3366.28,"ts":"56:04","sug":1,"sugReason":"美术馆实习经历细节"},{"idx":521,"sp":"潘潘","t":"然后嗯，后来是去了那个嗯，到后台去做藏品管理。","s":3367,"e":3374.4,"ts":"56:07","sug":1,"sugReason":"美术馆实习经历细节"},{"idx":522,"sp":"潘潘","t":"嗯，然后我就就尝试了一圈之后，我就发现我好像确实更喜欢这个嗯，在后台然后做藏品管理，做一些就是相对、相对比较默默无闻的工作吧。","s":3374.92,"e":3390.44,"ts":"56:14","sug":1,"sugReason":"美术馆实习经历细节"},{"idx":523,"sp":"潘潘","t":"呃，然后有些人可能会觉得呃，做这个比如说这个collection management，就藏品管理啊，或者是做图书馆啊、档案啊这方面的工作比较枯燥。","s":3391,"e":3403.8,"ts":"56:31"},{"idx":524,"sp":"潘潘","t":"但是嗯，我自己还算是比较能在这样的工作里面找到乐趣。","s":3403.88,"e":3410.84,"ts":"56:43"},{"idx":525,"sp":"潘潘","t":"嗯，然后。","s":3411.32,"e":3412.52,"ts":"56:51"},{"idx":526,"sp":"潘潘","t":"呃。","s":3413.69,"e":3414.29,"ts":"56:53"},{"idx":527,"sp":"潘潘","t":"确实是，还算比较适合矮人。","s":3415.76,"e":3419.72,"ts":"56:55","sug":1,"sugReason":"藏品管理偏好重复表达"},{"idx":528,"sp":"潘潘","t":"嗯，但是呢，在实际工作当中，其实你还是得要和呃，比如说不同的用我来来我们管就是查资料的用户啊，一些不同的研究者啊，包括啊档案的捐赠人啊之类的，他们去沟通。","s":3420.04,"e":3436,"ts":"57:00","sug":1,"sugReason":"藏品管理偏好重复表达"},{"idx":529,"sp":"潘潘","t":"所以也不是那种你能。","s":3436.16,"e":3439.2,"ts":"57:16","sug":1,"sugReason":"藏品管理偏好重复表达"},{"idx":530,"sp":"潘潘","t":"真的能闭门造车，就是呃的的的的状态吧，你还是需要把还是需要感官打开，然后要去主动和人交流的工作。","s":3439.66,"e":3449.54,"ts":"57:19","sug":1,"sugReason":"藏品管理偏好重复表达"},{"idx":531,"sp":"潘潘","t":"对嗯。","s":3449.9,"e":3450.9,"ts":"57:29","sug":1,"sugReason":"藏品管理偏好重复表达"},{"idx":532,"sp":"雨林","t":"听起来就是开会好像比较少。","s":3451.96,"e":3453.96,"ts":"57:31","sug":1,"sugReason":"藏品管理偏好重复表达"},{"idx":533,"sp":"潘潘","t":"不像不像开会。","s":3454.04,"e":3455.92,"ts":"57:34","sug":1,"sugReason":"藏品管理偏好重复表达"},{"idx":534,"sp":"雨林","t":"什么这个对齐那个叫啥下个星期再下个星期的那些小目标就这些好像时间会慢一点会吗？","s":3456.2,"e":3467.28,"ts":"57:36","sug":1,"sugReason":"藏品管理偏好重复表达"},{"idx":535,"sp":"潘潘","t":"是的是的我们一般嗯是开会是比较少然后嗯像可能跟我们一般的所谓项目的话战线都会拉的比较长。","s":3467.52,"e":3479.84,"ts":"57:47","sug":1,"sugReason":"藏品管理偏好重复表达"},{"idx":536,"sp":"潘潘","t":"因为一批档案，它的体量就在那儿。","s":3480.44,"e":3483.2,"ts":"58:00"},{"idx":537,"sp":"潘潘","t":"所以你也不可能说，好像你下周把这个30项东西整理出来了，就是不可能的。","s":3483.36,"e":3489.68,"ts":"58:03"},{"idx":538,"sp":"潘潘","t":"所以嗯，大家也都习惯了，整整体还算一个比较佛系的行业吧。","s":3490.2,"e":3495.68,"ts":"58:10","sug":1,"sugReason":"I人/开会讨论信息密度低"},{"idx":539,"sp":"潘潘","t":"就是大家嗯会能理解说，嗯，有些工作像档案整理啊，嗯，它是它是需要你。","s":3495.84,"e":3505.48,"ts":"58:15","sug":1,"sugReason":"I人/开会讨论信息密度低"},{"idx":540,"sp":"潘潘","t":"就就投入时间的，然后因为它需要你细心，它需要你的这个嗯注意力，所以嗯对，确实没有太多的说好像呃经常要check in啊之类的。","s":3505.67,"e":3519.67,"ts":"58:25","sug":1,"sugReason":"I人/开会讨论信息密度低"},{"idx":541,"sp":"雨林","t":"嗯。","s":3520.07,"e":3520.67,"ts":"58:40","sug":1,"sugReason":"I人/开会讨论信息密度低"},{"idx":542,"sp":"雨林","t":"好嗯。","s":3523.16,"e":3524.4,"ts":"58:43","sug":1,"sugReason":"I人/开会讨论信息密度低"},{"idx":543,"sp":"雨林","t":"嗯，我想我想配备到这个，但是我一下子哦。","s":3527.14,"e":3531.1,"ts":"58:47","sug":1,"sugReason":"I人/开会讨论信息密度低"},{"idx":544,"sp":"雨林","t":"看看我们怎么过渡到这里。","s":3532.07,"e":3533.71,"ts":"58:52","sug":1,"sugReason":"I人/开会讨论信息密度低"},{"idx":545,"sp":"阿司","t":"我想问我我我有点想就是就是把上一段就比如说他说黑镜那里面的，然后由我或者雨林来说出来，可以可以可以，比如说就可以问那我试一下吧，好的好的，就是我在想说呃潘潘在整理这些文件或者有的时候是照片的时候，会不会就根据这些照片开始。","s":3534.07,"e":3555.59,"ts":"58:54","sug":1,"sugReason":"I人/开会讨论信息密度低"},{"idx":546,"sp":"阿司","t":"诶，慢慢地来想象这个人长什么样子，然后他大致生活在什么样的环境里面，他周围是什么样的人，然后再回头去看他留下的那些资料，然后再去推测他的生活场景，就是有一种重建这种场景的感觉。","s":3555.96,"e":3574.76,"ts":"59:15","sug":1,"sugReason":"I人/开会讨论信息密度低"},{"idx":547,"sp":"潘潘","t":"嗯是的因为嗯我其实说到场景重建让我想到去年那个新一季的黑镜里面有一集叫啊就是异录集讲的是那个男主那个一个人他可以通过嗯照片走进过去的记忆现场然后重新回到当时的环境里面。","s":3577.82,"e":3601.38,"ts":"59:37","sug":1,"sugReason":"I人/开会讨论信息密度低"},{"idx":548,"sp":"雨林","t":"对我还差两级。","s":3601.46,"e":3603.26,"ts":"1:00:01"},{"idx":549,"sp":"雨林","t":"而且这个翻译，易路吉这怎么这么对齐呢？","s":3603.34,"e":3606.98,"ts":"1:00:03"},{"idx":550,"sp":"雨林","t":"嗯，对，这个这个翻译。","s":3607.14,"e":3608.86,"ts":"1:00:07"},{"idx":551,"sp":"潘潘","t":"对，这个易路吉是我查的啦，我就记得他。","s":3609.02,"e":3612.7,"ts":"1:00:09"},{"idx":552,"sp":"潘潘","t":"对对对，叫于老吉，这个翻译还挺好的。","s":3612.82,"e":3614.98,"ts":"1:00:12"},{"idx":553,"sp":"潘潘","t":"然后嗯，然后我我当时看那集的时候就觉得说这个这种重新回到老照片里的这种体验和呃整理档案在档案里面发现材料的感觉有一点相似，所以嗯啊，对对对，就然后嗯，所以我还挺好奇。","s":3615.42,"e":3635.14,"ts":"1:00:15"},{"idx":554,"sp":"潘潘","t":"呃，那个编剧是从哪里得到了灵感？","s":3635.68,"e":3638.48,"ts":"1:00:35"},{"idx":555,"sp":"潘潘","t":"然后嗯，像我的话，确实因为嗯，在档案整理档案的过程当中，你呃会发现各种各样，有的时候甚至是意想不到的藏品在一个人的档案里面出现。","s":3638.88,"e":3654.32,"ts":"1:00:38"},{"idx":556,"sp":"潘潘","t":"可能你觉得啊，这个人他是个作家，然后他的档案里面可能会有什么样的。","s":3654.44,"e":3659.85,"ts":"1:00:54"},{"idx":557,"sp":"潘潘","t":"材料，但是嗯有的时候你会发现通过档案发现这个人他呃另外一面不同的人生，他可能有其他的兴趣爱好，他可能有一些甚至说说是比较私人的啊信件啊什么之类的。","s":3660.01,"e":3676.21,"ts":"1:01:00"},{"idx":558,"sp":"潘潘","t":"然后嗯在工作的过程当中，虽然我的嗯怎么说呢，就效率而言，我的目标是赶得赶紧把这个这批档案给整理出来，然后把这个检索目录啊给写出来。","s":3676.65,"e":3691.81,"ts":"1:01:16"},{"idx":559,"sp":"潘潘","t":"但是有的时候我也会呃拿出一张照片，我就哎看来是说哎这个就是。","s":3691.93,"e":3697.69,"ts":"1:01:31"},{"idx":560,"sp":"潘潘","t":"照片里的这个人，他到底是谁？","s":3697.89,"e":3699.77,"ts":"1:01:37"},{"idx":561,"sp":"潘潘","t":"就除了这个主人公之外，就另外的这些人，他们都是谁？","s":3699.89,"e":3704.33,"ts":"1:01:39"},{"idx":562,"sp":"潘潘","t":"或者说这张照片，他以前是他是如果他没有任何的描述的话，照片背面没有任何信息的话，他可能是在哪拍的。","s":3704.49,"e":3715.13,"ts":"1:01:44"},{"idx":563,"sp":"潘潘","t":"嗯，就会有这些特别嗯，这个有一点这个叫什么？","s":3715.61,"e":3721.61,"ts":"1:01:55"},{"idx":564,"sp":"雨林","t":"呃找线索的那种。","s":3724.85,"e":3727.17,"ts":"1:02:04"},{"idx":565,"sp":"潘潘","t":"找线索然后甚至有一点推理有一点这个出神的感觉，就是从我的工作主线当中呃神游出去就就是会有这些嗯哇瞬间对对对，然后嗯我觉得会有这样的想法会有这样想象他其实和我之前。","s":3727.25,"e":3751.21,"ts":"1:02:07"},{"idx":566,"sp":"潘潘","t":"呃，本科是人类学，然后研究生也读过一点美术史。","s":3751.46,"e":3755.9,"ts":"1:02:31"},{"idx":567,"sp":"潘潘","t":"嗯，这两个学科的训练是分不开的。","s":3756.3,"e":3758.7,"ts":"1:02:36"},{"idx":568,"sp":"潘潘","t":"嗯，尤其是我觉得当年对于呃MATERIAL CULTURE，就是物质文化的学习，嗯，对我现在的工作是，嗯，和我现在的工作是连接得非常紧密的。","s":3759.1,"e":3772.06,"ts":"1:02:39"},{"idx":569,"sp":"潘潘","t":"嗯，MATERIAL CULTURE其实就是通过一件物品本身啊，去理解它背后的人类社会啊，的人类的生活和社会关系。","s":3772.58,"e":3783.3,"ts":"1:02:52"},{"idx":570,"sp":"潘潘","t":"那么这件物品可以是非常日常的，我们手边的东西，比如说咖啡杯、比如说水壶、比如说手机。","s":3783.93,"e":3793.17,"ts":"1:03:03"},{"idx":571,"sp":"潘潘","t":"嗯，它也可以是历史博物馆里面的一件藏品，一件青铜器，卢浮宫里的一幅画等等。","s":3793.57,"e":3801.53,"ts":"1:03:13"},{"idx":572,"sp":"潘潘","t":"然后在物质文化的学习当中呢，我们会去思考、去讨论这些物品的过去、现在和将来。","s":3802.04,"e":3811.84,"ts":"1:03:22"},{"idx":573,"sp":"潘潘","t":"嗯，他们的人生，他们的物生，嗯，他们是如何被创造出来的？","s":3812.28,"e":3818.08,"ts":"1:03:32"},{"idx":574,"sp":"潘潘","t":"他们是在怎样的，在哪里被生产出来的？","s":3818.2,"e":3822.16,"ts":"1:03:38"},{"idx":575,"sp":"潘潘","t":"嗯，通过怎样的方式被创造出来？","s":3822.64,"e":3825.92,"ts":"1:03:42","sug":1,"sugReason":"物传记概念重复定义"},{"idx":576,"sp":"潘潘","t":"然后他们又。","s":3826.28,"e":3827.84,"ts":"1:03:46","sug":1,"sugReason":"物传记概念重复定义"},{"idx":577,"sp":"潘潘","t":"以什么样的方式在人类社会中流通啊？","s":3828.75,"e":3832.71,"ts":"1:03:48","sug":1,"sugReason":"物传记概念重复定义"},{"idx":578,"sp":"潘潘","t":"他们待过哪些地方啊？","s":3832.83,"e":3834.71,"ts":"1:03:52","sug":1,"sugReason":"物传记概念重复定义"},{"idx":579,"sp":"潘潘","t":"甚至如何，甚至甚至是嗯，比如说他们是如何被断舍离的、被消失的。","s":3834.87,"e":3840.71,"ts":"1:03:54","sug":1,"sugReason":"物传记概念重复定义"},{"idx":580,"sp":"潘潘","t":"嗯，比如说你这个一张餐巾纸，他待会儿就被你丢到了垃圾桶里，他明天就从你的生活当中消失了。","s":3841.19,"e":3850.39,"ts":"1:04:01","sug":1,"sugReason":"物传记概念重复定义"},{"idx":581,"sp":"潘潘","t":"所以嗯……就是物生吧，这个一个物品的一生吧。","s":3850.79,"e":3855.15,"ts":"1:04:10"},{"idx":582,"sp":"阿司","t":"嗯，然后是不是也有一种就是人类学的方法跟它相关的？","s":3855.63,"e":3861.43,"ts":"1:04:15"},{"idx":583,"sp":"阿司","t":"我忘记叫什么名字了。","s":3861.51,"e":3863.35,"ts":"1:04:21"},{"idx":584,"sp":"潘潘","t":"嗯，呃，对，这个其实呃，对于一件物品的研究，它的它的过对它的过去、现在和将来的探索，呃，有一个方法论叫OBJECT BIOGRAPHY，就是物传记，物品的传记。","s":3864.03,"e":3879.83,"ts":"1:04:24"},{"idx":585,"sp":"潘潘","t":"嗯，然后我记得我以前读人类学和美术史的时候都做过这个作业，就是写这个 OBJECT BIOGRAPHY。","s":3880.39,"e":3889.11,"ts":"1:04:40"},{"idx":586,"sp":"潘潘","t":"然后一般来说我们说 BIOGRAPHY的时候就是传记，是写人的生平；但是物传记的话，嗯，就是呃要去研究一件物品，然后去回答他的嗯，回答我刚才提到的那些嗯，提到那些问题。","s":3889.59,"e":3908.23,"ts":"1:04:49","sug":1,"sugReason":"作业设置细节"},{"idx":587,"sp":"潘潘","t":"嗯，比如说，呃，我印象比较深的是我研究生的时候写过一份《乌传记》的作业。","s":3908.79,"e":3915.87,"ts":"1:05:08","sug":1,"sugReason":"作业设置细节"},{"idx":588,"sp":"潘潘","t":"当时呢，老师把我们带到学校的图书馆，然后让图书馆员从馆藏里面找出几样就是馆员他们都认为信息不足的藏品。","s":3916.87,"e":3930.19,"ts":"1:05:16","sug":1,"sugReason":"作业设置细节"},{"idx":589,"sp":"潘潘","t":"嗯，比如说我记得有啊，大概拿出了十几件吧，然后里面有一双是高跟鞋。","s":3930.83,"e":3938.19,"ts":"1:05:30","sug":1,"sugReason":"作业设置细节"},{"idx":590,"sp":"潘潘","t":"然后，可他可能是上世纪某一位著名设计师设计的。","s":3938.8,"e":3944.4,"ts":"1:05:38","sug":1,"sugReason":"作业设置细节"},{"idx":591,"sp":"潘潘","t":"但是呢，馆员们也不是很确定。","s":3944.52,"e":3946.8,"ts":"1:05:44"},{"idx":592,"sp":"潘潘","t":"呃，另外呢，还有一本相册，然后里面有呃可能几十张老照片。","s":3947.44,"e":3953.4,"ts":"1:05:47"},{"idx":593,"sp":"潘潘","t":"但是呢，像呃相册里面或者是这个相片后面都没有任何文字。","s":3953.56,"e":3958.76,"ts":"1:05:53"},{"idx":594,"sp":"潘潘","t":"所以说，呃，馆员他一时之间也不知道怎么样去描述它，怎么样把它录入到这个图书馆系统里面。","s":3959.12,"e":3966.64,"ts":"1:05:59"},{"idx":595,"sp":"潘潘","t":"就是如果你只填，比如说无题相册之类的话，那那这个相册之后就很难被找到，对吧？","s":3966.9,"e":3974.98,"ts":"1:06:06"},{"idx":596,"sp":"潘潘","t":"哦，所以就是你即便即便把这个信息录入到了系统里面，嗯，可能今后就是也也对它今后的使用就是没有什么帮助。","s":3975.14,"e":3987.5,"ts":"1:06:15"},{"idx":597,"sp":"潘潘","t":"所以说，嗯，就类似于像高跟鞋啊、橡皮相册啊这些，就是嗯，这种呃，这这一类大概十几件啊物品。","s":3987.94,"e":3998.58,"ts":"1:06:27"},{"idx":598,"sp":"潘潘","t":"然后他们可能有嗯，通过各种各样的途径进入到了啊，我们学校图书馆。","s":3998.7,"e":4005.06,"ts":"1:06:38"},{"idx":599,"sp":"潘潘","t":"然后有的时候可能是馆员他自己没有时间去深入研究这些东西啊，有的时候可能是它上面有嗯，呃，外语，然后这个馆馆里面那个图书馆里面暂时还没有会这门语言的人，所以就是。","s":4005.38,"e":4022.62,"ts":"1:06:45"},{"idx":600,"sp":"潘潘","t":"也是没有时间去特别啊挖掘的这些藏品吧。","s":4022.83,"e":4027.35,"ts":"1:07:02","sug":1,"sugReason":"研究过程铺垫"},{"idx":601,"sp":"潘潘","t":"所以说呃，当时我们做那个物传记的作业就是一个呃很好的机会吧，去呃去发掘一下这些就是无名相册、无名高跟鞋，他们的他们的物身。","s":4028.27,"e":4043.59,"ts":"1:07:08","sug":1,"sugReason":"研究过程铺垫"},{"idx":602,"sp":"潘潘","t":"所以呃，老师对对对，然后老师就让我们呃每个人认领了一件物品，然后呢，那个去写这个这篇传记。","s":4043.91,"e":4053.67,"ts":"1:07:23","sug":1,"sugReason":"研究过程铺垫"},{"idx":603,"sp":"潘潘","t":"然后这个它虽然是一个论文吧，但是这个作业我记得当时是没有字数限制的，就是老师让你觉得老师觉得你就你就你就写吧，就写到你觉得自己没东西写了为止。","s":4053.75,"e":4066.23,"ts":"1:07:33","sug":1,"sugReason":"研究过程铺垫"},{"idx":604,"sp":"雨林","t":"哇，没有限制也是。","s":4066.43,"e":4067.95,"ts":"1:07:46","sug":1,"sugReason":"研究过程铺垫"},{"idx":605,"sp":"潘潘","t":"对，没有限制就是挺可怕的，也是。","s":4068.39,"e":4071.11,"ts":"1:07:48","sug":1,"sugReason":"研究过程铺垫"},{"idx":606,"sp":"潘潘","t":"然后嗯后来我我当时认领的是一本大概可能就是两个手掌大的一本折页的小画册，然后它展开来是一整条的那种。","s":4072.11,"e":4084.19,"ts":"1:07:52"},{"idx":607,"sp":"潘潘","t":"然后我拿到之后呢，第一步我就先你你你去研究这个物品，就得非常细致的、非常的发散式的去观察它。","s":4084.9,"e":4094.94,"ts":"1:08:04"},{"idx":608,"sp":"潘潘","t":"嗯，比如说我当时拿到那本小书之后，我就先看了那个，先翻开来看看，先看它的首页和末页。","s":4095.5,"e":4103.06,"ts":"1:08:15"},{"idx":609,"sp":"潘潘","t":"然后我发现，嗯，它的最后一页真的有那个出版信息。","s":4103.42,"e":4107.9,"ts":"1:08:23"},{"idx":610,"sp":"潘潘","t":"嗯，然后我发现它是一本。","s":4108.42,"e":4110.9,"ts":"1:08:28"},{"idx":611,"sp":"潘潘","t":"日本明治末年，大概是1900年前后的呃工艺文样设计图谱。","s":4111.17,"e":4116.93,"ts":"1:08:31"},{"idx":612,"sp":"潘潘","t":"然后它的书名叫呃TAKE ZONE，就是竹子的图案。","s":4117.37,"e":4122.53,"ts":"1:08:37"},{"idx":613,"sp":"潘潘","t":"呃，在呃翻翻，我就我就在打开翻翻，发现它呃每一页都是以竹子为主题，就是各种各样的小画。","s":4123.37,"e":4133.13,"ts":"1:08:43"},{"idx":614,"sp":"潘潘","t":"然后那本书的嗯。","s":4133.77,"e":4136.01,"ts":"1:08:53","sug":1,"sugReason":"出版/印刷/墨水调研细节"},{"idx":615,"sp":"潘潘","t":"纸张呢，是那种呃软软的，然后非常有肌理感的那种纸。","s":4136.85,"e":4141.37,"ts":"1:08:56","sug":1,"sugReason":"出版/印刷/墨水调研细节"},{"idx":616,"sp":"潘潘","t":"呃，所以非整体来说是一本非常精美的小书。","s":4141.81,"e":4145.81,"ts":"1:09:01","sug":1,"sugReason":"出版/印刷/墨水调研细节"},{"idx":617,"sp":"潘潘","t":"所以呃，后来为了呃去描述这本书的出身吧，那么我就得去查资料、去做比对、去推测，比如说它使用的这个纸大概有可能是什么纸。","s":4146.33,"e":4161.69,"ts":"1:09:06","sug":1,"sugReason":"出版/印刷/墨水调研细节"},{"idx":618,"sp":"潘潘","t":"呃，印刷这样子的书用的墨水是1900年前后用的是怎出版？","s":4161.97,"e":4168.29,"ts":"1:09:21","sug":1,"sugReason":"出版/印刷/墨水调研细节"},{"idx":619,"sp":"潘潘","t":"就是印书籍印刷用的是怎样的墨水？","s":4168.37,"e":4171.13,"ts":"1:09:28","sug":1,"sugReason":"出版/印刷/墨水调研细节"},{"idx":620,"sp":"潘潘","t":"呃，以及说当时的文化背景。","s":4171.57,"e":4174.01,"ts":"1:09:31","sug":1,"sugReason":"出版/印刷/墨水调研细节"},{"idx":621,"sp":"潘潘","t":"比如说为什么要出版这样子的小册子？","s":4174.13,"e":4177.45,"ts":"1:09:34"},{"idx":622,"sp":"潘潘","t":"呃，谁会来买这样子的书啊？","s":4177.85,"e":4181.85,"ts":"1:09:37"},{"idx":623,"sp":"潘潘","t":"买来之后呢，是收藏用，还是比如说作为因为它是这个。","s":4181.97,"e":4187.09,"ts":"1:09:41"},{"idx":624,"sp":"潘潘","t":"设计图谱吧，是不是作为设计参考之类的？","s":4187.38,"e":4190.18,"ts":"1:09:47","sug":1,"sugReason":"藏家印章/流通推测展开"},{"idx":625,"sp":"潘潘","t":"后来我就记得那个作业我写的还挺多的。","s":4190.98,"e":4194.3,"ts":"1:09:50","sug":1,"sugReason":"藏家印章/流通推测展开"},{"idx":626,"sp":"潘潘","t":"然后然后为了去呃研究这个去推测吧，就是这本书它是通过怎么样的方式来到我们这个学校图书馆的。","s":4194.58,"e":4206.98,"ts":"1:09:54","sug":1,"sugReason":"藏家印章/流通推测展开"},{"idx":627,"sp":"潘潘","t":"然后我还去嗯查找了就是。","s":4207.3,"e":4210.86,"ts":"1:10:07","sug":1,"sugReason":"藏家印章/流通推测展开"},{"idx":628,"sp":"潘潘","t":"馆内就是其他同一时，差不多同一时期，1900年前后从日本来的，就是古籍和珍本。","s":4211.42,"e":4219.74,"ts":"1:10:11","sug":1,"sugReason":"藏家印章/流通推测展开"},{"idx":629,"sp":"潘潘","t":"然后看看能不能从其他的书上找到一些线索，就比如说有没有相似的类、类、类型的书啊？","s":4219.94,"e":4227.38,"ts":"1:10:19","sug":1,"sugReason":"藏家印章/流通推测展开"},{"idx":630,"sp":"潘潘","t":"或者说书上有没有类似的呃、相似的藏家印章啊等等。","s":4227.62,"e":4232.94,"ts":"1:10:27","sug":1,"sugReason":"藏家印章/流通推测展开"},{"idx":631,"sp":"潘潘","t":"就是通过。","s":4233.3,"e":4234.94,"ts":"1:10:33"},{"idx":632,"sp":"潘潘","t":"各种各样，就是穷尽我的我的思路吧，去去猜测说这本书它是怎么样被生产出来，它是怎么样来到一个美国的大学的图书馆的。","s":4235.61,"e":4247.97,"ts":"1:10:35"},{"idx":633,"sp":"潘潘","t":"然后所以整个过程就特别像是在研究一个人他的一生，他的他的他的颠沛流离也好。","s":4248.49,"e":4256.17,"ts":"1:10:48"},{"idx":634,"sp":"潘潘","t":"嗯，所以虽然虽然当时只是。","s":4256.61,"e":4260.19,"ts":"1:10:56"},{"idx":635,"sp":"潘潘","t":"为了完成作业，但是我就是特别特别喜欢这种探索的感觉。","s":4260.59,"e":4264.83,"ts":"1:11:00"},{"idx":636,"sp":"雨林","t":"嗯。","s":4265.43,"e":4265.91,"ts":"1:11:05"},{"idx":637,"sp":"阿司","t":"哇哦！","s":4266.23,"e":4266.91,"ts":"1:11:06"},{"idx":638,"sp":"阿司","t":"我微信让我想起来我微信读书一直躺着的一本比较经典的读物，就叫做《物的2次生命》。","s":4267.91,"e":4277.07,"ts":"1:11:07"},{"idx":639,"sp":"阿司","t":"嗯，然后它的作者是阿帕杜莱，它的主旨就是这个物件不只是死的，它是有社会生命的。","s":4277.43,"e":4285.83,"ts":"1:11:17"},{"idx":640,"sp":"阿司","t":"然后让我觉得，如果我们把一些呃视角都转到物品而不是人为这个概念出发的话，其实是非常有趣的一件事情。","s":4286.27,"e":4298.91,"ts":"1:11:26"},{"idx":641,"sp":"阿司","t":"然后尤其是听你讲那本呃主字的图案，我觉得真的非常的浪漫。","s":4299.27,"e":4304.35,"ts":"1:11:39"},{"idx":642,"sp":"阿司","t":"我的脑子里一直就闪过一个词叫做万物有灵，呃或者就是简称物灵吧，就是从一个灵性的角度，在你给这些物品写传记的时候，就像在。","s":4304.67,"e":4316.91,"ts":"1:11:44"},{"idx":643,"sp":"阿司","t":"拼凑出或者打捞出这个物件的灵魂一样。","s":4317.35,"e":4321.51,"ts":"1:11:57"},{"idx":644,"sp":"阿司","t":"嗯，我小的时候好像读过一本长篇小说，我记得是郑渊洁的。","s":4321.95,"e":4328.47,"ts":"1:12:01"},{"idx":645,"sp":"阿司","t":"他是一个因为郑渊、郑渊洁是中国童话大王嘛，他写的全部都是这种童话。","s":4328.79,"e":4335.35,"ts":"1:12:08"},{"idx":646,"sp":"阿司","t":"然后他有一部长篇的动画故事，我记得还蛮厚的，就是叫做《我是钱》。","s":4335.63,"e":4341.59,"ts":"1:12:15"},{"idx":647,"sp":"阿司","t":"然后他就是把钞票当做第一人称去创作的一篇小说，就是通过呃钞票他每天流转过的地方，然后来观察每一个家庭、每一个组织里面的人是什么样的。","s":4342.05,"e":4357.81,"ts":"1:12:22"},{"idx":648,"sp":"阿司","t":"这个人他是贪婪也好，他是善良也好，然后。","s":4357.89,"e":4362.45,"ts":"1:12:37"},{"idx":649,"sp":"阿司","t":"通过去讲述这个钱一张钞票的一生，然后去呃进行一个这个虚拟的一个人类学的观察吧，我觉得真的还蛮有意思的。","s":4363.12,"e":4375.24,"ts":"1:12:43"},{"idx":650,"sp":"阿司","t":"但是呃小说归小说哈，呃我其实也蛮想问，就是盼盼有没有想过，就是以这些你的这些经历去写创作关于。","s":4375.48,"e":4385.84,"ts":"1:12:55"},{"idx":651,"sp":"阿司","t":"雾生的雾灵的小说或者文学作品，因为我觉得你太适合了，你肯定有很多灵感。","s":4386.62,"e":4393.62,"ts":"1:13:06"},{"idx":652,"sp":"阿司","t":"嗯，有点偏了这话题。","s":4394.78,"e":4396.62,"ts":"1:13:14"},{"idx":653,"sp":"潘潘","t":"没没没有没有没有，我觉得嗯是我曾经是有想过写以档案管理员的。","s":4396.94,"e":4406.26,"ts":"1:13:16"},{"idx":654,"sp":"潘潘","t":"工作出发去写可能一个短篇小说之类的。","s":4407.47,"e":4412.07,"ts":"1:13:27"},{"idx":655,"sp":"潘潘","t":"嗯。","s":4412.59,"e":4413.15,"ts":"1:13:32"},{"idx":656,"sp":"阿司","t":"因为对，因为我觉得重生之我在美国。","s":4413.31,"e":4416.99,"ts":"1:13:33"},{"idx":657,"sp":"潘潘","t":"做他的管理员都不用重生了，就是现在。","s":4416.99,"e":4421.47,"ts":"1:13:36"},{"idx":658,"sp":"阿司","t":"我们我们这期标题有了好棒啊。","s":4422.71,"e":4428.83,"ts":"1:13:42"},{"idx":659,"sp":"潘潘","t":"对，因为因为我觉得嗯，首先是大家对于我们这个职业的了解也比较少吧。","s":4429.28,"e":4436.68,"ts":"1:13:49"},{"idx":660,"sp":"潘潘","t":"嗯，然后我们也我觉得大大多数档案管理员可能也不是就是比较安安静静待在那边那种，就也也不太会去嗯过多的可能就是非常 vocal 去分享说我们这个行业。","s":4437.12,"e":4454.16,"ts":"1:13:57"},{"idx":661,"sp":"潘潘","t":"嗯，是是应该是怎么样之类的。","s":4454.6,"e":4456.64,"ts":"1:14:14"},{"idx":662,"sp":"潘潘","t":"嗯，然后。","s":4457.08,"e":4458.72,"ts":"1:14:17"},{"idx":663,"sp":"潘潘","t":"嗯，对，反正我我有之前就是写过几笔吧，但是后来也是也不了了之了。","s":4460.94,"e":4469.54,"ts":"1:14:20"},{"idx":664,"sp":"潘潘","t":"就是但我觉得查斯的这个角度还挺有意思的，就可能从可能可能可以成为一个就是。","s":4469.7,"e":4477.3,"ts":"1:14:29"},{"idx":665,"sp":"潘潘","t":"有点那种梦中梦的感觉，就是从先写档案管理员的生活，然后期待。","s":4478.42,"e":4486.58,"ts":"1:14:38"},{"idx":666,"sp":"阿司","t":"联系他的作品。","s":4486.58,"e":4488.02,"ts":"1:14:46"},{"idx":667,"sp":"雨林","t":"对而且也很关心就是你对什么物会很感兴趣。","s":4489.7,"e":4496.42,"ts":"1:14:49"},{"idx":668,"sp":"阿司","t":"对这个很重要哎。","s":4496.58,"e":4497.98,"ts":"1:14:56"},{"idx":669,"sp":"雨林","t":"对你在有做陶艺嘛，然后你也是做了很多，然后有的是不能留着的。","s":4498.1,"e":4504.06,"ts":"1:14:58"},{"idx":670,"sp":"雨林","t":"对，他们也是你要管理的档案。","s":4506.76,"e":4510.32,"ts":"1:15:06"},{"idx":671,"sp":"潘潘","t":"哇哦。","s":4511.2,"e":4511.72,"ts":"1:15:11"},{"idx":672,"sp":"潘潘","t":"是哦，也确实是，因为嗯嗯呃先说我工作当中吧，确实我我可能是一个比较比较视觉的人，所以嗯虽然怎么说呢，大部分的档案可是还是以至少我接触的东西还是以手稿啊比较文字类的东西为主。","s":4512.04,"e":4534.96,"ts":"1:15:12"},{"idx":673,"sp":"潘潘","t":"嗯，我也我也挺感兴趣，但是嗯照片总是更好看的，就是看起来更有意思的。","s":4535.44,"e":4541.32,"ts":"1:15:35"},{"idx":674,"sp":"潘潘","t":"嗯，然后呃有的时候呢嗯。","s":4541.64,"e":4548.12,"ts":"1:15:41"},{"idx":675,"sp":"潘潘","t":"对，然后因为因为我也做陶艺，然后我就发现我对。","s":4550.34,"e":4556.9,"ts":"1:15:50"},{"idx":676,"sp":"潘潘","t":"我对自己的。","s":4560.24,"e":4562.48,"ts":"1:16:00"},{"idx":677,"sp":"潘潘","t":"创作出来的东西，就是它就是可能会成为我个人档案的东西的。","s":4563.66,"e":4571.14,"ts":"1:16:03"},{"idx":678,"sp":"潘潘","t":"就是我还挺会断舍离的，就是这和这和就是做档案管理员的工作逻辑很、很不、很不呃、很不一致。","s":4573.84,"e":4583.96,"ts":"1:16:13"},{"idx":679,"sp":"潘潘","t":"但是我自己做出，我可能作为一个创作者，我就我对自己做出来的东西还挺挑剔的，就是如果我觉得不好看，我就会扔掉。","s":4584.48,"e":4596.88,"ts":"1:16:24"},{"idx":680,"sp":"潘潘","t":"而不是把它对，而且而不是把它好像留下来，可能作为。","s":4597.19,"e":4603.91,"ts":"1:16:37"},{"idx":681,"sp":"潘潘","t":"对，就是比如说我在处理档案的时候，我看到比如说一份、一个、一个、一份手稿。","s":4606.63,"e":4614.43,"ts":"1:16:46"},{"idx":682,"sp":"潘潘","t":"然后我会特别嗯欣赏，就是这一个这份手稿，它作为一个就是过程中的，就是创作过程当中产生的这一个产物。","s":4614.67,"e":4627.19,"ts":"1:16:54"},{"idx":683,"sp":"潘潘","t":"嗯，就与其说是你有一份，嗯，你有一份可能。","s":4627.71,"e":4631.63,"ts":"1:17:07"},{"idx":684,"sp":"潘潘","t":"嗯，就是之后出书了，或者一个作家他之后出书了。","s":4631.83,"e":4635.27,"ts":"1:17:11"},{"idx":685,"sp":"潘潘","t":"与其说是那本书，我、我、我从我工作当中是会更欣赏这个档案，他、他就是档案中的手稿，它上面可能有很多手写的痕迹，有很多这个涂改、修改的痕迹。","s":4635.55,"e":4649.79,"ts":"1:17:15"},{"idx":686,"sp":"潘潘","t":"嗯。","s":4650.27,"e":4650.87,"ts":"1:17:30"},{"idx":687,"sp":"潘潘","t":"然后我觉得这个是。","s":4651.71,"e":4653.63,"ts":"1:17:31"},{"idx":688,"sp":"潘潘","t":"是特别是特别美的，而且会给你，而且是特别嗯特别嗯稀少，就是大家不太看得到的一个一个状态吧。","s":4655.26,"e":4666.86,"ts":"1:17:35"},{"idx":689,"sp":"潘潘","t":"但是。","s":4667.26,"e":4667.98,"ts":"1:17:47"},{"idx":690,"sp":"潘潘","t":"这么说是啊，就是我对于我如果我自己是那个创作者的话，我就会只想要留下，就是可能是我自己比较满意的作品。","s":4670.18,"e":4678.38,"ts":"1:17:50"},{"idx":691,"sp":"雨林","t":"嗯，可能需要第三个人来看你的过程。","s":4678.78,"e":4683.06,"ts":"1:17:58"},{"idx":692,"sp":"潘潘","t":"对。","s":4683.1,"e":4683.46,"ts":"1:18:03"},{"idx":693,"sp":"阿司","t":"是的。","s":4683.66,"e":4684.02,"ts":"1:18:03"},{"idx":694,"sp":"阿司","t":"嗯，我想先pause一下，因为我们时间不可能不太多。","s":4684.34,"e":4688.98,"ts":"1:18:04","ai":1,"dt":"production_talk"},{"idx":695,"sp":"阿司","t":"我现在其实脑子里头有有有一个剪辑的想法，就是我们。","s":4689.06,"e":4694.14,"ts":"1:18:09","ai":1,"dt":"production_talk"},{"idx":696,"sp":"阿司","t":"因为后面的内容我觉得也很不错嘛，就不太想全部都舍掉。","s":4694.34,"e":4699.42,"ts":"1:18:14","ai":1,"dt":"production_talk"},{"idx":697,"sp":"阿司","t":"我在想说，要不然就是分，如果盼盼愿意再给我们录一次的话，我们可以分上下两集。","s":4699.62,"e":4706.94,"ts":"1:18:19","ai":1,"dt":"production_talk"},{"idx":698,"sp":"阿司","t":"就是第一集就是重生，我在美国图书馆做档案管理员。","s":4707.26,"e":4712.18,"ts":"1:18:27","ai":1,"dt":"production_talk"},{"idx":699,"sp":"阿司","t":"第二期就叫为什么，ai 时代，为什么人类学才是人类文明最后的堡垒？","s":4712.54,"e":4718.46,"ts":"1:18:32","ai":1,"dt":"production_talk"},{"idx":700,"sp":"阿司","t":"哈哈哈。","s":4718.54,"e":4719.66,"ts":"1:18:38","ai":1,"dt":"production_talk"},{"idx":701,"sp":"潘潘","t":"就爆款。","s":4721.47,"e":4723.07,"ts":"1:18:41","ai":1,"dt":"production_talk"},{"idx":702,"sp":"阿司","t":"就是就是第二第二期可以就是从比如说创作，什么图书馆啊，兴趣啊，写作，可以啊，可以，一直到 ai 时代，就是你的看法。","s":4723.91,"e":4732.79,"ts":"1:18:43","ai":1,"dt":"production_talk"},{"idx":703,"sp":"阿司","t":"我觉得内容比较和，第一个就是比较像揭示你这个档案管理员的一个工作流程。","s":4732.87,"e":4741.43,"ts":"1:18:52","ai":1,"dt":"production_talk"},{"idx":704,"sp":"阿司","t":"然后但我觉得我特别喜欢你的那个 technical 的部分，我想说我们现在有时间，要不要把那个可以啊，可以，让你录了。","s":4741.79,"e":4748.75,"ts":"1:19:01","ai":1,"dt":"production_talk"},{"idx":705,"sp":"阿司","t":"然后就结束今天秦玉林，要不然你你来Q一下，就我就是高亮的这部分。","s":4748.95,"e":4755.39,"ts":"1:19:08","ai":1,"dt":"production_talk"},{"idx":706,"sp":"阿司","t":"对嗯嗯就是你可以你可以读我这一。","s":4755.51,"e":4758.07,"ts":"1:19:15","ai":1,"dt":"production_talk"},{"idx":707,"sp":"雨林","t":"段好的好的好的。","s":4758.07,"e":4759.15,"ts":"1:19:18","ai":1,"dt":"production_talk"},{"idx":708,"sp":"雨林","t":"好。","s":4759.75,"e":4760.27,"ts":"1:19:19","ai":1,"dt":"production_talk"},{"idx":709,"sp":"雨林","t":"好啊，好潘潘，那你作为档案管理人，其实跟我们普通生活中面对自己的东西或者是家里的东西等等这些物件的可能思维思路是不一样的，那面对这种大量的几十箱的物品的时候你。","s":4762.3,"e":4781.1,"ts":"1:19:22","ai":1,"dt":"production_talk"},{"idx":710,"sp":"雨林","t":"要怎么样建立秩序呢？","s":4781.95,"e":4784.51,"ts":"1:19:41"},{"idx":711,"sp":"雨林","t":"给他们怎么样抽丝剥茧呢？","s":4784.59,"e":4786.63,"ts":"1:19:44"},{"idx":712,"sp":"雨林","t":"有没有什么比较硬核的方法或者流程给我们这些门外汉解释一下。","s":4786.91,"e":4794.43,"ts":"1:19:46"},{"idx":713,"sp":"阿司","t":"对。","s":4794.67,"e":4794.99,"ts":"1:19:54"},{"idx":714,"sp":"潘潘","t":"嗯，那么嗯其实在呃具体的整理过程当中呢，呃我们档案员的工作就是去需要1.","s":4796.47,"e":4806.79,"ts":"1:19:56"},{"idx":715,"sp":"潘潘","t":"1点去根据我们开箱的这个顺序啊之类的，会去去搭建他们呃这些材料它所呈现出来的信息结构。","s":4806.79,"e":4817.95,"ts":"1:20:06"},{"idx":716,"sp":"潘潘","t":"然后嗯最后我们要用一个可以被大部分的研究者理解的逻辑去嗯。","s":4818.35,"e":4827.43,"ts":"1:20:18"},{"idx":717,"sp":"潘潘","t":"去编写一个这个检，每根据每一个档案去编写一个不同的检索目录。","s":4828.17,"e":4833.93,"ts":"1:20:28"},{"idx":718,"sp":"潘潘","t":"然后所以说我们在整理材料的过程当中呢，它并不是一个我们，并我们并没有一个固定的方法去整理嗯不同的档案，而是会根据每一份档案它自然呈现出来的。","s":4834.41,"e":4852.33,"ts":"1:20:34","sug":1,"sugReason":"排列逻辑举例展开"},{"idx":719,"sp":"潘潘","t":"这个不同的，它天然的这个不同的信息架构来进行整理。","s":4852.6,"e":4856.64,"ts":"1:20:52","sug":1,"sugReason":"排列逻辑举例展开"},{"idx":720,"sp":"潘潘","t":"嗯，在这一点上呢，有些人可能会觉得啊，图书馆系统里面这个呃，档案员、图书馆员好像就就他当我们的工作都差不多。","s":4857.12,"e":4867.84,"ts":"1:20:57","sug":1,"sugReason":"排列逻辑举例展开"},{"idx":721,"sp":"潘潘","t":"但是从我们的角度来说，嗯，档案员和图书馆员和图书馆的编目员，就是catalog的工作其实是很不一样的，因为嗯，从。","s":4867.92,"e":4879.6,"ts":"1:21:07","sug":1,"sugReason":"排列逻辑举例展开"},{"idx":722,"sp":"潘潘","t":"呃，从图书编目的角度来说，呃，至少是我的理解吧。","s":4879.79,"e":4883.63,"ts":"1:21:19","sug":1,"sugReason":"排列逻辑举例展开"},{"idx":723,"sp":"潘潘","t":"嗯，一本书它进入，它来到图书馆呃之后呢，会被这个加入到这个已经建立好的这个系统当中，会被信息系统中。","s":4883.95,"e":4896.51,"ts":"1:21:23","sug":1,"sugReason":"排列逻辑举例展开"},{"idx":724,"sp":"潘潘","t":"然后呢，呃，这个编目员会给每本书一个 call number 叫索书号。","s":4896.87,"e":4902.83,"ts":"1:21:36","sug":1,"sugReason":"排列逻辑举例展开"},{"idx":725,"sp":"潘潘","t":"然后呢，这些书会按照索书号一个一个上架，然后以后这个源源不断的新书就会被加入到这样一个庞大的同一个体系里面。","s":4903.15,"e":4912.75,"ts":"1:21:43","sug":1,"sugReason":"排列逻辑举例展开"},{"idx":726,"sp":"潘潘","t":"但是呃，整理档案呢，它更像是在建立一个个呃微观独立的体系。","s":4913.18,"e":4920.86,"ts":"1:21:53"},{"idx":727,"sp":"潘潘","t":"这么说吧，就是嗯，档案它档案的材料呃，它并没有一个特别就是统一固定的排列方法。","s":4921.82,"e":4932.3,"ts":"1:22:01"},{"idx":728,"sp":"潘潘","t":"比如说啊，我们把所有的手稿都拿出来，然后按照年份、月份给它一张张排好。","s":4932.38,"e":4940.3,"ts":"1:22:12"},{"idx":729,"sp":"潘潘","t":"呃，或者说我们把这个人他所有的信件都嗯一字排开，然后按照嗯比如说通信人的姓名首字母排列这样子。","s":4940.51,"e":4951.39,"ts":"1:22:20"},{"idx":730,"sp":"潘潘","t":"嗯，我们在最开始就是列那个清单，在开箱浏览的过程当中，呃，我们特别关注的是这些材料它是它原本存在哪些排列逻辑。","s":4951.95,"e":4964.51,"ts":"1:22:31"},{"idx":731,"sp":"潘潘","t":"比如说，嗯，这位学者他习惯根据不同的研究项目来归归纳他的文件。","s":4964.75,"e":4971.43,"ts":"1:22:44","sug":1,"sugReason":"照片与信件关系的例子过长"},{"idx":732,"sp":"潘潘","t":"就是可能这一部分、这一箱都是关于这某个项目，然后这里面可能又有按照日期来排列这样子。","s":4971.67,"e":4979.51,"ts":"1:22:51","sug":1,"sugReason":"照片与信件关系的例子过长"},{"idx":733,"sp":"潘潘","t":"嗯，或者说有一些人他可能习惯把工作的工作的东西和私人生活的资料放在一起混在一起放。","s":4979.75,"e":4988.99,"ts":"1:22:59","sug":1,"sugReason":"照片与信件关系的例子过长"},{"idx":734,"sp":"潘潘","t":"那么其实那也是展现了他这个他作为一个人他的。","s":4989.23,"e":4993.51,"ts":"1:23:09","sug":1,"sugReason":"照片与信件关系的例子过长"},{"idx":735,"sp":"潘潘","t":"他他的这个呃生活方式吧，可能他就是工作和生活的东西都在当时都在同一个空间里面进行。","s":4993.79,"e":5002.87,"ts":"1:23:13","sug":1,"sugReason":"照片与信件关系的例子过长"},{"idx":736,"sp":"潘潘","t":"呃，所以说这些只要我们在整理的过程当中呃发现了这些还算比较清晰的排列逻辑，我们都会尽量保去去去保留他们。","s":5003.43,"e":5015.67,"ts":"1:23:23","sug":1,"sugReason":"照片与信件关系的例子过长"},{"idx":737,"sp":"潘潘","t":"呃，因为档案工作的嗯，对于档案工作来说，我们的工作不仅是要保存这些材料，呃，我们也是在保存这些材料之间的关系。","s":5016.11,"e":5029.03,"ts":"1:23:36","sug":1,"sugReason":"照片与信件关系的例子过长"},{"idx":738,"sp":"潘潘","t":"呃，我就是不知道这样说会不会有点抽象啊。","s":5029.92,"e":5033.72,"ts":"1:23:49","sug":1,"sugReason":"照片与信件关系的例子过长"},{"idx":739,"sp":"潘潘","t":"但是呃，举个举个例子吧，比如说一位呃艺术家，他的档案里面，呃，他把这个大量就是作品和展览的照片，所有的照片集中在一起，然后这些照照片呢，形成了他呃个人档案当中一个比较重要的部分。","s":5034,"e":5052.92,"ts":"1:23:54","sug":1,"sugReason":"照片与信件关系的例子过长"},{"idx":740,"sp":"潘潘","t":"嗯。","s":5053.2,"e":5053.8,"ts":"1:24:13","sug":1,"sugReason":"照片与信件关系的例子过长"},{"idx":741,"sp":"潘潘","t":"除此之外呢，他还有很多信件。","s":5054.82,"e":5057.5,"ts":"1:24:14"},{"idx":742,"sp":"潘潘","t":"呃，然后在很多信件当中可能夹着照片，比如说呃，我们猜啊，他当时可能把想把自己的作品就是拍下来，然后寄给别人分享这样子。","s":5057.98,"e":5068.7,"ts":"1:24:17"},{"idx":743,"sp":"潘潘","t":"嗯，那么出于尊重这些材料它原有的逻辑关系呢，我们就不会把这些放在信件当中的照片单独取出来，和其他的照片放在一起整理。","s":5068.98,"e":5082.42,"ts":"1:24:28"},{"idx":744,"sp":"潘潘","t":"虽然说，虽然说从使用的角度来看，呃，想象一下一位艺术史学者，他可能来我们馆来查找这份档案。","s":5082.95,"e":5092.87,"ts":"1:24:42"},{"idx":745,"sp":"潘潘","t":"那么他想找照片的时候呢，他往往会先去关注这个检索目录当中照片的那一部分。","s":5093.23,"e":5101.19,"ts":"1:24:53","sug":1,"sugReason":"数字化讨论"},{"idx":746,"sp":"潘潘","t":"那么夹在这个这些信件当中的照片，可能就不太容易被研究者发现哦。","s":5101.47,"e":5109.15,"ts":"1:25:01","sug":1,"sugReason":"数字化讨论"},{"idx":747,"sp":"潘潘","t":"嗯。","s":5109.39,"e":5109.65,"ts":"1:25:09","sug":1,"sugReason":"数字化讨论"},{"idx":748,"sp":"潘潘","t":"但是就是为了去保留这些，就是信件和照片他们之间的呃原生关系、原始语境。","s":5109.81,"e":5120.21,"ts":"1:25:09","sug":1,"sugReason":"数字化讨论"},{"idx":749,"sp":"潘潘","t":"那么我们还是会按照原样来保存，就是就是像就是信那那那一部分，可能就是会成为信件加的照片的这样一种方式。","s":5120.53,"e":5131.65,"ts":"1:25:20","sug":1,"sugReason":"数字化讨论"},{"idx":750,"sp":"潘潘","t":"所以说嗯。","s":5132.01,"e":5133.57,"ts":"1:25:32","sug":1,"sugReason":"数字化讨论"},{"idx":751,"sp":"潘潘","t":"所以说，对，所以说我们的工作就是呃会经常要去探索这些物品和物品之间的关系，然后去嗯，在然后去保存它们。","s":5134.54,"e":5147.42,"ts":"1:25:34","sug":1,"sugReason":"数字化讨论"},{"idx":752,"sp":"潘潘","t":"呃，当然了，就是如果说，如果说在一个比较理想的情况下，所我们能把所有这些材料都进行数字化处理，那么我们比如说在呃。","s":5147.74,"e":5158.3,"ts":"1:25:47","sug":1,"sugReason":"数字化讨论"},{"idx":753,"sp":"潘潘","t":"呃从数据的角度来说我们可以把这张照片和呃他同时比如说把和和其他的照片连连在一起或者是把这和和他这封信件连在一起啊当然那当然是就是比较理想的情况吧但是对对对所以没错就就是这个嗯但是就是呃。","s":5158.82,"e":5182.9,"ts":"1:25:58","sug":1,"sugReason":"数字化讨论"},{"idx":754,"sp":"潘潘","t":"大部分的档案馆因为资源限制，所以说没办法对大量的馆藏进行数字化。","s":5183.82,"e":5189.9,"ts":"1:26:23","sug":1,"sugReason":"数字化讨论"},{"idx":755,"sp":"潘潘","t":"所以啊我们的工作也是呃进行，就是为可能可能也可以说是为了之后的数字化打一个基础吧。","s":5190.06,"e":5199.94,"ts":"1:26:30","sug":1,"sugReason":"数字化讨论"},{"idx":756,"sp":"阿司","t":"哇哦嗯。","s":5200.22,"e":5201.58,"ts":"1:26:40"},{"idx":757,"sp":"潘潘","t":"嗯，所以呃，就是呃，说了这么多，就是我我会觉得在呃，档案工档案的工作，它是它是保存材料本身，它也是去保存材料的之间的关系。","s":5202.73,"e":5217.81,"ts":"1:26:42"},{"idx":758,"sp":"潘潘","t":"它整个这个一点点就是抽丝剥茧的过程，就是对我来说还挺像一个人类学家进入田野的。","s":5218.01,"e":5226.89,"ts":"1:26:58"},{"idx":759,"sp":"潘潘","t":"啊，这个感觉的。","s":5227.12,"e":5228.24,"ts":"1:27:07"},{"idx":760,"sp":"潘潘","t":"那么对，就是你可能通过已有的信息、已有的一些啊，可能之前前人做过的研究之类的，对这个你要进入的田野有有了一些了解。","s":5228.72,"e":5240.28,"ts":"1:27:08","sug":1,"sugReason":"田野比喻+收尾重复"},{"idx":761,"sp":"潘潘","t":"但是当你真正呃进入到田野里面的时候，你往往需要把之前的那些假设啊，一些呃现有的认知放在一边，然后去。","s":5240.56,"e":5253.48,"ts":"1:27:20","sug":1,"sugReason":"田野比喻+收尾重复"},{"idx":762,"sp":"潘潘","t":"投入到这个环境里面，投入可能投入到这份档案里面，然后让这个档案来告诉你，就是他他他有怎样，他他是他是谁，呃他和他们呃一份档案之间物与物的关系是啊怎样的，然后要去。","s":5254.21,"e":5274.45,"ts":"1:27:34","sug":1,"sugReason":"田野比喻+收尾重复"},{"idx":763,"sp":"潘潘","t":"对，然后就特别是就是有点是要把自己的呃主体性放下的这种感觉啊，所以我所以我就。","s":5275.58,"e":5286.86,"ts":"1:27:55","sug":1,"sugReason":"田野比喻+收尾重复"},{"idx":764,"sp":"潘潘","t":"我会觉得嗯很多人会觉得说呃可能可能大家一想到档案的一个脑中会出现的画面是一个特别规整，然后特别严肃，然后你可能有一个一间库房，然后上面有书架，书架上面摆满了档案盒的这种画面。","s":5288.71,"e":5308.43,"ts":"1:28:08","sug":1,"sugReason":"田野比喻+收尾重复"},{"idx":765,"sp":"潘潘","t":"但是嗯我特别想要分享，就是包括我在工作当中主持工作坊的时候啊，呃，或者是或者是比如说像现在来来上嗯 p 课啊，就是我会，我我作为一个。","s":5308.51,"e":5324.55,"ts":"1:28:28","sug":1,"sugReason":"田野比喻+收尾重复"},{"idx":766,"sp":"潘潘","t":"档案管理员，我会我我不太会去想要为呃档案现在已经有的这种权威感去进行更多的加持，我反而是呃更希望大家把嗯就是。","s":5325.35,"e":5340.99,"ts":"1:28:45","sug":1,"sugReason":"田野比喻+收尾重复"},{"idx":767,"sp":"潘潘","t":"不要那么严肃的来看待档案，然后嗯就是通过我的分享，就是更多的一些我们在后台的工作的细节，让大家觉，让大家了解到说嗯其实在这个非常规整的外壳之下，档案尤其是这个整理的过程当中，其实是非常非常混乱的，非常嗯。","s":5341.94,"e":5365.78,"ts":"1:29:01","sug":1,"sugReason":"田野比喻+收尾重复"},{"idx":768,"sp":"潘潘","t":"就是也也挺像嗯非常非常有机的一个信息过程信息获取的过程。","s":5366.47,"e":5376.03,"ts":"1:29:26","sug":1,"sugReason":"田野比喻+收尾重复"},{"idx":769,"sp":"雨林","t":"嗯然后。","s":5376.79,"e":5377.95,"ts":"1:29:36","sug":1,"sugReason":"田野比喻+收尾重复"},{"idx":770,"sp":"阿司","t":"太棒了谢谢这段关于具体过程的分享。","s":5377.95,"e":5382.23,"ts":"1:29:37","sug":1,"sugReason":"田野比喻+收尾重复"},{"idx":771,"sp":"雨林","t":"对觉得很很还是很包容很有生命力的就不是那种死板的啊或者说是。","s":5382.75,"e":5390.51,"ts":"1:29:42","sug":1,"sugReason":"田野比喻+收尾重复"},{"idx":772,"sp":"雨林","t":"呃，叫什么吹毛求疵的那种感觉嗯，对。","s":5391.08,"e":5395.28,"ts":"1:29:51","sug":1,"sugReason":"田野比喻+收尾重复"},{"idx":773,"sp":"潘潘","t":"ok. ","s":5396.82,"e":5397.8,"ts":"1:29:56","sug":1,"sugReason":"田野比喻+收尾重复"},{"idx":774,"sp":"阿司","t":"今天可以RAP UP可以说一段在想怎么做一个呃第一段的这么一个总结或者说画外音的形式吗于林你觉得呢嗯也可以这段就是要不然戛然而止也可以对。","s":5398.71,"e":5416.27,"ts":"1:29:58"},{"idx":775,"sp":"雨林","t":"对我们那那今天我们就主要是聊了阿斯跟啊主要跟阿斯还有潘潘聊好我再来一次啊今天主要是请潘潘介绍了他跟人类学的关系还有他现在的工作作为档案管理员的工作啊那其实我们还有很多问题像我们潘潘包括现在就是。","s":5416.27,"e":5435.74,"ts":"1:30:16"},{"idx":776,"sp":"雨林","t":"你你说了这个物品的生命之后，我现在对我的，不管是家里的物品，还是我手机里的这种电子。","s":5436.02,"e":5444.3,"ts":"1:30:36"},{"idx":777,"sp":"潘潘","t":"垃圾。","s":5444.74,"e":5445.38,"ts":"1:30:44"},{"idx":778,"sp":"雨林","t":"还有很多疑问，所以想要继续跟你讨论。","s":5446.14,"e":5449.14,"ts":"1:30:46"},{"idx":779,"sp":"雨林","t":"啊，嗯，对。","s":5449.5,"e":5450.66,"ts":"1:30:49"},{"idx":780,"sp":"阿司","t":"然后后续我们也会分第二集推出来，讲一讲一些关于物。","s":5451.7,"e":5458.22,"ts":"1:30:51"},{"idx":781,"sp":"阿司","t":"呃，电子电子文档，还有一些关于写作一些的兴趣。","s":5458.64,"e":5465.44,"ts":"1:30:58"},{"idx":782,"sp":"阿司","t":"所以大家一定要stay tune，然后期待我们的第二期跟盼盼的聊天。","s":5465.56,"e":5471.8,"ts":"1:31:05"},{"idx":783,"sp":"阿司","t":"O K耶番茄撒。","s":5472.16,"e":5475.84,"ts":"1:31:12"},{"idx":784,"sp":"潘潘","t":"花丝的样子。","s":5475.84,"e":5476.72,"ts":"1:31:15"},{"idx":785,"sp":"雨林","t":"好棒好棒。","s":5476.76,"e":5477.6,"ts":"1:31:16"},{"idx":786,"sp":"雨林","t":"那我们先把这个录音停一下哈。","s":5478.04,"e":5481.48,"ts":"1:31:18"},{"idx":787,"sp":"阿司","t":"啊我停了，1.","s":5481.88,"e":5483.52,"ts":"1:31:21","ai":1,"dt":"production_talk"},{"idx":788,"sp":"阿司","t":"5小时停了。","s":5483.52,"e":5485.16,"ts":"1:31:23","ai":1,"dt":"production_talk"},{"idx":789,"sp":"雨林","t":"对我把这个drive看一下。","s":5485.28,"e":5487.52,"ts":"1:31:25","ai":1,"dt":"production_talk"},{"idx":790,"sp":"阿司","t":"好我们竟然精准的停在1.","s":5490.66,"e":5494.38,"ts":"1:31:30","ai":1,"dt":"production_talk"},{"idx":791,"sp":"阿司","t":"5小时太神奇了。","s":5494.38,"e":5497.9,"ts":"1:31:34","ai":1,"dt":"production_talk"},{"idx":792,"sp":"雨林","t":"再约一个时间，我刚小孩一直在哭，不知道你有没有听到。","s":5502.83,"e":5508.91,"ts":"1:31:42","ai":1,"dt":"production_talk"},{"idx":793,"sp":"阿司","t":"完全没有。","s":5509.87,"e":5510.79,"ts":"1:31:49","ai":1,"dt":"production_talk"},{"idx":794,"sp":"阿司","t":"嗯。","s":5510.95,"e":5510.99,"ts":"1:31:50","ai":1,"dt":"production_talk"},{"idx":795,"sp":"雨林","t":"好的好的，还是有一些隔音的。","s":5511.07,"e":5513.39,"ts":"1:31:51","ai":1,"dt":"production_talk"},{"idx":796,"sp":"潘潘","t":"我有我有。","s":5513.95,"e":5515.03,"ts":"1:31:53","ai":1,"dt":"production_talk"},{"idx":797,"sp":"阿司","t":"就是大概NOTICE雨林那个稍微有一点点情绪上的变化。","s":5515.03,"e":5520.91,"ts":"1:31:55","ai":1,"dt":"production_talk"},{"idx":798,"sp":"阿司","t":"我想说应该是孩子。","s":5521.83,"e":5523.47,"ts":"1:32:01","ai":1,"dt":"production_talk"},{"idx":799,"sp":"阿司","t":"行，你傻了。","s":5524.13,"e":5525.33,"ts":"1:32:04","ai":1,"dt":"production_talk"},{"idx":800,"sp":"雨林","t":"对。","s":5525.73,"e":5525.97,"ts":"1:32:05","ai":1,"dt":"production_talk"},{"idx":801,"sp":"阿司","t":"那我们就把所有的录音都传到好，就雨林给我们发的那个link. ","s":5526.65,"e":5532.57,"ts":"1:32:06","ai":1,"dt":"production_talk"},{"idx":802,"sp":"雨林","t":"或者你们先传到群里，简单一点也可以，然后我来上传一下。","s":5532.89,"e":5537.09,"ts":"1:32:12","ai":1,"dt":"production_talk"},{"idx":803,"sp":"潘潘","t":"O K。","s":5537.65,"e":5538.13,"ts":"1:32:17","ai":1,"dt":"production_talk"},{"idx":804,"sp":"雨林","t":"Okay。","s":5539.14,"e":5539.78,"ts":"1:32:19","ai":1,"dt":"production_talk"},{"idx":805,"sp":"阿司","t":"这个Voice memo的要怎么传？","s":5540.66,"e":5542.58,"ts":"1:32:20","ai":1,"dt":"production_talk"},{"idx":806,"sp":"雨林","t":"可以这样，你你点那个3个点对吧？","s":5542.66,"e":5544.9,"ts":"1:32:22","ai":1,"dt":"production_talk"},{"idx":807,"sp":"潘潘","t":"哦哦哦有一个。","s":5545.26,"e":5546.5,"ts":"1:32:25","ai":1,"dt":"production_talk"},{"idx":808,"sp":"雨林","t":"share然后到微信你看一下。","s":5546.5,"e":5548.14,"ts":"1:32:26","ai":1,"dt":"production_talk"},{"idx":809,"sp":"阿司","t":"行。","s":5548.5,"e":5548.7,"ts":"1:32:28","ai":1,"dt":"production_talk"},{"idx":810,"sp":"阿司","t":"嗯。","s":5548.82,"e":5549.02,"ts":"1:32:28","ai":1,"dt":"production_talk"},{"idx":811,"sp":"阿司","t":"新匿名。","s":5549.18,"e":5550.02,"ts":"1:32:29","ai":1,"dt":"production_talk"},{"idx":812,"sp":"阿司","t":"潘潘。","s":5550.82,"e":5551.82,"ts":"1:32:30","ai":1,"dt":"production_talk"},{"idx":813,"sp":"雨林","t":"好性感。","s":5552.61,"e":5553.93,"ts":"1:32:32","ai":1,"dt":"production_talk"},{"idx":814,"sp":"雨林","t":"好然后对时间你们觉得好约吗大家我们可以快速看一下还是在群里再。","s":5554.65,"e":5562.33,"ts":"1:32:34","ai":1,"dt":"production_talk"},{"idx":815,"sp":"阿司","t":"弄快速看一下。","s":5562.33,"e":5563.33,"ts":"1:32:42","ai":1,"dt":"production_talk"},{"idx":816,"sp":"潘潘","t":"可以啊我我下周会在我要出差去温哥华然后可能再下周的那个周五。","s":5563.61,"e":5574.09,"ts":"1:32:43","ai":1,"dt":"production_talk"},{"idx":817,"sp":"雨林","t":"就是20号。","s":5575.05,"e":5576.49,"ts":"1:32:55","ai":1,"dt":"production_talk"},{"idx":818,"sp":"潘潘","t":"20号。","s":5576.62,"e":5577.5,"ts":"1:32:56","ai":1,"dt":"production_talk"},{"idx":819,"sp":"阿司","t":"20号让我看一下。","s":5579.82,"e":5581.78,"ts":"1:32:59","ai":1,"dt":"production_talk"},{"idx":820,"sp":"潘潘","t":"或者嗯我想想啊。","s":5581.94,"e":5584.3,"ts":"1:33:01","ai":1,"dt":"production_talk"},{"idx":821,"sp":"阿司","t":"我是ok的。","s":5585.02,"e":5586.26,"ts":"1:33:05","ai":1,"dt":"production_talk"},{"idx":822,"sp":"潘潘","t":"哦哦，actually嗯20号应嗯。","s":5587.3,"e":5592.5,"ts":"1:33:07","ai":1,"dt":"production_talk"},{"idx":823,"sp":"雨林","t":"27呀。","s":5596.09,"e":5597.65,"ts":"1:33:16","ai":1,"dt":"production_talk"},{"idx":824,"sp":"潘潘","t":"27会太晚吗？","s":5598.89,"e":5600.17,"ts":"1:33:18","ai":1,"dt":"production_talk"},{"idx":825,"sp":"雨林","t":"嗯，阿思如果那个剪辑也可以先发布第一期，对不对？","s":5601.01,"e":5605.37,"ts":"1:33:21","ai":1,"dt":"production_talk"},{"idx":826,"sp":"雨林","t":"对呀，我们试试看啊，就不一定啊。","s":5606.05,"e":5608.93,"ts":"1:33:26","ai":1,"dt":"production_talk"},{"idx":827,"sp":"潘潘","t":"可以，那可能我可能27下午会比较好。","s":5609.57,"e":5612.61,"ts":"1:33:29","ai":1,"dt":"production_talk"},{"idx":828,"sp":"阿司","t":"会更好一点是吧？","s":5613.17,"e":5614.01,"ts":"1:33:33","ai":1,"dt":"production_talk"},{"idx":829,"sp":"阿司","t":"我也可以。","s":5614.17,"e":5614.97,"ts":"1:33:34","ai":1,"dt":"production_talk"},{"idx":830,"sp":"雨林","t":"的行，那我先跟大家发一个。","s":5614.97,"e":5619.13,"ts":"1:33:34","ai":1,"dt":"production_talk"},{"idx":831,"sp":"雨林","t":"邀请。","s":5620.1,"e":5620.94,"ts":"1:33:40","ai":1,"dt":"production_talk"},{"idx":832,"sp":"潘潘","t":"27。","s":5625.1,"e":5625.86,"ts":"1:33:45","ai":1,"dt":"production_talk"},{"idx":833,"sp":"阿司","t":"你发的时候我来说一下，就是剪辑方面大概先给他几个指示，就是前期介绍，就我们warm up的地方。","s":5626.18,"e":5636.02,"ts":"1:33:46","ai":1,"dt":"production_talk"},{"idx":834,"sp":"阿司","t":"呃，比如说他们刚开始介绍工作管理档案流程的话，可以跟后面这段technical的做一个比较，然后稍微精简一些，保留比较精华的部分。","s":5636.42,"e":5647.94,"ts":"1:33:56","ai":1,"dt":"production_talk"},{"idx":835,"sp":"阿司","t":"然后中间有呃，主播跟嘉宾商谈的部分，关于进度与流程的部分全部去掉。","s":5648.27,"e":5655.19,"ts":"1:34:08","ai":1,"dt":"production_talk"},{"idx":836,"sp":"阿司","t":"然后内容找一些分块，找出一些可以插入分段音乐的时间点。","s":5655.67,"e":5662.15,"ts":"1:34:15","ai":1,"dt":"production_talk"},{"idx":837,"sp":"阿司","t":"然后还有就是呃，把我们说话。","s":5662.99,"e":5666.35,"ts":"1:34:22","ai":1,"dt":"production_talk"},{"idx":838,"sp":"阿司","t":"说的不流畅，还有卡顿的地方整理一下，然后适当的。","s":5666.73,"e":5671.77,"ts":"1:34:26","ai":1,"dt":"production_talk"},{"idx":839,"sp":"阿司","t":"不知道看看看看需不需要加速，应该应该不太需要加速。","s":5672.85,"e":5677.85,"ts":"1:34:32","ai":1,"dt":"production_talk"},{"idx":840,"sp":"雨林","t":"慢慢来吧。","s":5678.09,"e":5678.77,"ts":"1:34:38","ai":1,"dt":"production_talk"},{"idx":841,"sp":"雨林","t":"对，现在大家想加速还可以自己调。","s":5679.01,"e":5681.17,"ts":"1:34:39","ai":1,"dt":"production_talk"},{"idx":842,"sp":"阿司","t":"应该对嗯，就是对先先让A I不加速。","s":5681.25,"e":5684.73,"ts":"1:34:41","ai":1,"dt":"production_talk"},{"idx":843,"sp":"阿司","t":"对，然后平衡咱们三个人的音量，还有语速呃，语速就先不全部调，我就把这点叉掉。","s":5685.25,"e":5692.45,"ts":"1:34:45","ai":1,"dt":"production_talk"},{"idx":844,"sp":"雨林","t":"嗯，可以很棒了。","s":5692.89,"e":5695.53,"ts":"1:34:52","ai":1,"dt":"production_talk"},{"idx":845,"sp":"雨林","t":"好，好的，我刚刚给你们发了个 invite那就。","s":5696.33,"e":5701.45,"ts":"1:34:56","ai":1,"dt":"production_talk"},{"idx":846,"sp":"阿司","t":"谢谢。","s":5701.45,"e":5702.29,"ts":"1:35:01","ai":1,"dt":"production_talk"},{"idx":847,"sp":"雨林","t":"麻烦大家啦。","s":5702.73,"e":5704.33,"ts":"1:35:02","ai":1,"dt":"production_talk"},{"idx":848,"sp":"雨林","t":"那我们群里聊。","s":5704.45,"e":5706.01,"ts":"1:35:04","ai":1,"dt":"production_talk"},{"idx":849,"sp":"阿司","t":"嗯好滴好的。","s":5706.57,"e":5708.93,"ts":"1:35:06","ai":1,"dt":"production_talk"},{"idx":850,"sp":"雨林","t":"好好的周愉快。","s":5709.01,"e":5710.85,"ts":"1:35:09","ai":1,"dt":"production_talk"},{"idx":851,"sp":"潘潘","t":"周末愉快。","s":5711.29,"e":5712.49,"ts":"1:35:11","ai":1,"dt":"production_talk"},{"idx":852,"sp":"阿司","t":"嗯拜拜。","s":5713.05,"e":5713.89,"ts":"1:35:13","ai":1,"dt":"production_talk"},{"idx":853,"sp":"潘潘","t":"拜拜拜拜。","s":5713.89,"e":5715.25,"ts":"1:35:13","ai":1,"dt":"production_talk"},{"idx":854,"sp":"雨林","t":"拜拜。","s":5715.25,"e":5716.05,"ts":"1:35:15","ai":1,"dt":"production_talk"},{"idx":855,"sp":"潘潘","t":"哼。","s":5716.61,"e":5717.21,"ts":"1:35:16","ai":1,"dt":"production_talk"},{"idx":856,"sp":"雨林","t":"哎呦。","s":5717.88,"e":5718.56,"ts":"1:35:17","ai":1,"dt":"production_talk"}];
+const BLK = [{"id":1,"r":[0,158],"type":"pre_show","reason":"录前准备：Zoom设置、麦克风调试、稿子讨论、拍手对齐","dur":"9:55"},{"id":2,"r":[490,503],"type":"production_talk","reason":"制作讨论：商量稿子进度和剩余时间","dur":"1:12"},{"id":3,"r":[694,709],"type":"production_talk","reason":"制作讨论：讨论分上下集和剪辑安排","dur":"1:37"},{"id":4,"r":[787,856],"type":"production_talk","reason":"录后讨论：停录音、传文件、约时间、剪辑指示","dur":"3:57"}];
+
+const TL={"pre_show":"录前准备","tech_debug":"技术调试","chit_chat":"闲聊寒暄","repeated_content":"重复内容","production_talk":"制作讨论","privacy":"隐私内容","redundant_viewpoint":"重复观点","over_detail":"过度展开","low_density":"低密度段落","weak_relevance":"弱相关内容"};
+
+// Nav chapters — topic summaries
+const CHAPS = __CHAPTERS_DATA__;
+
+// Speakers — 3 shades of the same warm tone
+const spShades = ['#1A1A1A','#6E6E6E','#4A4A4A'];
+const spList=[], spCMap={};
+S.forEach(x=>{ if(x.sp && !spCMap[x.sp]){ spCMap[x.sp]=spShades[spList.length%3]; spList.push(x.sp); }});
+
+// State
+const del=new Set(), um=new Set();
+let curIdx=-1, curNav=-1;
+S.forEach(x=>{ if(x.ai) del.add(x.idx); if(x.sug) del.add(x.idx); });
+
+function fm(s){ if(s<0)s=0; const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=Math.floor(s%60); return h>0?`${h}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`:`${m}:${String(sc).padStart(2,'0')}`; }
+function esc(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ===== STATS =====
+function computeStats() {
+  const td=S.length?S[S.length-1].e:0; let rd=0; const rbt={}, sd={};
+  S.forEach(x=>{const d=x.e-x.s;if(del.has(x.idx)){rd+=d;rbt[x.dt||'other']=(rbt[x.dt||'other']||0)+d}else if(x.sp){sd[x.sp]=(sd[x.sp]||0)+d}});
+  return {td, rd, rc:td-rd, rbt, sd};
+}
+
+// ===== SIDEBAR =====
+function renderSidebar() {
+  const {td, rd, rc, rbt, sd} = computeStats();
+
+  document.getElementById('d-from').textContent=fm(td);
+  document.getElementById('d-to').textContent=fm(rc);
+  document.getElementById('d-rm').textContent=fm(rd);
+
+  // Summary
+  const fill=['pre_show','tech_debug','production_talk','chit_chat'];
+  let fd=0;const fn=[];const cc=[];
+  for(const[t,d] of Object.entries(rbt)){if(t==='other')continue;if(fill.includes(t)){fd+=d;fn.push(TL[t]||t)}else cc.push({l:TL[t]||t,d})}
+  cc.sort((a,b)=>b.d-a.d);
+  const pts=[];
+  if(fd>0)pts.push(`${Math.round(fd/60)} 分钟${fn.join('、')}`);
+  cc.forEach(c=>pts.push(`${Math.round(c.d/60)} 分钟${c.l}`));
+  // Count suggested deletes
+  const sugCount = S.filter(x => x.sug && del.has(x.idx)).length;
+  let summText = '';
+  if(pts.length) summText += `共删除 ${pts.join('，')}。`;
+  if(sugCount > 0) summText += `另有 ${sugCount} 句建议精简（重复叙述/展开过多），可在右侧逐条恢复。`;
+  if(!summText) summText = '未做任何删减。';
+  document.getElementById('summ').textContent = summText;
+
+  // Speaker legend (no pie chart)
+  const en=spList.filter(sp=>sd[sp]>0).map(sp=>({n:sp,d:sd[sp]||0}));
+  if(en.length){
+    document.getElementById('spleg').innerHTML=en.map(e=>{
+      const p=Math.round(e.d/rc*100);
+      return`<div class="sp-row"><span class="sp-dot" style="background:${spCMap[e.n]}"></span><span class="sp-name">${e.n}</span><span class="sp-val">${p}% · ${fm(e.d)}</span></div>`;
+    }).join('');
+  }
+
+  // Navigator
+  document.getElementById('nav').innerHTML = CHAPS.map((ch,i)=>{
+    return`<div class="nav-item${i===curNav?' active':''}" onclick="navTo(${i})">
+      <span class="nav-num">${String(i+1).padStart(2,'0')}</span>
+      <div class="nav-body">
+        <div class="nav-title">${esc(ch.title)}</div>
+        <div class="nav-ts">${ch.time} · ${esc(ch.desc)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===== TRANSCRIPT =====
+function renderTx() {
+  const c=document.getElementById('tx');let h='';
+  // Block map (deleted sections)
+  const bm={};BLK.forEach(b=>{for(let i=b.r[0];i<=b.r[1];i++)bm[i]=b});
+  // Chapter map (content sections)
+  const cm={};CHAPS.forEach((ch,i)=>{if(ch.startIdx!==undefined)cm[ch.startIdx]={...ch,num:i+1}});
+
+  let lb=null;
+  S.forEach(x=>{
+    // Chapter header — content section divider
+    if(cm[x.idx]){
+      const ch=cm[x.idx];
+      h+=`<div class="chap-hdr" id="chap${ch.num}">
+        <span class="chap-num">${String(ch.num).padStart(2,'0')}</span>
+        <span class="chap-title">${esc(ch.title)}</span>
+        <span class="chap-desc">${esc(ch.desc||'')}</span>
+      </div>`;
+    }
+
+    // Block header — deleted section
+    const b=bm[x.idx];
+    if(b&&b!==lb){
+      const ck=isBD(b);
+      h+=`<div class="blk"><div class="chk ${ck?'on':''}" onclick="tgB(${b.id})">✕</div><span class="blk-tag">${TL[b.type]||b.type}</span><span class="blk-rsn">${b.reason}</span><span class="blk-dur mono">${b.dur}</span></div>`;
+      lb=b;
+    }
+
+    // Sentence row
+    const id=del.has(x.idx);
+    const isSug = x.sug && id; // suggested + currently deleted
+    let cl='row';if(id)cl+=' del';if(isSug)cl+=' sug';if(x.idx===curIdx)cl+=' act';
+    const reasonTag = (isSug && x.sugReason) ? `<span class="sug-reason">${esc(x.sugReason)}</span>` : '';
+    h+=`<div class="${cl}" id="r${x.idx}" onclick="goTo(${x.idx})"><div class="r-chk"><div class="chk ${id?'on':''}" onclick="event.stopPropagation();tgS(${x.idx})">✕</div></div><div class="r-sp">${x.sp}</div><div class="r-tm">${x.ts}</div><div class="r-txt">${esc(x.t)}${reasonTag}</div></div>`;
+  });
+  c.innerHTML=h;
+}
+
+function isBD(b){for(let i=b.r[0];i<=b.r[1];i++)if(!del.has(i))return false;return true}
+function renderAll(){renderSidebar();renderTx()}
+
+// ===== INTERACTIONS =====
+function tgS(i){del.has(i)?del.delete(i):del.add(i);um.add(i);renderAll();sv()}
+function tgB(id){const b=BLK.find(x=>x.id===id);if(!b)return;const ad=isBD(b);for(let i=b.r[0];i<=b.r[1];i++){ad?del.delete(i):del.add(i);um.add(i)}renderAll();sv()}
+
+function goTo(idx){
+  curIdx=idx;
+  const x=S.find(s=>s.idx===idx);
+  if(x){sk(x.s);au.play()}
+  document.querySelectorAll('.row.act').forEach(el=>el.classList.remove('act'));
+  const r=document.getElementById('r'+idx);
+  if(r){r.classList.add('act');r.scrollIntoView({behavior:'smooth',block:'center'})}
+  if(x) updateNav(x.s);
+}
+
+function navTo(i){
+  curNav=i;
+  const ch=CHAPS[i];
+  const x=S.find(s=>s.idx===ch.startIdx);
+  if(x){sk(x.s);au.play()}
+  document.querySelectorAll('.nav-item.active').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-item')[i]?.classList.add('active');
+  const r=document.getElementById('r'+ch.startIdx);
+  if(r) r.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function updateNav(time){
+  let active=0;
+  for(let i=CHAPS.length-1;i>=0;i--){
+    const x=S.find(s=>s.idx===CHAPS[i].startIdx);
+    if(x&&time>=x.s){active=i;break}
+  }
+  if(active!==curNav){
+    curNav=active;
+    document.querySelectorAll('.nav-item.active').forEach(el=>el.classList.remove('active'));
+    document.querySelectorAll('.nav-item')[active]?.classList.add('active');
+  }
+}
+
+// ===== MODE SWITCHING =====
+let previewMode = false;
+
+function findVisibleSentenceIdx() {
+  // Find the first non-deleted sentence currently visible in viewport
+  const rows = document.querySelectorAll('.row:not(.del)');
+  for (const row of rows) {
+    const rect = row.getBoundingClientRect();
+    if (rect.top >= 100 && rect.top < window.innerHeight * 0.6) {
+      return parseInt(row.id.replace('r', ''));
+    }
+  }
+  // Fallback: find closest to top
+  for (const row of rows) {
+    const rect = row.getBoundingClientRect();
+    if (rect.bottom > 100) return parseInt(row.id.replace('r', ''));
+  }
+  return -1;
+}
+
+function positionSlider() {
+  const toggle = document.getElementById('mode-toggle');
+  const slider = document.getElementById('mode-slider');
+  const activeBtn = previewMode ? document.getElementById('mode-preview') : document.getElementById('mode-edit');
+  if (!slider || !activeBtn || !toggle) return;
+  const tRect = toggle.getBoundingClientRect();
+  const bRect = activeBtn.getBoundingClientRect();
+  slider.style.width = bRect.width + 'px';
+  slider.style.transform = `translateX(${bRect.left - tRect.left - 4}px)`;
+}
+
+function setMode(mode) {
+  const wasPreview = previewMode;
+  previewMode = (mode === 'preview');
+  if (wasPreview === previewMode) return;
+
+  // 1. Remember scroll position
+  const anchorIdx = findVisibleSentenceIdx();
+
+  // 2. Show transition with cute graphic
+  const trans = document.getElementById('mode-trans');
+  const text = document.getElementById('mt-text');
+  const pencil = document.getElementById('mt-pencil');
+  const cassette = document.getElementById('mt-cassette');
+
+  text.textContent = previewMode ? '粗剪预览' : '编辑模式';
+  pencil.style.display = previewMode ? 'none' : 'block';
+  cassette.style.display = previewMode ? 'block' : 'none';
+  trans.classList.add('active');
+
+  // 3. Apply mode change after graphic plays
+  setTimeout(() => {
+    document.body.classList.toggle('preview', previewMode);
+    document.getElementById('mode-edit').classList.toggle('active', !previewMode);
+    document.getElementById('mode-preview').classList.toggle('active', previewMode);
+    positionSlider();
+
+    renderSidebar();
+    if (typeof updatePlayerDuration === 'function') updatePlayerDuration();
+
+    // 4. Restore scroll position
+    if (anchorIdx >= 0) {
+      const row = document.getElementById('r' + anchorIdx);
+      if (row) row.scrollIntoView({ block: 'start' });
+    }
+
+    // 5. Fade out transition
+    setTimeout(() => trans.classList.remove('active'), 400);
+  }, 900);
+}
+
+// Initialize slider position after first render
+setTimeout(positionSlider, 100);
+window.addEventListener('resize', positionSlider);
+
+// Compute virtual time (rough cut position) from original time
+function originalToVirtual(origTime) {
+  let virtualTime = 0;
+  let lastEnd = 0;
+  // Sort kept segments
+  const kept = [];
+  let segStart = null;
+  S.forEach(x => {
+    if (!del.has(x.idx)) {
+      if (segStart === null) segStart = x.s;
+    } else {
+      if (segStart !== null) {
+        kept.push({ s: segStart, e: x.s });
+        segStart = null;
+      }
+    }
+  });
+  if (segStart !== null) {
+    const lastS = S[S.length - 1];
+    kept.push({ s: segStart, e: lastS.e });
+  }
+
+  for (const seg of kept) {
+    if (origTime <= seg.s) break;
+    if (origTime >= seg.e) {
+      virtualTime += seg.e - seg.s;
+    } else {
+      virtualTime += origTime - seg.s;
+      break;
+    }
+  }
+  return virtualTime;
+}
+
+// ===== AUDIO =====
+const au=document.getElementById('au');let pl=false;
+const spds=[1,1.25,1.5,1.75,2,.75];let si=0;
+function tgPlay(){pl?au.pause():au.play()}
+function sk(t){au.currentTime=t}
+let dragging=false;
+function startDrag(e){
+  dragging=true;
+  seekFromPos(e);
+  const onMove=ev=>{if(dragging)seekFromPos(ev)};
+  const onUp=()=>{dragging=false;document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp)};
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onUp);
+}
+function seekFromPos(e){const rc=document.getElementById('ptrk').getBoundingClientRect();const pct=Math.max(0,Math.min(1,(e.clientX-rc.left)/rc.width));if(au.duration){au.currentTime=pct*au.duration;document.getElementById('pfill').style.width=(pct*100)+'%'}}
+function cySpd(){si=(si+1)%spds.length;au.playbackRate=spds[si];document.getElementById('pspd').textContent=spds[si]+'×'}
+
+au.addEventListener('play',()=>{pl=true;document.getElementById('pbtn').textContent='暂停'});
+au.addEventListener('pause',()=>{pl=false;document.getElementById('pbtn').textContent='播放'});
+au.addEventListener('loadedmetadata',()=>{ updatePlayerDuration(); });
+
+function updatePlayerDuration() {
+  if(previewMode) {
+    const stats = computeStats();
+    document.getElementById('pdur').textContent=fm(stats.rc);
+  } else {
+    document.getElementById('pdur').textContent=fm(au.duration||0);
+  }
+}
+
+au.addEventListener('timeupdate',()=>{
+  const t=au.currentTime,d=au.duration||0;
+
+  // Show virtual time in preview mode, original time in edit mode
+  if(previewMode) {
+    const vt = originalToVirtual(t);
+    document.getElementById('ptm').textContent=fm(vt);
+    // Progress bar based on virtual time / rough cut duration
+    const stats = computeStats();
+    if(stats.rc > 0) document.getElementById('pfill').style.width=(vt/stats.rc*100)+'%';
+  } else {
+    document.getElementById('ptm').textContent=fm(t);
+    if(d>0) document.getElementById('pfill').style.width=(t/d*100)+'%';
+  }
+
+  const cur=S.find((x,i)=>{const nx=S[i+1];return t>=x.s&&(!nx||t<nx.s)});
+  if(cur&&cur.idx!==curIdx){
+    curIdx=cur.idx;
+    document.querySelectorAll('.row.act').forEach(el=>el.classList.remove('act'));
+    const r=document.getElementById('r'+cur.idx);
+    if(r){r.classList.add('act');const rc=r.getBoundingClientRect();if(rc.top<60||rc.bottom>window.innerHeight-90)r.scrollIntoView({behavior:'smooth',block:'center'})}
+  }
+  updateNav(t);
+  // Always skip deleted segments during playback (both modes)
+  if(pl)for(const x of S)if(del.has(x.idx)&&t>=x.s&&t<x.e){au.currentTime=x.e+.05;return}
+});
+
+// ===== EXPORT =====
+function doExport(){
+  const segs=[];let c=null;
+  S.forEach(x=>{if(del.has(x.idx)){if(c&&(x.s-c.end)<1.5)c.end=x.e;else{if(c)segs.push(c);c={start:x.s,end:x.e}}}else{if(c){segs.push(c);c=null}}});if(c)segs.push(c);
+  // Extend first segment to 0 to avoid opening artifacts
+  if(segs.length>0 && segs[0].start<5) segs[0].start=0;
+
+  const stats = computeStats();
+  const data = {
+    version: "roughcut_v1",
+    exported_at: new Date().toISOString(),
+    original_duration: Math.round(stats.td),
+    roughcut_duration: Math.round(stats.rc),
+    removed_duration: Math.round(stats.rd),
+    segments: segs
+  };
+
+  const bl=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='delete_segments_edited.json';a.click();
+
+  // Show success modal with next steps
+  document.getElementById('export-modal').classList.add('vis');
+}
+
+// Persistence
+// Version key = title + sentence count + delete count, so stale cache is ignored
+const DATA_VER = document.title + '_' + S.length + '_' + S.filter(x=>x.ai||x.sug).length;
+const SK='rc6_'+DATA_VER;
+function sv(){try{localStorage.setItem(SK,JSON.stringify({v:DATA_VER,d:Array.from(del),m:Array.from(um)}))}catch(e){}}
+function rs(){try{const r=localStorage.getItem(SK);if(!r)return;const s=JSON.parse(r);if(s.v!==DATA_VER)return;if(s.d){del.clear();s.d.forEach(i=>del.add(i))}if(s.m)s.m.forEach(i=>um.add(i))}catch(e){}}
+function showT(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('vis');setTimeout(()=>el.classList.remove('vis'),2000)}
+
+rs();renderAll();
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&e.target===document.body){e.preventDefault();tgPlay()}});
+
+</script>
+</body>
+</html>
