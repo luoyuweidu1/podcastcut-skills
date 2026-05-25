@@ -111,7 +111,13 @@ for (let i = 0; i < sentences.length; i++) {
     t: text,
     s: Math.round(startTime * 100) / 100,
     e: Math.round(endTime * 100) / 100,
-    ts: timeStr
+    ts: timeStr,
+    // 逐词时间戳（半句删除：选区→词→时间段 的映射依赖它）
+    w: wordsArr.map(w => ({
+      t: w.text,
+      s: Math.round(w.start * 100) / 100,
+      e: Math.round(w.end * 100) / 100
+    }))
   };
 
   if (deletedSet.has(idx)) {
