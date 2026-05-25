@@ -775,7 +775,7 @@ function renderTx() {
     const isSug = x.sug && id; // suggested + currently deleted
     let cl='row';if(id)cl+=' del';if(isSug)cl+=' sug';if(x.idx===curIdx)cl+=' act';
     const reasonTag = (isSug && x.sugReason) ? `<span class="sug-reason">${esc(x.sugReason)}</span>` : '';
-    h+=`<div class="${cl}" id="r${x.idx}" onclick="goTo(${x.idx})"><div class="r-chk"><div class="chk ${id?'on':''}" onclick="event.stopPropagation();tgS(${x.idx})">✕</div></div><div class="r-num mono">${x.idx}</div><div class="r-sp">${x.sp}</div><div class="r-tm">${x.ts}</div><div class="r-txt">${txtHtml(x)}${reasonTag}</div></div>`;
+    h+=`<div class="${cl}" id="r${x.idx}" onclick="goTo(${x.idx})"><div class="r-chk"><div class="chk ${id?'on':''}" onclick="event.stopPropagation();tgS(${x.idx})">✕</div></div><div class="r-num mono">${x.idx+1}</div><div class="r-sp">${x.sp}</div><div class="r-tm">${x.ts}</div><div class="r-txt">${txtHtml(x)}${reasonTag}</div></div>`;
   });
   c.innerHTML=h;
 }
