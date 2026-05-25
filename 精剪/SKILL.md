@@ -148,8 +148,7 @@ node "$SKILL_DIR/剪播客/scripts/manifest.js" set-stage "$BASE_DIR" fine appro
 - `run_fine_analysis.js` 和 `generate_review_enhanced.js` 都**优先读 `sentence_deletes`**（用户决定），缺失才回退 `semantic_deep_analysis.json`（AI 判断）。
 - 因此用户在粗剪页的整句增删**会**反映到精剪：恢复的句子会被精剪分析并显示为保留，删掉的句子被跳过、不浪费 LLM token、也不出现在精剪页。
 - **`semantic_deep_analysis.json` 不被改写**——反馈/评估闭环（2.3/2.4）靠它对比「AI 原判 vs 用户修正」，改写会抹掉这个学习信号。
-
-> **仍待办（小）**：粗剪的**半句删除**(`partial_deletes`)目前只随导出保留，尚未叠加进精剪页显示——用户在粗剪做的半句切，需要在精剪页（词级，本就更适合做半句）按需重做。整句决定已完全打通。
+- 粗剪的**半句删除**(`partial_deletes`)也会带入：`generate_review_enhanced.js` 把它们按 `deleteText/charOffset`（基于词文本拼接，与精剪 `collectActiveRanges` 同源）转成 `ROUGHCUT_PARTIALS` 注入页面；无 localStorage 存档时 `seedRoughcutPartials()` 作为初始 `manualEdits` 还原（有存档则由 restoreState 还原，避免重复）。用户在精剪页可继续编辑/恢复它们。
 
 > **最终出片以精剪导出的 `delete_segments_edited.json` 为准。**
 

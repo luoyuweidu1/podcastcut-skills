@@ -1189,6 +1189,8 @@ const typeColors = {"pre_show": "#6b7280", "tech_debug": "#0891b2", "chit_chat":
 const AI_DELETED_COUNT = __AI_DELETED_COUNT__;
 const AI_SUGGESTED_COUNT = __AI_SUGGESTED_COUNT__;
 const TOTAL_SENTENCES = __TOTAL_SENTENCES__;
+// 粗剪带入的半句删除（{sentenceIdx, deleteText, charOffset}），无 localStorage 时作为初始 manualEdits
+const ROUGHCUT_PARTIALS = __ROUGHCUT_PARTIALS__;
 
 // ===== STATE =====
 let currentFilter = 'all';
@@ -2257,6 +2259,22 @@ function restoreState() {
     console.warn('Restore failed:', e);
     return false;
   }
+}
+
+// 把粗剪页带过来的半句删除作为初始 manualEdits（仅当没有 localStorage 存档时；
+// 有存档时这些已被存过并由 restoreState 还原，避免重复）。
+function seedRoughcutPartials() {
+  if (!Array.isArray(ROUGHCUT_PARTIALS) || ROUGHCUT_PARTIALS.length === 0) return;
+  const touched = new Set();
+  ROUGHCUT_PARTIALS.forEach(p => {
+    manualEdits.push({ id: ++manualEditCounter, sentenceIdx: p.sentenceIdx, deleteText: p.deleteText, charOffset: p.charOffset });
+    touched.add(p.sentenceIdx);
+  });
+  touched.forEach(idx => { updateRowVisual(idx); rebuildRowWithManualEdits(idx); });
+  buildSummaryTable();
+  invalidateSkipRanges();
+  updateStats();
+  console.log('[roughcut] 带入半句删除 ' + ROUGHCUT_PARTIALS.length + ' 处（来自粗剪）');
 }
 
 // ===== SUMMARY TABLE =====
@@ -3783,7 +3801,7 @@ document.getElementById('stat-final-delete').textContent = currentDeletedSet.siz
 
 buildSummaryTable();
 buildTranscript();
-restoreState();
+if (!restoreState()) seedRoughcutPartials();
 
 // Debug exports
 window._debug = {

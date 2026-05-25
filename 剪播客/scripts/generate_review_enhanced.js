@@ -89,6 +89,7 @@ if (analysis.sentences) {
 // 整句删除底稿：优先用用户在粗剪页确认导出的 sentence_deletes（权威），
 // 否则保持 5a (semantic_deep_analysis) 的 AI 判断。semantic 文件不被改写（反馈/评估闭环依赖它）。
 let roughcutSource = 'semantic(AI)';
+let roughcutPartialsRaw = null;  // 粗剪半句删除 {sentenceIdx: [{cs,ce,s,e}]}，sentencesData 建好后转成 manualEdits
 if (fs.existsSync(roughcutFile)) {
   try {
     const rc = JSON.parse(fs.readFileSync(roughcutFile, 'utf8'));
@@ -98,6 +99,7 @@ if (fs.existsSync(roughcutFile)) {
       rc.sentence_deletes.forEach(i => deletedSet.add(i));
       roughcutSource = 'roughcut(user)';
     }
+    if (rc.partial_deletes && typeof rc.partial_deletes === 'object') roughcutPartialsRaw = rc.partial_deletes;
   } catch (e) { /* 损坏则回退 AI 判断 */ }
 }
 console.log(`   整句删除底稿: ${roughcutSource} (${deletedSet.size} 句)`);
@@ -347,6 +349,24 @@ if (analysis.blocks) {
   });
 }
 
+// ===== 粗剪半句删除 → 精剪 manualEdits =====
+// 粗剪 partial_deletes 用 {cs,ce} 字符区间（基于 词文本拼接 words.map(t).join('')），
+// 与精剪 collectActiveRanges 的 charOffset 同源；deleteText 必须取自同一拼接串。
+const roughcutPartials = [];
+if (roughcutPartialsRaw) {
+  for (const [idxStr, ranges] of Object.entries(roughcutPartialsRaw)) {
+    const idx = Number(idxStr);
+    const sd = sentencesData.find(s => s.idx === idx);
+    if (!sd || !sd.words || !sd.words.length || !Array.isArray(ranges)) continue;
+    const fullText = sd.words.map(w => w.t).join('');
+    ranges.forEach(r => {
+      const dt = fullText.substring(r.cs, r.ce);
+      if (dt) roughcutPartials.push({ sentenceIdx: idx, deleteText: dt, charOffset: r.cs });
+    });
+  }
+}
+if (roughcutPartials.length) console.log(`   粗剪半句删除带入: ${roughcutPartials.length} 处`);
+
 // ===== 构建说话人样式和类映射 =====
 const speakerColors = ['var(--blue)', 'var(--green)', 'var(--purple)', 'var(--orange, #d97706)', 'var(--red, #dc2626)'];
 const uniqueSpeakers = [...new Set(sentencesData.map(s => s.speaker))];
@@ -369,6 +389,7 @@ template = template.replace('__BLOCKS_DATA__', JSON.stringify(blocksDataArr));
 template = template.replace('__AI_DELETED_COUNT__', String(deletedCount + suggestedCount));
 template = template.replace('__AI_SUGGESTED_COUNT__', String(suggestedCount));
 template = template.replace('__TOTAL_SENTENCES__', String(totalSentences));
+template = template.replace('__ROUGHCUT_PARTIALS__', JSON.stringify(roughcutPartials));
 template = template.replace('__SPEAKER_STYLES__', speakerStyles);
 template = template.replaceAll('__SPEAKER_CLASS_FUNC__', speakerClassExpr);
 template = template.replace(/__AUDIO_SRC__/g, audioSrc);
