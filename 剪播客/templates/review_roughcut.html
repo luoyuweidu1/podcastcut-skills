@@ -398,7 +398,7 @@ body.preview .sug-reason { opacity: 0; }
 .r-txt .fe::after { content: attr(data-type); font-size: 10px; vertical-align: super; margin-left: 2px; opacity: .65; font-weight: 600; }
 .r-txt .fe.dis { text-decoration: none; background: transparent; color: inherit; }
 .r-txt .fe.dis::after { opacity: .35; text-decoration: line-through; }
-/* 粗剪整句删除在精剪页折叠成占位（点击展开/收起） */
+/* 精剪整句删除在精剪页折叠成占位（点击展开/收起） */
 .rd-fold { display:flex; align-items:center; gap: 8px; padding: 8px 16px; margin: 6px 0; background: #f7f3ec; border-left: 3px solid var(--light); border-radius: 4px; cursor: pointer; font-size: 13px; color: var(--light); user-select:none; }
 .rd-fold:hover { background: #efe8db; color: var(--dark); }
 .rd-fold .rd-arrow { font-size: 10px; opacity: .6; }
@@ -599,7 +599,7 @@ body.preview .sug-reason { opacity: 0; }
 
 <main class="main">
   <div class="main-hdr">
-    <h1 class="main-title">粗剪逐字稿</h1>
+    <h1 class="main-title">精剪逐字稿</h1>
     <p class="main-sub">
       审阅并编辑你的播客内容。点击句子跳转播放，使用 <span class="hint-tag">☐</span> 删除或恢复段落，所有操作自动保存。
     </p>
@@ -607,7 +607,7 @@ body.preview .sug-reason { opacity: 0; }
       <div class="mode-toggle" id="mode-toggle">
         <div class="mode-slider" id="mode-slider"></div>
         <button class="mode-btn active" id="mode-edit" onclick="setMode('edit')">✎ 编辑模式</button>
-        <button class="mode-btn" id="mode-preview" onclick="setMode('preview')">▶ 粗剪预览</button>
+        <button class="mode-btn" id="mode-preview" onclick="setMode('preview')">▶ 精剪预览</button>
       </div>
     </div>
   </div>
@@ -669,20 +669,20 @@ S.forEach(x=>{ if(x.sp && !spCMap[x.sp]){ spCMap[x.sp]=spShades[spList.length%3]
 // State
 const del=new Set(), um=new Set();
 // 半句删除：sentenceIdx → [{cs,ce,s,e}]（cs/ce=字符范围，s/e=时间段）
-// 粗剪阶段初始为 {}；精剪阶段由生成器注入粗剪导出的 partial_deletes
+// 精剪阶段初始为 {}；精剪阶段由生成器注入精剪导出的 partial_deletes
 const pdel = __ROUGHCUT_PARTIALS_DATA__;
-// 精剪 AI 标记 [{idx, cs, ce, s, e, type, reason, ord}]；粗剪阶段为 []
+// 精剪 AI 标记 [{idx, cs, ce, s, e, type, reason, ord}]；精剪阶段为 []
 const FE = __FINE_EDITS_DATA__;
-// 粗剪整句删除集合（精剪页用于折叠展示）；粗剪阶段为 []
+// 精剪整句删除集合（精剪页用于折叠展示）；精剪阶段为 []
 const RD_LIST = __ROUGHCUT_DELETES_DATA__;
 const RD = new Set(RD_LIST);
 // 精剪页：用户禁用的 AI 精剪标（key = idx + '@' + ord）
 const fdis = new Set();
-// 精剪页：折叠的粗剪删除段中，被用户展开的 group key 集合（group key = 首句 idx）
+// 精剪页：折叠的精剪删除段中，被用户展开的 group key 集合（group key = 首句 idx）
 const rdExp = new Set();
 let curIdx=-1, curNav=-1;
 S.forEach(x=>{ if(x.ai) del.add(x.idx); if(x.sug) del.add(x.idx); });
-// 精剪页：粗剪用户确认的整句删除也加入 del（默认折叠显示）
+// 精剪页：精剪用户确认的整句删除也加入 del（默认折叠显示）
 RD.forEach(i => del.add(i));
 
 function fm(s){ if(s<0)s=0; const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=Math.floor(s%60); return h>0?`${h}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`:`${m}:${String(sc).padStart(2,'0')}`; }
@@ -793,21 +793,21 @@ function renderTx() {
   }
 
   let lb=null;
-  let foldRun=null;  // 连续粗剪删除的句子聚成一组 {startIdx, items}
+  let foldRun=null;  // 连续精剪删除的句子聚成一组 {startIdx, items}
   function flushFold(){
     if(!foldRun || !foldRun.items.length){ foldRun=null; return; }
     const key=foldRun.startIdx, n=foldRun.items.length;
     if(rdExp.has(key)){
-      h += `<div class="rd-fold" onclick="toggleRdFold(${key})"><span class="rd-arrow">▼</span> 折叠这 ${n} 句（粗剪已删）</div>`;
+      h += `<div class="rd-fold" onclick="toggleRdFold(${key})"><span class="rd-arrow">▼</span> 折叠这 ${n} 句（精剪已删）</div>`;
       foldRun.items.forEach(x => { h += rowHtml(x, ' rd-ctx'); });
     } else {
-      h += `<div class="rd-fold" onclick="toggleRdFold(${key})"><span class="rd-arrow">▶</span> ⋯ 粗剪删除了 ${n} 句（点击展开）⋯</div>`;
+      h += `<div class="rd-fold" onclick="toggleRdFold(${key})"><span class="rd-arrow">▶</span> ⋯ 精剪删除了 ${n} 句（点击展开）⋯</div>`;
     }
     foldRun=null;
   }
 
   S.forEach(x=>{
-    // 粗剪整句删除 → 聚成 fold 组，结束 run 时统一渲染
+    // 精剪整句删除 → 聚成 fold 组，结束 run 时统一渲染
     if(RD.has(x.idx)){
       if(!foldRun) foldRun={startIdx:x.idx, items:[]};
       foldRun.items.push(x);
@@ -1007,7 +1007,7 @@ function setMode(mode) {
   const pencil = document.getElementById('mt-pencil');
   const cassette = document.getElementById('mt-cassette');
 
-  text.textContent = previewMode ? '粗剪预览' : '编辑模式';
+  text.textContent = previewMode ? '精剪预览' : '编辑模式';
   pencil.style.display = previewMode ? 'none' : 'block';
   cassette.style.display = previewMode ? 'block' : 'none';
   trans.classList.add('active');
