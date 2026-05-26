@@ -29,6 +29,9 @@ const analysisFile = args.analysis || 'semantic_deep_analysis.json';
 const audioSrc = args.audio || '1_转录/audio_seekable.mp3';
 const outputFile = args.output || '../review_roughcut.html';
 const title = args.title || '粗剪审查';
+// 精剪阶段才会提供这两个；粗剪阶段省略 → FE=[]、ROUGHCUT_*=空，行为同旧
+const fineFile = args.fine || null;
+const roughcutFile = args.roughcut || null;
 
 // ===== 模板路径 =====
 const scriptDir = path.dirname(process.argv[1] || __filename);
@@ -199,6 +202,74 @@ if (analysis.chapters && analysis.chapters.length > 0) {
   console.log(`   章节: ${CHAPS.length} (自动生成)`);
 }
 
+// ===== 精剪阶段数据（FE / 粗剪导出）=====
+// 句子 meta：用于把 fine_analysis 的 global wordRange 映射为句内 char 偏移
+const sentInfo = {};
+for (let i = 0; i < sentences.length; i++) {
+  const parts = sentences[i].split('|');
+  if (parts.length < 4) continue;
+  const sidx = parseInt(parts[0]);
+  const [sw, we] = parts[1].split('-').map(Number);
+  const offsets = []; let acc = 0;
+  for (let wi = sw; wi <= Math.min(we, actualWords.length - 1); wi++) {
+    offsets.push(acc);
+    acc += actualWords[wi].text.length;
+  }
+  sentInfo[sidx] = { wordStart: sw, wordEnd: we, charOffsets: offsets, charLen: acc };
+}
+
+// FE：fine_analysis.edits[] → [{idx, cs, ce, s, e, type, reason, ord}]
+let FE = [];
+if (fineFile && fs.existsSync(fineFile)) {
+  const fa = JSON.parse(fs.readFileSync(fineFile, 'utf8'));
+  const edits = (fa.edits || []).concat(fa.extraFineEdits || []);
+  const ordBySent = {};
+  for (const ed of edits) {
+    const wr = ed.wordRange;
+    if (!wr || wr.length !== 2) continue;
+    // 找宿主句子（线性扫描；规模小）
+    let hostIdx = null, hostMeta = null;
+    for (const [k, m] of Object.entries(sentInfo)) {
+      if (wr[0] >= m.wordStart && wr[0] <= m.wordEnd) { hostIdx = +k; hostMeta = m; break; }
+    }
+    if (hostMeta == null) continue;
+    const posA = wr[0] - hostMeta.wordStart;
+    const posB = Math.min(wr[1] - hostMeta.wordStart, hostMeta.charOffsets.length - 1);
+    if (posA < 0 || posA >= hostMeta.charOffsets.length) continue;
+    const cs = hostMeta.charOffsets[posA];
+    // 优先用 deleteText.length 算 ce（与页面渲染的 full.slice(cs,ce) 严格对齐，避免 wordRange 末位歧义）
+    let ce;
+    if (ed.deleteText && typeof ed.deleteText === 'string') {
+      ce = cs + ed.deleteText.length;
+    } else {
+      ce = (posB < hostMeta.charOffsets.length - 1) ? hostMeta.charOffsets[posB + 1] : hostMeta.charLen;
+    }
+    if (ce > hostMeta.charLen) ce = hostMeta.charLen;
+    const ord = (ordBySent[hostIdx] = (ordBySent[hostIdx] || 0) + 1);
+    FE.push({
+      idx: hostIdx, cs, ce,
+      s: ed.ds !== undefined ? ed.ds : (ed.deleteStart !== undefined ? ed.deleteStart : null),
+      e: ed.de !== undefined ? ed.de : (ed.deleteEnd !== undefined ? ed.deleteEnd : null),
+      type: ed.type || 'edit',
+      reason: ed.reason || '',
+      ord
+    });
+  }
+  // 过滤掉时间无效的
+  FE = FE.filter(f => f.s != null && f.e != null && f.e > f.s);
+  console.log(`   精剪标 (FE): ${FE.length} 条`);
+}
+
+// 粗剪导出（精剪阶段读取）→ ROUGHCUT_DELETES（整句删除数组）+ ROUGHCUT_PARTIALS（半句删除映射）
+let ROUGHCUT_DELETES = [];
+let ROUGHCUT_PARTIALS = {};
+if (roughcutFile && fs.existsSync(roughcutFile)) {
+  const rc = JSON.parse(fs.readFileSync(roughcutFile, 'utf8'));
+  ROUGHCUT_DELETES = rc.sentence_deletes || [];
+  ROUGHCUT_PARTIALS = rc.partial_deletes || {};
+  console.log(`   粗剪导出: ${ROUGHCUT_DELETES.length} 句整删, ${Object.keys(ROUGHCUT_PARTIALS).length} 句有半句删`);
+}
+
 // ===== 统计 =====
 const deletedCount = S.filter(s => s.ai).length;
 console.log(`   总句: ${S.length}, 删除: ${deletedCount}, 保留: ${S.length - deletedCount}`);
@@ -211,6 +282,9 @@ let template = fs.readFileSync(templateFile, 'utf8');
 template = template.replace('__SENTENCES_DATA__', JSON.stringify(S));
 template = template.replace('__BLOCKS_DATA__', JSON.stringify(BLK));
 template = template.replace('__CHAPTERS_DATA__', JSON.stringify(CHAPS));
+template = template.replace('__FINE_EDITS_DATA__', JSON.stringify(FE));
+template = template.replace('__ROUGHCUT_DELETES_DATA__', JSON.stringify(ROUGHCUT_DELETES));
+template = template.replace('__ROUGHCUT_PARTIALS_DATA__', JSON.stringify(ROUGHCUT_PARTIALS));
 template = template.replace(/__AUDIO_SRC__/g, audioSrc);
 template = template.replace(/__TITLE__/g, title);
 template = template.replace(/__PROJECT_NAME__/g, title);
