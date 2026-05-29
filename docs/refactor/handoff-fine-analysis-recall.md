@@ -122,7 +122,7 @@ done
 ## 已知约束(别破坏)
 
 - **方案 1**(粗剪→精剪 通过 `sentence_deletes/partial_deletes` 字段交接)别破:fine_analysis 的 sentence_deletes 输入还是从 `delete_segments_roughcut.json` 来。
-- **统一模板和生成器**(`generate_review_roughcut.js`)别动:Task 1 刚改过 review_roughcut.html,改 prompt/规则不应该再影响模板。
+- **统一模板和生成器**(`generate_review.js`)别动:Task 1 刚改过 review_roughcut.html,改 prompt/规则不应该再影响模板。
 - **doExport 没变** —— 不要因为 recall 增加而担心成品 — 多召回的 FE 会自然进 export 路径,cut_audio.py 在 PCM 样本级切,边界已经被上游精修。
 
 ---

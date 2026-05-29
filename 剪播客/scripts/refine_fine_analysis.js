@@ -40,17 +40,32 @@ if (!fs.existsSync(fineAnalysisPath)) {
 }
 
 if (!audioPath) {
-  // 默认尝试找原始音频
-  const defaultAudio = path.join(analysisDir, '..', '1_转录', 'audio_seekable.mp3');
-  if (fs.existsSync(defaultAudio)) {
-    audioPath = defaultAudio;
+  // 默认音频选择顺序（onset 能量谷底搜索要求源码尽量无损 / 高保真）：
+  //   1) audio_original.*    — 原始未压缩源（最佳）
+  //   2) audio_seekable.mp3  — CBR 192k MP3，回退选项；重压缩会平滑能量包络
+  //   3) audio.mp3           — 16kHz 降采样的 ASR 用版本，最差回退
+  // 优先用 original 是因为 MP3 重压缩会让 onset 边界检测偏差几十 ms。
+  const transcribeDir = path.join(analysisDir, '..', '1_转录');
+  let originals = [];
+  try {
+    originals = fs.readdirSync(transcribeDir).filter(f => f.startsWith('audio_original.'));
+  } catch (e) {}
+  if (originals.length > 0) {
+    audioPath = path.join(transcribeDir, originals[0]);
   } else {
-    const defaultAudio2 = path.join(analysisDir, '..', '1_转录', 'audio.mp3');
-    if (fs.existsSync(defaultAudio2)) {
-      audioPath = defaultAudio2;
+    const seekable = path.join(analysisDir, '..', '1_转录', 'audio_seekable.mp3');
+    if (fs.existsSync(seekable)) {
+      audioPath = seekable;
+      console.warn('⚠️  未找到 audio_original.*，回退到 audio_seekable.mp3（重压缩 MP3，onset 精度会略降）');
     } else {
-      console.error('❌ 未指定 --audio，且默认音频路径不存在');
-      process.exit(1);
+      const asrAudio = path.join(analysisDir, '..', '1_转录', 'audio.mp3');
+      if (fs.existsSync(asrAudio)) {
+        audioPath = asrAudio;
+        console.warn('⚠️  仅找到 audio.mp3（16kHz ASR 版），onset 检测精度会显著降低');
+      } else {
+        console.error('❌ 未指定 --audio，且默认音频路径不存在');
+        process.exit(1);
+      }
     }
   }
 }
@@ -130,11 +145,33 @@ for (let i = 0; i < results.length; i++) {
   }
 
   // 根据 type 更新对应字段（方向约束：只允许边界向删除区域内部移动）
-  if (type === 'partial_start' || type === 'filler_start') {
+  // 向内 snap 的最大允许位移（30ms）——超过这个量大概率是 refine 把谷底找到了
+  // 短 filler 词（"啊/呃/嗯"）的能量包络中段，而不是真正的词边界；硬限防止吞掉大部分词。
+  const MAX_INWARD_SHIFT_S = 0.03;
+  if (type === 'onset_pullback') {
+    // 句首填充词的 onset 拉回：deleteStart 只能往左移（refined <= original），
+    // 覆盖 ASR 起音延迟。窗口已被 merge 阶段卡在前词尾巴之内。
+    const oldVal = edit.deleteStart ?? edit.ds ?? 0;
+    if (result.refined > oldVal + 0.001) {
+      skipped++;
+      continue;
+    }
+    edit._originalDeleteStart = oldVal;
+    edit.deleteStart = result.refined;
+    if (edit.ds != null) edit.ds = result.refined;
+    applied++;
+    console.log(`   ✅ Edit #${edit.idx} ${edit.type}: start ${oldVal.toFixed(4)} ← ${result.refined.toFixed(4)} (Δ${(delta * 1000).toFixed(1)}ms onset 拉回)`);
+  } else if (type === 'partial_start' || type === 'filler_start') {
     const oldVal = edit.deleteStart ?? edit.ds ?? 0;
     // deleteStart 只能往右移（refined >= original）
     if (result.refined < oldVal - 0.001) {
       skipped++;
+      continue;
+    }
+    // 防短 filler 被吞：向内位移 > 30ms 就拒绝（保留 ASR 边界）
+    if (result.refined - oldVal > MAX_INWARD_SHIFT_S) {
+      skipped++;
+      console.log(`   ⏭️  Edit #${edit.idx} ${edit.type}: start refine 向内移动 ${((result.refined - oldVal) * 1000).toFixed(1)}ms > 30ms 上限，拒绝（保留 ASR 边界 ${oldVal.toFixed(4)}）`);
       continue;
     }
     edit._originalDeleteStart = oldVal;
@@ -147,6 +184,12 @@ for (let i = 0; i < results.length; i++) {
     // deleteEnd 只能往左移（refined <= original）
     if (result.refined > oldVal + 0.001) {
       skipped++;
+      continue;
+    }
+    // 防短 filler 被吞：向内位移 > 30ms 就拒绝
+    if (oldVal - result.refined > MAX_INWARD_SHIFT_S) {
+      skipped++;
+      console.log(`   ⏭️  Edit #${edit.idx} ${edit.type}: end refine 向内移动 ${((oldVal - result.refined) * 1000).toFixed(1)}ms > 30ms 上限，拒绝（保留 ASR 边界 ${oldVal.toFixed(4)}）`);
       continue;
     }
     edit._originalDeleteEnd = oldVal;
