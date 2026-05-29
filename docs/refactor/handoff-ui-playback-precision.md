@@ -174,3 +174,15 @@ A/B 测试(发现问题/验证修复都用):
 
 写完手册的人:Claude(2026-05-26 18:xx)
 读这份手册的人:下一个 session 的 Claude(可能是同一会话的延续或全新启动)
+
+---
+
+## 后记 · Task 1 已完成(2026-05-29)
+
+陷阱 6 移植完成并 commit:`68a85f3` feat(精剪): 移植陷阱 6 UI 跳过补偿到统一模板。
+
+- **Level 1 算法验证已跑** —— meeting_02 实数据:549 merged ranges,FE 覆盖 673/754,nudge 分层正确,lookahead ∈ [0.05, 0.30]。脚本 `/tmp/level1-skip-ranges-verify.js`(临时,可挪 `tools/` 持久化)。
+- **偏离旧 enhanced 的决定**:applyBoundaryNudge 只进 preview,不进 doExport。当前 pipeline 上游已做 onset 补偿,成品被 A/B 实测为干净。
+- **次级发现 → 新 handoff**:Level 1 暴露了一个比 UI 更重要的问题——**用户 9 处报告里 5 处(S8/S17/S20/S25/部分 S17)在 fine_analysis 根本没标 FE**。播放器修不了空集。详见 [`handoff-fine-analysis-recall.md`](handoff-fine-analysis-recall.md)。
+- **Task 2(成品也听到的单点反查)** still pending —— 等用户给出时间 + 听感 + 旁边几个字。
+- **Level 2/3 验证未做** —— 边际收益不足。如果实际听感还有问题,Level 2 再说。
