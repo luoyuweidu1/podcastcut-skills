@@ -15,7 +15,7 @@ output: 2_分析/fine_analysis.json、review_enhanced.html、(用户)delete_segm
 pos: pipeline 第三步；上游=/podcastcut-粗剪，下游=/podcastcut-执行
 
 架构守护者：run_fine_analysis.js / merge_llm_fine.js / refine_fine_analysis.js / refine_boundaries.py /
-generate_review_roughcut.js（**与粗剪共用同一生成器和同一模板 templates/review_roughcut.html**，精剪态靠
+generate_review.js（**与粗剪共用同一生成器和同一模板 templates/review_roughcut.html**，精剪态靠
 传 --fine 和 --roughcut 激活；产物文件名仍为 review_enhanced.html 以区分粗剪页）暂在 剪播客/scripts(templates)。
 旧的 generate_review_enhanced.js / templates/review_enhanced.html 已删除（被统一生成器/模板取代）；历史可在 CHANGELOG / git log 中查。
 未来建 _shared/ 时统一迁移并更新引用。
@@ -36,7 +36,7 @@ generate_review_roughcut.js（**与粗剪共用同一生成器和同一模板 te
 - 审查页用占位符注入，生成后校验**无样例残留**（不应出现 `雨林/潘潘/阿司`）。
 
 ## 脚本位置
-`$SKILL_DIR/剪播客/scripts/`（run_fine_analysis.js / merge_llm_fine.js / refine_fine_analysis.js / refine_boundaries.py / generate_review_roughcut.js）、模板 `$SKILL_DIR/剪播客/templates/review_roughcut.html`（**统一模板,与粗剪共用**）。
+`$SKILL_DIR/剪播客/scripts/`（run_fine_analysis.js / merge_llm_fine.js / refine_fine_analysis.js / refine_boundaries.py / generate_review.js）、模板 `$SKILL_DIR/剪播客/templates/review_roughcut.html`（**统一模板,与粗剪共用**）。
 
 ---
 
@@ -106,7 +106,7 @@ node "$SKILL_DIR/剪播客/scripts/refine_fine_analysis.js" \
 
 ```bash
 cd "$BASE_DIR/2_分析"
-node "$SKILL_DIR/剪播客/scripts/generate_review_roughcut.js" \
+node "$SKILL_DIR/剪播客/scripts/generate_review.js" \
   --sentences sentences.txt \
   --words "$BASE_DIR/1_转录/subtitles_words.json" \
   --analysis semantic_deep_analysis.json \
@@ -147,7 +147,7 @@ node "$SKILL_DIR/剪播客/scripts/manifest.js" set-stage "$BASE_DIR" fine appro
 ## 数据流说明（粗剪 → 精剪）
 精剪以用户在粗剪页确认导出的 **`delete_segments_roughcut.json` 为整句保留/删除底稿**：
 - 该导出在 `segments`（时间段，供 cut_audio）之外还带 **`sentence_deletes`**（句索引数组，用户的最终整句决定）与 `partial_deletes`（半句删除）。
-- `run_fine_analysis.js` 和 `generate_review_roughcut.js` 都**优先读 `sentence_deletes`**（用户决定），缺失才回退 `semantic_deep_analysis.json`（AI 判断）。
+- `run_fine_analysis.js` 和 `generate_review.js` 都**优先读 `sentence_deletes`**（用户决定），缺失才回退 `semantic_deep_analysis.json`（AI 判断）。
 - 因此用户在粗剪页的整句增删**会**反映到精剪：恢复的句子会被精剪分析并显示为保留，删掉的句子被跳过、不浪费 LLM token、也不出现在精剪页。
 - **`semantic_deep_analysis.json` 不被改写**——反馈/评估闭环（2.3/2.4）靠它对比「AI 原判 vs 用户修正」，改写会抹掉这个学习信号。
 - 粗剪的**半句删除**(`partial_deletes`)也会带入：统一生成器把 `delete_segments_roughcut.json` 的 `partial_deletes` 注入模板的 `__ROUGHCUT_PARTIALS_DATA__` 占位符，模板初始化为 `const pdel = __ROUGHCUT_PARTIALS_DATA__`（即 sentenceIdx → 半句区间数组），由 `rs()` 在存档存在时覆盖。用户在精剪页可继续编辑/恢复它们（点击划线即恢复）。

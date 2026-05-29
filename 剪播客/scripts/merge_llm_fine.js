@@ -784,6 +784,45 @@ if (fillerRefineCount > 0) {
   console.log(`🔍 标记 ${fillerRefineCount} 个 filler/stutter 紧密边界需 onset detection 精修`);
 }
 
+// ── filler_start (句首填充词) 的 onset 拉回 ──
+// ASR 报的 word.start 比真实起音晚 30-80ms（"对/嗯"等鼻音/浊塞音尤甚），
+// 直接切 word.start 会让起音漏在音频里。
+// 在 [ds-window, ds] 内向左搜能量谷底，把切点拉回到上一保留词之后的静音里。
+// 搜索窗口被前一词的尾巴硬卡住，绝不吃前词。
+let onsetPullbackCount = 0;
+for (const edit of merged) {
+  if (edit.type !== 'filler_start') continue;
+  const ds = edit.deleteStart ?? edit.ds ?? 0;
+  if (!ds) continue;
+
+  let prevWord = null;
+  for (const w of speechWords) {
+    if (w.end <= ds + 0.001 && (!prevWord || w.end > prevWord.end)) prevWord = w;
+  }
+  if (!prevWord) continue;
+
+  const gap = ds - prevWord.end;
+  if (gap < 0.03) continue; // 没空间精修
+
+  // 搜索窗口 = min(100ms, gap - 10ms 安全余量)
+  const window = Math.min(0.10, gap - 0.01);
+  if (window < 0.03) continue;
+
+  if (!edit._refinePoints) edit._refinePoints = [];
+  if (!edit._refinePoints.some(p => p.type === 'onset_pullback')) {
+    edit._refinePoints.push({
+      time: ds,
+      type: 'onset_pullback',
+      searchWindow: window,
+      direction: 'left'
+    });
+    onsetPullbackCount++;
+  }
+}
+if (onsetPullbackCount > 0) {
+  console.log(`🎯 标记 ${onsetPullbackCount} 个 filler_start 待 onset 拉回精修（左向能量谷底搜索）`);
+}
+
 const result = {
   edits: merged,
   summary: {

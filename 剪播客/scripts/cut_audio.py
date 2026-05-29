@@ -30,15 +30,19 @@ def calc_fade_duration(segment_duration):
     """
     自适应淡入淡出时长，和片段长度挂钩。
 
-    规则：
+    规则（Tier 2 之后调参）：
     - 极短片段 (< 0.3s): 不加 fade（太短会失真）
-    - 短片段 (0.3-2s):  fade = 段长 × 8%，最少 0.03s
-    - 中片段 (2-8s):    fade = 0.15 ~ 0.25s
-    - 长片段 (> 8s):    fade = 0.3s（上限）
+    - 其他: fade = min(段长 × 8%, **0.04s**)，下限 0.03s
+
+    上限从 0.3s 砍到 0.04s 的原因：精剪导出 doExport 容差是 0.05s（fine cut 窄窗），
+    cut 之后的 keep 段开头紧贴下一个保留词的起音。原 0.3s ramp 会把 ramp 起点
+    （音量 0）压在 kept 词的辅音/起音上，听感"该词音量变弱"——典型受害是 stutter
+    重复词的"保留版"。0.04s ramp（40ms）够防 click（临界 5-10ms），又不会吃到
+    kept 词的可感知起音（首音素 prebuilt 时长一般 30-80ms）。
     """
     if segment_duration < 0.3:
         return 0.0
-    fade = min(segment_duration * 0.08, 0.3)
+    fade = min(segment_duration * 0.08, 0.04)
     return max(fade, 0.03)
 
 
@@ -448,9 +452,13 @@ def main():
         elif line.startswith('channels=') and line.split('=')[1].strip().isdigit():
             src_channels = int(line.split('=')[1].strip())
 
-    # MP3 bitrate: at least 128k, cap at 192k
-    out_bitrate = max(src_bitrate // 1000, 128)
-    out_bitrate = min(out_bitrate, 192)
+    # MP3 bitrate: floor 192k, cap 320k.
+    # 之前是 128k floor / 192k cap，但 MP3 编码效率比 AAC 低，128k MP3 跟 128k AAC 比
+    # 高频细节明显衰减；播客典型录音源是 126-192k AAC，转 MP3 时至少要 192k 才不"听
+    # 起来像加了细微 hiss"。设 floor 192 保证下限，cap 320 是 MP3 最高规格。
+    # 如果源本身比 192k 高（罕见），按源的 ×1.5 上采保留 headroom。
+    out_bitrate = max(int(src_bitrate / 1000 * 1.5), 192)
+    out_bitrate = min(out_bitrate, 320)
     print(f"🔧 编码为 MP3 (源: {src_bitrate//1000}kbps {src_sample_rate}Hz {src_channels}ch → 输出: {out_bitrate}kbps)...")
 
     cmd = [

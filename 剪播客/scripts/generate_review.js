@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 /**
- * 生成 V7 粗剪审查页面 (review_roughcut.html)
+ * 生成 V7 审查页面（统一模板，覆盖粗剪/精剪两态）。
  *
  * 读取转录和分析数据，注入橄榄绿编辑式模板。
+ * - 不传 `--fine` → 粗剪态，输出文件名默认 `review_roughcut.html`、导出 `delete_segments_roughcut.json`
+ * - 传 `--fine fine_analysis.json` → 精剪态（FE 非空），输出文件名按约定为 `review_enhanced.html`、导出 `delete_segments_edited.json`
  *
- * 用法: node generate_review_roughcut.js [options]
+ * 用法: node generate_review.js [options]
  *   --sentences   sentences.txt 路径
  *   --words       subtitles_words.json 路径
  *   --analysis    semantic_deep_analysis.json 路径
+ *   --fine        fine_analysis.json 路径（精剪态需要）
+ *   --roughcut    delete_segments_roughcut.json 路径（精剪态用于显示半句删除底稿）
  *   --audio       音频文件相对路径 (默认: 1_转录/audio_seekable.mp3)
  *   --output      输出 HTML 路径
  *   --title       页面标题

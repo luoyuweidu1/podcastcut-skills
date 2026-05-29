@@ -1326,7 +1326,12 @@ function doExport(){
   ranges=ranges.concat(pdelRanges()).concat(feRanges());
   ranges.sort((p,q)=>p[0]-q[0]);
   const segs=[];let c=null;
-  ranges.forEach(r=>{ if(c&&(r[0]-c.end)<1.5){ if(r[1]>c.end)c.end=r[1]; } else { if(c)segs.push(c); c={start:r[0],end:r[1]}; } });
+  // 合并容差 0.05s（与 preview 的 buildMergedRanges 一致）。
+  // 必须保持紧——历史 1.5s 容差会把"两个相邻删除之间的保留词"一口吞掉，
+  // 典型受害者：self_correction 的 keepText 紧跟在 deleteText 之后、再接一个 stutter 删除时。
+  // doExport 仍不做 applyBoundaryNudge（保留"raw / sample-accurate"语义），
+  // ASR onset 拉回在上游 fine_analysis 层的 onset_pullback 处理。
+  ranges.forEach(r=>{ if(c&&(r[0]-c.end)<0.05){ if(r[1]>c.end)c.end=r[1]; } else { if(c)segs.push(c); c={start:r[0],end:r[1]}; } });
   if(c)segs.push(c);
   if(segs.length>0 && segs[0].start<5) segs[0].start=0;
 

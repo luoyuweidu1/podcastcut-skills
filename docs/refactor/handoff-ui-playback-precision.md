@@ -133,7 +133,7 @@ if(pl){
 | 文件 | 关注什么 |
 |------|----------|
 | `剪播客/templates/review_roughcut.html` | timeupdate 监听器(~1126);doExport(~1131);新加 `getSkipRanges` |
-| `剪播客/scripts/generate_review_roughcut.js` | FE 时间计算(`s/e` 来源);silence 类时间(time-only) |
+| `剪播客/scripts/generate_review.js` | FE 时间计算(`s/e` 来源);silence 类时间(time-only) |
 | `剪播客/scripts/merge_llm_fine.js` | boundary extension(陷阱 25/26/39 应该在这);post-merge gap cleanup |
 | `剪播客/scripts/refine_fine_analysis.js` | onset 精修;`_refinePoints` 标记;confidence < 0.5 fallback |
 | `剪播客/参考/技术陷阱与波形.md` | **必读**:陷阱 6/8/25/26/28/35-40 全在这 |
