@@ -634,6 +634,7 @@ function isWordDeleted(w) {
 const keptWords = actualWords.filter(w => !isWordDeleted(w));
 const SILENCE_THRESHOLD = 0.8; // from preferences or default
 let gapEdits = [];
+let crossKeptSkipped = 0;
 
 for (let i = 1; i < keptWords.length; i++) {
   const gap = keptWords[i].start - keptWords[i - 1].end;
@@ -650,6 +651,22 @@ for (let i = 1; i < keptWords.length; i++) {
       return Math.abs(eStart - trimStart) < 0.05 && Math.abs(eEnd - trimEnd) < 0.05;
     });
     if (alreadyCovered) continue;
+
+    // 【陷阱级 defensive check】silence_merged 不得跨越任何保留词。
+    // 算法上 keptWords 是 actualWords 经 isWordDeleted 过滤后的子集，consecutive 对
+    // 之间理论上没有 kept 词；但 isWordDeleted 是"全包含"判定，对 *部分重叠* delete
+    // 范围的词会判 false（即被算作 kept）。这种边缘 case 下，partial-overlap 的"kept"
+    // 词可能落进 [trimStart, trimEnd] 区间。显式扫一遍 actualWords 的中点抓住它。
+    const crossesKept = actualWords.some(w => {
+      const mid = (w.start + w.end) / 2;
+      if (mid <= trimStart || mid >= trimEnd) return false;
+      // 在区间内：检查该词是否在某个已知 delete 范围里（如果是，则非 kept，OK）
+      return !isWordDeleted(w);
+    });
+    if (crossesKept) {
+      crossKeptSkipped++;
+      continue;
+    }
 
     // Find sentence index
     let sentIdx = -1;
@@ -697,11 +714,17 @@ if (gapEdits.length > 0) {
 
   const gapTimeSaved = gapEdits.reduce((s, e) => s + e.duration, 0);
   console.log(`   Found ${gapEdits.length} merged gaps, trimmed ${gapTimeSaved.toFixed(1)}s`);
+  if (crossKeptSkipped > 0) {
+    console.log(`   ⏭️  Skipped ${crossKeptSkipped} silence_merged candidates that would cross kept words (defensive check)`);
+  }
 
   // Refresh byType
   byType['silence_merged'] = gapEdits.length;
 } else {
   console.log('   No merged gaps found');
+  if (crossKeptSkipped > 0) {
+    console.log(`   ⏭️  Skipped ${crossKeptSkipped} silence_merged candidates that would cross kept words`);
+  }
 }
 
 // Recalculate total time saved
