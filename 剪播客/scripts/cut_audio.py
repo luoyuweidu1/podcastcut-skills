@@ -452,20 +452,33 @@ def main():
         elif line.startswith('channels=') and line.split('=')[1].strip().isdigit():
             src_channels = int(line.split('=')[1].strip())
 
-    # MP3 bitrate: floor 192k, cap 320k.
-    # 之前是 128k floor / 192k cap，但 MP3 编码效率比 AAC 低，128k MP3 跟 128k AAC 比
-    # 高频细节明显衰减；播客典型录音源是 126-192k AAC，转 MP3 时至少要 192k 才不"听
-    # 起来像加了细微 hiss"。设 floor 192 保证下限，cap 320 是 MP3 最高规格。
-    # 如果源本身比 192k 高（罕见），按源的 ×1.5 上采保留 headroom。
-    out_bitrate = max(int(src_bitrate / 1000 * 1.5), 192)
-    out_bitrate = min(out_bitrate, 320)
-    print(f"🔧 编码为 MP3 (源: {src_bitrate//1000}kbps {src_sample_rate}Hz {src_channels}ch → 输出: {out_bitrate}kbps)...")
+    # 按输出后缀选编码：
+    #   .m4a / .aac  → AAC 直出（如果源已是 AAC，避免二次 codec 家族转换，保高频细节）
+    #   .mp3 (默认) → libmp3lame（floor 192k，cap 320k）
+    # 历史背景：之前只支持 MP3 输出，源是 AAC 126k 时听感"加了细微 hiss"。
+    # 加 AAC 路径后用户可以传 *.m4a 输出名得到真正的"零额外损失"成品。
+    out_ext = os.path.splitext(output_name)[1].lower()
+
+    if out_ext in ('.m4a', '.aac'):
+        # AAC 路径：bitrate floor 192k cap 320k（MP4/M4A 容器对 AAC 没有 320k 硬上限，
+        # 但 256k AAC ≈ 透明级，再高边际收益小）
+        out_bitrate = max(int(src_bitrate / 1000 * 1.2), 192)
+        out_bitrate = min(out_bitrate, 320)
+        codec_args = ['-c:a', 'aac', '-b:a', f'{out_bitrate}k']
+        codec_label = 'AAC'
+    else:
+        # MP3 默认路径
+        out_bitrate = max(int(src_bitrate / 1000 * 1.5), 192)
+        out_bitrate = min(out_bitrate, 320)
+        codec_args = ['-c:a', 'libmp3lame', '-b:a', f'{out_bitrate}k']
+        codec_label = 'MP3'
+
+    print(f"🔧 编码为 {codec_label} (源: {src_bitrate//1000}kbps {src_sample_rate}Hz {src_channels}ch → 输出: {out_bitrate}kbps)...")
 
     cmd = [
         'ffmpeg', '-v', 'quiet', '-stats',
         '-i', temp_concat,
-        '-c:a', 'libmp3lame', '-b:a', f'{out_bitrate}k',
-    ]
+    ] + codec_args
     if src_sample_rate and src_sample_rate > 16000:
         cmd.extend(['-ar', str(src_sample_rate)])
     if src_channels and src_channels > 1:
