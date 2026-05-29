@@ -17,7 +17,7 @@ pos: pipeline 第三步；上游=/podcastcut-粗剪，下游=/podcastcut-执行
 架构守护者：run_fine_analysis.js / merge_llm_fine.js / refine_fine_analysis.js / refine_boundaries.py /
 generate_review_roughcut.js（**与粗剪共用同一生成器和同一模板 templates/review_roughcut.html**，精剪态靠
 传 --fine 和 --roughcut 激活；产物文件名仍为 review_enhanced.html 以区分粗剪页）暂在 剪播客/scripts(templates)。
-旧的 generate_review_enhanced.js / templates/review_enhanced.html 已退役（保留在仓库供历史参考，未来可清理）。
+旧的 generate_review_enhanced.js / templates/review_enhanced.html 已删除（被统一生成器/模板取代）；历史可在 CHANGELOG / git log 中查。
 未来建 _shared/ 时统一迁移并更新引用。
 -->
 
