@@ -15,6 +15,8 @@ output: 2_分析/semantic_deep_analysis.json、review_roughcut.html、(用户)de
 pos: pipeline 第二步；上游=转录，下游=/podcastcut-精剪
 
 架构守护者：generate_review_roughcut.js / 模板 review_roughcut.html / user_manager.js 暂在 剪播客/scripts(templates)。
+**模板与精剪共用**：精剪单元也调本生成器（额外传 --fine 和 --roughcut 激活精剪态，渲染 AI 标 + 折叠粗剪整删段），
+输出叫 review_enhanced.html 以区分两阶段。改本模板前先想想对精剪页有没有影响。
 未来建 _shared/ 时统一迁移并更新引用。
 -->
 
