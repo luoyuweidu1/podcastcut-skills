@@ -54,19 +54,48 @@ if (!audioPath) {
     audioPath = path.join(transcribeDir, originals[0]);
   } else {
     const seekable = path.join(analysisDir, '..', '1_转录', 'audio_seekable.mp3');
-    if (fs.existsSync(seekable)) {
-      audioPath = seekable;
-      console.warn('⚠️  未找到 audio_original.*，回退到 audio_seekable.mp3（重压缩 MP3，onset 精度会略降）');
-    } else {
-      const asrAudio = path.join(analysisDir, '..', '1_转录', 'audio.mp3');
-      if (fs.existsSync(asrAudio)) {
-        audioPath = asrAudio;
-        console.warn('⚠️  仅找到 audio.mp3（16kHz ASR 版），onset 检测精度会显著降低');
-      } else {
-        console.error('❌ 未指定 --audio，且默认音频路径不存在');
-        process.exit(1);
-      }
+    const asrAudio = path.join(analysisDir, '..', '1_转录', 'audio.mp3');
+    const fallbackTarget = fs.existsSync(seekable) ? seekable
+                         : fs.existsSync(asrAudio) ? asrAudio
+                         : null;
+
+    if (!fallbackTarget) {
+      console.error('❌ 未指定 --audio，且默认音频路径不存在');
+      process.exit(1);
     }
+
+    audioPath = fallbackTarget;
+
+    // 显著警告（防止"以为没事"的静默退化）：
+    // 多行 + 框线 + 具体修复路径 + 直接 print 到 stderr，让 CI 日志和终端都难以忽略。
+    const fallbackKind = audioPath.endsWith('audio.mp3')
+      ? '16kHz ASR 降采样版（最差选项）'
+      : 'CBR 192k MP3 重压缩版（次优）';
+    const onsetImpact = audioPath.endsWith('audio.mp3')
+      ? 'onset 检测精度会**显著降低**（可能错过 30-80ms 起音）'
+      : 'onset 检测精度**略降**（能量谷底被 MP3 编码平滑）';
+
+    const bar = '━'.repeat(70);
+    process.stderr.write([
+      '',
+      `\x1b[33m${bar}\x1b[0m`,
+      '\x1b[33;1m⚠️  refine 退到回退音频源 — 这会影响 onset 拉回的精度\x1b[0m',
+      `\x1b[33m${bar}\x1b[0m`,
+      `\x1b[33m使用音频：\x1b[0m\x1b[1m${path.basename(audioPath)}\x1b[0m （${fallbackKind}）`,
+      `\x1b[33m影响：\x1b[0m${onsetImpact}`,
+      '',
+      '\x1b[33m如果是\x1b[0m\x1b[33;1m新项目\x1b[0m\x1b[33m，强烈建议补一份 audio_original.* 再重跑：\x1b[0m',
+      `  \x1b[36mcp <原始音频> "${transcribeDir}/audio_original.<ext>"\x1b[0m`,
+      '',
+      '\x1b[33m如果是老项目数据/有意识用回退源，按 Ctrl+C 取消则跳过本次 refine。\x1b[0m',
+      '\x1b[33m继续 3 秒后开始 refine……\x1b[0m',
+      `\x1b[33m${bar}\x1b[0m`,
+      '',
+    ].join('\n'));
+
+    // 3 秒暂停：足够让人 Ctrl+C，又不阻塞太久。CI 默认 stdin 不是 TTY，
+    // 这种情况下直接继续没事（CI 会在日志里看到完整警告）。
+    try { execSync('sleep 3'); } catch (e) { /* SIGINT during sleep = user cancel, propagate */ if (e.signal) process.exit(130); }
   }
 }
 
