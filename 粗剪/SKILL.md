@@ -14,7 +14,7 @@ output: 2_分析/semantic_deep_analysis.json、review_roughcut.html、(用户)de
         project.json(roughcut=awaiting_review)
 pos: pipeline 第二步；上游=转录，下游=/podcastcut-精剪
 
-架构守护者：generate_review.js / 模板 review_roughcut.html / user_manager.js 暂在 剪播客/scripts(templates)。
+架构守护者：generate_review.js / 模板 review.html / user_manager.js 暂在 剪播客/scripts(templates)。
 **模板与精剪共用**：精剪单元也调本生成器（额外传 --fine 和 --roughcut 激活精剪态，渲染 AI 标 + 折叠粗剪整删段），
 输出叫 review_enhanced.html 以区分两阶段。改本模板前先想想对精剪页有没有影响。
 未来建 _shared/ 时统一迁移并更新引用。
@@ -35,7 +35,7 @@ pos: pipeline 第二步；上游=转录，下游=/podcastcut-精剪
 - 审查页模板用占位符注入（`__SENTENCES_DATA__` 等），生成后必须校验**无样例残留**（不应出现 `雨林/潘潘/阿司` 等示例说话人）。
 
 ## 脚本位置
-`$SKILL_DIR/剪播客/scripts/`（generate_review.js、user_manager.js）、模板 `$SKILL_DIR/剪播客/templates/review_roughcut.html`。
+`$SKILL_DIR/剪播客/scripts/`（generate_review.js、user_manager.js）、模板 `$SKILL_DIR/剪播客/templates/review.html`。
 
 ---
 
@@ -122,7 +122,7 @@ node "$SKILL_DIR/剪播客/scripts/generate_review.js" \
 open "$BASE_DIR/review_roughcut.html"
 ```
 
-> 模板位于 `templates/review_roughcut.html`，脚本注入 `__SENTENCES_DATA__/__BLOCKS_DATA__/__CHAPTERS_DATA__`。
+> 模板位于 `templates/review.html`，脚本注入 `__SENTENCES_DATA__/__BLOCKS_DATA__/__CHAPTERS_DATA__`。
 > 审查页能力：整句删除/恢复（勾选框）、**半句删除**（选中文字→标记，char 级精度）、句子序号、点击跳转试听（动态跳过删除段，无需预剪）、localStorage 自动保存。
 
 ### 4. 用户审查 + 导出

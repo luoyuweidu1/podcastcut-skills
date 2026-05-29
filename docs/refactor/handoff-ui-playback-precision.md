@@ -93,7 +93,7 @@ setTimeout(resume, 80);                                   // 80ms fallback,防 s
 **6d seekTarget 精确落点** — `seekTarget = e`(删除范围精确结束点,**不加偏移**);仅当 `nextKept.startTime <= e + 0.5` 时才用 nextKept(避免精剪 seekTarget 跳过整句,陷阱 5)。
 
 #### 当前统一模板的播放跳过(简陋版)
-位置:`剪播客/templates/review_roughcut.html`,第 ~1126-1135 行附近的 `timeupdate` 监听器:
+位置:`剪播客/templates/review.html`,第 ~1126-1135 行附近的 `timeupdate` 监听器:
 ```js
 if(pl)for(const x of S)if(del.has(x.idx)&&t>=x.s&&t<x.e){au.currentTime=x.e+.05;return}
 if(pl){
@@ -132,7 +132,7 @@ if(pl){
 
 | 文件 | 关注什么 |
 |------|----------|
-| `剪播客/templates/review_roughcut.html` | timeupdate 监听器(~1126);doExport(~1131);新加 `getSkipRanges` |
+| `剪播客/templates/review.html` | timeupdate 监听器(~1126);doExport(~1131);新加 `getSkipRanges` |
 | `剪播客/scripts/generate_review.js` | FE 时间计算(`s/e` 来源);silence 类时间(time-only) |
 | `剪播客/scripts/merge_llm_fine.js` | boundary extension(陷阱 25/26/39 应该在这);post-merge gap cleanup |
 | `剪播客/scripts/refine_fine_analysis.js` | onset 精修;`_refinePoints` 标记;confidence < 0.5 fallback |

@@ -39,7 +39,7 @@ const roughcutFile = args.roughcut || null;
 
 // ===== 模板路径 =====
 const scriptDir = path.dirname(process.argv[1] || __filename);
-const templateFile = path.resolve(scriptDir, '../templates/review_roughcut.html');
+const templateFile = path.resolve(scriptDir, '../templates/review.html');
 
 // ===== 检查文件 =====
 function check(f, name) {
