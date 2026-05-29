@@ -24,16 +24,33 @@ if (dirArgIdx >= 0 && process.argv[dirArgIdx + 1]) {
 const wordsPath = path.join(analysisDir, '../1_转录/subtitles_words.json');
 const sentencesPath = path.join(analysisDir, 'sentences.txt');
 const analysisPath = path.join(analysisDir, 'semantic_deep_analysis.json');
+const roughcutPath = path.join(analysisDir, 'delete_segments_roughcut.json');
 const outputPath = path.join(analysisDir, 'fine_analysis_rules.json');
 
 const allWords = JSON.parse(fs.readFileSync(wordsPath, 'utf8'));
 const sentenceLines = fs.readFileSync(sentencesPath, 'utf8').split('\n').filter(Boolean);
 const analysis = JSON.parse(fs.readFileSync(analysisPath, 'utf8'));
 
-// Get deleted sentence indices from 5a
-const deletedSentences = new Set(
-  analysis.sentences.filter(s => s.action === 'delete').map(s => s.sentenceIdx)
-);
+// 删除句索引：优先用用户在粗剪页确认导出的 sentence_deletes（权威决定），
+// 否则回退到 5a (semantic_deep_analysis) 的 AI 删除集。
+// 这样精剪只分析用户真正保留的句子：用户恢复的句子会被分析到，用户删掉的不浪费 token。
+let deletedSentences;
+let deletedSource = 'semantic(AI)';
+if (fs.existsSync(roughcutPath)) {
+  try {
+    const rc = JSON.parse(fs.readFileSync(roughcutPath, 'utf8'));
+    if (Array.isArray(rc.sentence_deletes)) {
+      deletedSentences = new Set(rc.sentence_deletes);
+      deletedSource = 'roughcut(user)';
+    }
+  } catch (e) { /* 损坏则回退 */ }
+}
+if (!deletedSentences) {
+  deletedSentences = new Set(
+    analysis.sentences.filter(s => s.action === 'delete').map(s => s.sentenceIdx)
+  );
+}
+console.error(`[run_fine_analysis] 删除句来源: ${deletedSource}, 跳过 ${deletedSentences.size} 句`);
 
 const actualWords = allWords.filter(w => !w.isGap && !w.isSpeakerLabel);
 const gaps = allWords.filter(w => w.isGap);

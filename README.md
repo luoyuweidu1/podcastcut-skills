@@ -30,6 +30,10 @@ PODCASTCUT_DIR="$(pwd)"
 mkdir -p ~/.claude/skills
 ln -s "$PODCASTCUT_DIR/安装"      ~/.claude/skills/podcastcut-安装
 ln -s "$PODCASTCUT_DIR/剪播客"    ~/.claude/skills/podcastcut-剪播客
+ln -s "$PODCASTCUT_DIR/转录"      ~/.claude/skills/podcastcut-转录
+ln -s "$PODCASTCUT_DIR/粗剪"      ~/.claude/skills/podcastcut-粗剪
+ln -s "$PODCASTCUT_DIR/精剪"      ~/.claude/skills/podcastcut-精剪
+ln -s "$PODCASTCUT_DIR/执行"      ~/.claude/skills/podcastcut-执行
 ln -s "$PODCASTCUT_DIR/后期"      ~/.claude/skills/podcastcut-后期
 ln -s "$PODCASTCUT_DIR/质检"      ~/.claude/skills/podcastcut-质检
 ln -s "$PODCASTCUT_DIR/音质处理"  ~/.claude/skills/podcastcut-音质处理
@@ -59,7 +63,11 @@ cp .env.example .env
 | 命令 | 功能 |
 |------|------|
 | `/podcastcut-安装` | 环境准备 |
-| `/podcastcut-剪播客` | 主流程 |
+| `/podcastcut-剪播客` | 编排器（串起各单元，按状态推进、每步暂停审核、可续跑） |
+| `/podcastcut-转录` | 转录单元：音频 → FunASR → 字级转录 + 分句 |
+| `/podcastcut-粗剪` | 粗剪单元：段落级分析 + 句子级审查页 → `delete_segments_roughcut.json` |
+| `/podcastcut-精剪` | 精剪单元：词级口癖删减 + AI 自审查 + 词级审查页 → `delete_segments_edited.json` |
+| `/podcastcut-执行` | 执行单元：按删除清单从 `audio_original` 切成品（≥192k） |
 | `/podcastcut-质检` | 数据层 + 信号层 + 语义层质检 |
 | `/podcastcut-音质处理` | 按说话人降噪、LUFS 标准化 |
 | `/podcastcut-后期` | 高光、音乐、时间戳、标题 |

@@ -1,4 +1,6 @@
 {
+  "name": "podcastcut-skills",
+  "private": true,
   "dependencies": {
     "js-yaml": "^4.1.1"
   }
