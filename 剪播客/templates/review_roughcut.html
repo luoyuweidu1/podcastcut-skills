@@ -398,6 +398,10 @@ body.preview .sug-reason { opacity: 0; }
 .r-txt .fe::after { content: attr(data-type); font-size: 10px; vertical-align: super; margin-left: 2px; opacity: .65; font-weight: 600; }
 .r-txt .fe.dis { text-decoration: none; background: transparent; color: inherit; }
 .r-txt .fe.dis::after { opacity: .35; text-decoration: line-through; }
+/* 句首停顿标记（incomingSilences）：silence 在感知位置显示 */
+.in-sil { display:inline-block; margin:0 6px 2px 0; padding:1px 7px; font-family:"SF Mono",monospace; font-size:11px; color:var(--gold-dark); background:var(--gold-dim); border-radius:3px; cursor:pointer; user-select:none; vertical-align:middle; border:1px dashed var(--gold-dark); }
+.in-sil:hover { background:#f0e0c0; color:var(--dark); }
+.in-sil.dis { opacity:.35; text-decoration:line-through; border-style:dotted; }
 /* 精剪整句删除在精剪页折叠成占位（点击展开/收起） */
 .rd-fold { display:flex; align-items:center; gap: 8px; padding: 8px 16px; margin: 6px 0; background: #f7f3ec; border-left: 3px solid var(--light); border-radius: 4px; cursor: pointer; font-size: 13px; color: var(--light); user-select:none; }
 .rd-fold:hover { background: #efe8db; color: var(--dark); }
@@ -671,8 +675,12 @@ const del=new Set(), um=new Set();
 // 半句删除：sentenceIdx → [{cs,ce,s,e}]（cs/ce=字符范围，s/e=时间段）
 // 精剪阶段初始为 {}；精剪阶段由生成器注入精剪导出的 partial_deletes
 const pdel = __ROUGHCUT_PARTIALS_DATA__;
-// 精剪 AI 标记 [{idx, cs, ce, s, e, type, reason, ord}]；精剪阶段为 []
+// 精剪 AI 标记 [{idx, cs, ce, s, e, type, reason, ord}]；粗剪阶段为 []
+// silence/silence_merged 类的 cs/ce 为 null（时间维度，不在文本内划线，
+// 但参与 doExport / playback skip / computeStats，并在"下一非删除句"句首作为 ⏸ 标显示）
 const FE = __FINE_EDITS_DATA__;
+// 句首停顿标记：目标 sentenceIdx → [{duration, key, fromIdx}]（key 与 fdis 同源）
+const IS_BY_SENT = __INCOMING_SILENCES_DATA__;
 // 精剪整句删除集合（精剪页用于折叠展示）；精剪阶段为 []
 const RD_LIST = __ROUGHCUT_DELETES_DATA__;
 const RD = new Set(RD_LIST);
@@ -789,7 +797,12 @@ function renderTx() {
     const isSug = x.sug && id;
     let cl='row'+extraCls;if(id)cl+=' del';if(isSug)cl+=' sug';if(x.idx===curIdx)cl+=' act';
     const reasonTag = (isSug && x.sugReason) ? `<span class="sug-reason">${esc(x.sugReason)}</span>` : '';
-    return `<div class="${cl}" id="r${x.idx}" onclick="goTo(${x.idx})"><div class="r-chk"><div class="chk ${id?'on':''}" onclick="event.stopPropagation();tgS(${x.idx})">✕</div></div><div class="r-num mono">${x.idx+1}</div><div class="r-sp">${x.sp}</div><div class="r-tm">${x.ts}</div><div class="r-txt">${txtHtml(x)}${reasonTag}</div></div>`;
+    const incs = IS_BY_SENT[x.idx] || [];
+    const incTags = incs.map(s => {
+      const dis = fdis.has(s.key) ? ' dis' : '';
+      return `<span class="in-sil${dis}" data-key="${s.key}" title="句尾停顿 ${s.duration}s（点击 ${fdis.has(s.key)?'启用':'禁用'} 此静音）">⏸ ${s.duration}s</span>`;
+    }).join('');
+    return `<div class="${cl}" id="r${x.idx}" onclick="goTo(${x.idx})"><div class="r-chk"><div class="chk ${id?'on':''}" onclick="event.stopPropagation();tgS(${x.idx})">✕</div></div><div class="r-num mono">${x.idx+1}</div><div class="r-sp">${x.sp}</div><div class="r-tm">${x.ts}</div><div class="r-txt">${incTags}${txtHtml(x)}${reasonTag}</div></div>`;
   }
 
   let lb=null;
@@ -860,6 +873,13 @@ document.addEventListener('mousedown',e=>{ if(e.target!==selbtn) hideSelBtn(); }
 document.getElementById('tx').addEventListener('mouseup',e=>{
   // 点到 AI 精剪标 → toggle 启用/禁用
   if(e.target.classList && e.target.classList.contains('fe')){
+    const key=e.target.dataset.key;
+    if(fdis.has(key)) fdis.delete(key); else fdis.add(key);
+    renderTx(); sv(); hideSelBtn(); return;
+  }
+  // 点到句首停顿标 ⏸ → toggle 对应静音 FE（与同一 idx@ord 联动）
+  if(e.target.classList && e.target.classList.contains('in-sil')){
+    e.stopPropagation();
     const key=e.target.dataset.key;
     if(fdis.has(key)) fdis.delete(key); else fdis.add(key);
     renderTx(); sv(); hideSelBtn(); return;

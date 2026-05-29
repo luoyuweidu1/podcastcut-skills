@@ -225,7 +225,26 @@ if (fineFile && fs.existsSync(fineFile)) {
   const edits = (fa.edits || []).concat(fa.extraFineEdits || []);
   const ordBySent = {};
   for (const ed of edits) {
+    const tStart = ed.ds !== undefined ? ed.ds : (ed.deleteStart !== undefined ? ed.deleteStart : null);
+    const tEnd   = ed.de !== undefined ? ed.de : (ed.deleteEnd   !== undefined ? ed.deleteEnd   : null);
+    const isTimeOnly = (ed.type === 'silence' || ed.type === 'silence_merged');
     const wr = ed.wordRange;
+
+    if (isTimeOnly) {
+      // 静音类：无 wordRange，时间维度独立条目（cs/ce=null 不参与 txtHtml 渲染，
+      // 但参与 doExport / playback skip / computeStats / incomingSilences 标记）
+      if (ed.sentenceIdx === undefined || tStart == null || tEnd == null) continue;
+      const ord = (ordBySent[ed.sentenceIdx] = (ordBySent[ed.sentenceIdx] || 0) + 1);
+      FE.push({
+        idx: ed.sentenceIdx, cs: null, ce: null,
+        s: tStart, e: tEnd,
+        type: ed.type, reason: ed.reason || '',
+        duration: ed.duration || Math.round((tEnd - tStart) * 100) / 100,
+        ord
+      });
+      continue;
+    }
+
     if (!wr || wr.length !== 2) continue;
     // 找宿主句子（线性扫描；规模小）
     let hostIdx = null, hostMeta = null;
@@ -248,8 +267,7 @@ if (fineFile && fs.existsSync(fineFile)) {
     const ord = (ordBySent[hostIdx] = (ordBySent[hostIdx] || 0) + 1);
     FE.push({
       idx: hostIdx, cs, ce,
-      s: ed.ds !== undefined ? ed.ds : (ed.deleteStart !== undefined ? ed.deleteStart : null),
-      e: ed.de !== undefined ? ed.de : (ed.deleteEnd !== undefined ? ed.deleteEnd : null),
+      s: tStart, e: tEnd,
       type: ed.type || 'edit',
       reason: ed.reason || '',
       ord
@@ -270,6 +288,33 @@ if (roughcutFile && fs.existsSync(roughcutFile)) {
   console.log(`   粗剪导出: ${ROUGHCUT_DELETES.length} 句整删, ${Object.keys(ROUGHCUT_PARTIALS).length} 句有半句删`);
 }
 
+// 句首停顿标记：silence/silence_merged 的感知位置在下一句开头
+// 把每条静音传给"下一个非删除句"作为 incomingSilences，点击 toggle 同一个 FE
+const INCOMING_SILENCES = {};
+{
+  const initDelSet = new Set(ROUGHCUT_DELETES);
+  S.forEach(x => { if (x.ai || x.sug) initDelSet.add(x.idx); });
+  FE.forEach(f => {
+    if (f.type !== 'silence' && f.type !== 'silence_merged') return;
+    let nextIdx = null;
+    for (const sObj of S) {
+      if (sObj.idx <= f.idx) continue;
+      if (initDelSet.has(sObj.idx)) continue;
+      nextIdx = sObj.idx;
+      break;
+    }
+    if (nextIdx == null) return;
+    const dur = f.duration || Math.max(0, (f.e || 0) - (f.s || 0));
+    (INCOMING_SILENCES[nextIdx] = INCOMING_SILENCES[nextIdx] || []).push({
+      duration: Math.round(dur * 10) / 10,
+      key: `${f.idx}@${f.ord}`,
+      fromIdx: f.idx
+    });
+  });
+  const cnt = Object.keys(INCOMING_SILENCES).length;
+  if (cnt > 0) console.log(`   句首停顿标记: ${cnt} 个句子接收（共 ${Object.values(INCOMING_SILENCES).reduce((a,v)=>a+v.length,0)} 标）`);
+}
+
 // ===== 统计 =====
 const deletedCount = S.filter(s => s.ai).length;
 console.log(`   总句: ${S.length}, 删除: ${deletedCount}, 保留: ${S.length - deletedCount}`);
@@ -285,6 +330,7 @@ template = template.replace('__CHAPTERS_DATA__', JSON.stringify(CHAPS));
 template = template.replace('__FINE_EDITS_DATA__', JSON.stringify(FE));
 template = template.replace('__ROUGHCUT_DELETES_DATA__', JSON.stringify(ROUGHCUT_DELETES));
 template = template.replace('__ROUGHCUT_PARTIALS_DATA__', JSON.stringify(ROUGHCUT_PARTIALS));
+template = template.replace('__INCOMING_SILENCES_DATA__', JSON.stringify(INCOMING_SILENCES));
 template = template.replace(/__AUDIO_SRC__/g, audioSrc);
 template = template.replace(/__TITLE__/g, title);
 template = template.replace(/__PROJECT_NAME__/g, title);
