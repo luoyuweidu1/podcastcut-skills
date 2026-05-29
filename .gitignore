@@ -3,6 +3,8 @@
 .DS_Store
 output
 node_modules/
+# 防脚本误把 sentences.txt 写到 repo 根（output/.../sentences.txt 才是合法位置）
+/sentences.txt
 # 用户偏好：忽略各用户私人文件夹，但保留 default/ 模板（create 用户要从它克隆）
 剪播客/用户偏好/*
 !剪播客/用户偏好/default/
