@@ -200,15 +200,23 @@ def main():
             src_sample_rate = int(val.strip())
         elif key == 'channels' and val.strip().isdigit():
             src_channels = int(val.strip())
-    out_bitrate = min(src_bitrate, 192)
+    # 按输出后缀选编码（与 cut_audio.py 同步）：
+    #   .m4a / .aac → AAC，避免 MP3↔AAC 二次转码
+    #   .mp3 → libmp3lame（默认）
+    out_ext = os.path.splitext(output_file)[1].lower()
+    if out_ext in ('.m4a', '.aac'):
+        out_bitrate = min(max(int(src_bitrate * 1.2), 192), 320)
+        codec_args = ['-c:a', 'aac', '-b:a', f'{out_bitrate}k']
+    else:
+        out_bitrate = min(src_bitrate, 192)
+        codec_args = ['-c:a', 'libmp3lame', '-b:a', f'{out_bitrate}k']
 
     cmd = [
         'ffmpeg', '-y',
         '-i', input_file,
         '-filter_complex_script', filter_file,
         '-map', '[out]',
-        '-c:a', 'libmp3lame', '-b:a', f'{out_bitrate}k',
-    ]
+    ] + codec_args
     if src_sample_rate and src_sample_rate > 16000:
         cmd.extend(['-ar', str(src_sample_rate)])
     if src_channels and src_channels > 1:
