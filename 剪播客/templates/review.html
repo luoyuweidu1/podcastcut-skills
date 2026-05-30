@@ -1170,8 +1170,20 @@ function skipIfNeeded(){
           au.volume=0;
           au.currentTime=seekTarget;
           let resumed=false;
-          const resume=()=>{
-            if(resumed)return; resumed=true;
+          // 【陷阱 51】fade-in 必须等 seek 确认完成。原本 80ms 兜底 timer 会在 seek
+          // 还没完成时启动 fade-in（MP3 seek 可能需要 70-150ms），导致**旧位置**
+          // 的音频以 20% 音量被听见——典型是"删除内容的起音"漏出来，喇叭听不见
+          // 耳机能。改成：兜底延到 250ms，且兜底触发时验证 currentTime 实际跳了
+          // （差距 < 0.05s 才算成功），否则继续等。
+          const safeResume=()=>{
+            if(resumed)return;
+            // 验证 seek 是否真的发生
+            if(Math.abs(au.currentTime - seekTarget) > 0.05) {
+              // seek 还没到位，再等一轮（最多额外等 250ms）
+              setTimeout(safeResume, 50);
+              return;
+            }
+            resumed=true;
             // 5 阶 fade-in over 40ms (镜像 fade-out)
             au.volume=0;
             setTimeout(()=>{au.volume=sv0*0.2},8);
@@ -1182,8 +1194,8 @@ function skipIfNeeded(){
             if(pl && au.paused) au.play();
             scheduleNextSkip();
           };
-          au.addEventListener('seeked', resume, {once:true});
-          setTimeout(resume, 80);  // seeked 不触发的兜底
+          au.addEventListener('seeked', safeResume, {once:true});
+          setTimeout(safeResume, 250);  // 兜底从 80ms 延到 250ms，覆盖慢 seek
         }, 40);  // 40ms 后 fade-out 完成才 seek
       }
       return;
