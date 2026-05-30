@@ -979,14 +979,17 @@ function collectActiveRanges(){
   return out;
 }
 
-// 6b 边界 nudge：紧密间隙前移，吃掉 ASR onset lag (~30-100ms)
-// gap < 0.02 (词边界): 100ms；gap < 0.30: min(100ms, gap/2)；否则 min(50ms, gap/2)
-// 纯静音 ranges 不动（边界已精确，nudge 会吃前一保留词）
+// 6b 边界 nudge：在 prev kept 词尾巴和 cut 起点之间的 gap 里前移 cut 起点，吃掉
+// ASR onset lag (~30-100ms) 不让 deleted 词的起音泄露。
+// 【陷阱 50】绝不吃 prev kept 词：pullback 上限严格卡在 gap 之内（留 10ms 安全余
+// 量）。原本 tight-gap (gap<0.02) 分支 unconditional 拉 100ms，会吃掉前一个 kept
+// 词的尾音——sent 7 "住了" 的 "了" 被吃就是这条触发。
+// 纯静音 / trim ranges 不动（边界已精确，nudge 会吃前一保留词）
 function applyBoundaryNudge(merged, isSil){
   for(let i=0;i<merged.length;i++){
     if(isSil[i])continue;
     const s=merged[i][0];
-    if(s<=0)continue;
+    if(s<=0.05)continue;
     let prevEnd=0;
     for(const sent of S){
       if(del.has(sent.idx))continue;
@@ -995,9 +998,9 @@ function applyBoundaryNudge(merged, isSil){
       for(const w of sent.w) if(w.e<=s && w.e>prevEnd) prevEnd=w.e;
     }
     const gap=s-prevEnd;
-    if(gap<0.02 && s>0.10) merged[i][0]=Math.max(0,s-0.10);
-    else if(gap<0.30 && s>0.05) merged[i][0]=Math.max(0,s-Math.min(0.10,gap/2));
-    else if(s>0.05) merged[i][0]=Math.max(0,s-Math.min(0.05,gap/2));
+    // 安全 pullback: 上限 100ms，但绝不超过 gap-10ms（绝不吃 prev kept 词的尾巴）
+    const pullback = Math.max(0, Math.min(0.10, gap - 0.01));
+    merged[i][0] = s - pullback;
   }
 }
 
@@ -1149,30 +1152,39 @@ function skipIfNeeded(){
         au.currentTime=seekTarget;
         scheduleNextSkip();
       } else {
+        // F3 对称 fade：跟 cut_audio.py 的 40ms afade 配对，preview 听起来像 cut
+        // - fade-out 40ms：在 seek 之前线性降音量 100% → 0%（5 阶每 8ms）
+        //   playhead 边降边继续播 prev kept 词的尾巴，跟 cut 输出里 fade-out 同样
+        //   感知（cut 里那 40ms 也是逐渐变弱，不是被切掉）
+        // - seek 在音量 0 时执行
+        // - fade-in 40ms：seeked 后线性升音量 0 → 100%（5 阶每 8ms）
+        //   总 80ms 跨 cut 点对称渐变，匹配 cut 听感
         const sv0=au.volume;
-        au.volume=sv0*0.3;
+        // 5 阶 fade-out over 40ms（从 t=8 开始线性降到 t=40 = 0%）。t=0 不动保持
+        // full volume → 第一段 audio 不被强行截断
+        setTimeout(()=>{au.volume=sv0*0.8},8);
+        setTimeout(()=>{au.volume=sv0*0.6},16);
+        setTimeout(()=>{au.volume=sv0*0.4},24);
+        setTimeout(()=>{au.volume=sv0*0.2},32);
         setTimeout(()=>{
           au.volume=0;
           au.currentTime=seekTarget;
           let resumed=false;
           const resume=()=>{
             if(resumed)return; resumed=true;
-            // 【陷阱 50】post-seek fade 从 90ms（40ms 沉默 + 50ms 4 阶 ramp）压到 15ms
-            // （5ms 沉默 + 10ms 2 阶 ramp）。
-            // 原来 90ms 会吃掉 next kept 词的前 25% 内容——sent 7 "很久#2" 才 360ms 长，
-            // 前 90ms 整个"很"音节没了。15ms 仍然够防 click（5-10ms 临界），又不会
-            // 吃 kept 词的可感知起音。
+            // 5 阶 fade-in over 40ms (镜像 fade-out)
             au.volume=0;
-            setTimeout(()=>{
-              au.volume=sv0*0.5;
-              setTimeout(()=>{au.volume=sv0},10);
-            },5);
+            setTimeout(()=>{au.volume=sv0*0.2},8);
+            setTimeout(()=>{au.volume=sv0*0.4},16);
+            setTimeout(()=>{au.volume=sv0*0.6},24);
+            setTimeout(()=>{au.volume=sv0*0.8},32);
+            setTimeout(()=>{au.volume=sv0},40);
             if(pl && au.paused) au.play();
             scheduleNextSkip();
           };
           au.addEventListener('seeked', resume, {once:true});
           setTimeout(resume, 80);  // seeked 不触发的兜底
-        }, 10);
+        }, 40);  // 40ms 后 fade-out 完成才 seek
       }
       return;
     }
