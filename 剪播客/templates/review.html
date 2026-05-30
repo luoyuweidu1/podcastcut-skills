@@ -1152,54 +1152,36 @@ function skipIfNeeded(){
         au.currentTime=seekTarget;
         scheduleNextSkip();
       } else {
-        // F3 对称 fade：跟 cut_audio.py 的 40ms afade 配对，preview 听起来像 cut
-        // - fade-out 40ms：在 seek 之前线性降音量 100% → 0%（5 阶每 8ms）
-        //   playhead 边降边继续播 prev kept 词的尾巴，跟 cut 输出里 fade-out 同样
-        //   感知（cut 里那 40ms 也是逐渐变弱，不是被切掉）
-        // - seek 在音量 0 时执行
-        // - fade-in 40ms：seeked 后线性升音量 0 → 100%（5 阶每 8ms）
-        //   总 80ms 跨 cut 点对称渐变，匹配 cut 听感
+        // 【方案 C】简单 verify-seek + 短 fade-in。
+        // **不再试图 sample-级匹配 cut**——browser audio buffer/MP3 frame seek
+        // 是物理限制，所有补偿手段（F3 对称 fade / pause + drain / 长 buffer
+        // hold）都引入新副作用（耳机泄漏 / 卡播放 / 跳跃感）。
+        // 长期解：task #8 chunk-preview（pre-cut → MediaSource API）。
+        // 短期：接受 preview 是 approximate，记 trap doc。
         const sv0=au.volume;
-        // 5 阶 fade-out over 40ms（从 t=8 开始线性降到 t=40 = 0%）。t=0 不动保持
-        // full volume → 第一段 audio 不被强行截断
-        setTimeout(()=>{au.volume=sv0*0.8},8);
-        setTimeout(()=>{au.volume=sv0*0.6},16);
-        setTimeout(()=>{au.volume=sv0*0.4},24);
-        setTimeout(()=>{au.volume=sv0*0.2},32);
+        au.volume=sv0*0.3;
         setTimeout(()=>{
-          // 【陷阱 51 v3】完整修法：pause + seek + 80ms drain + play + fade-in。
-          // - pause 让 decoder 立刻停推新样本进 OS buffer
-          // - 80ms drain 让 buffer 内的旧样本被 mixer 处理掉（耳机泄漏消失）
-          // - 保存 wasPlaying 状态在 pause 之前（pause 事件会让 pl=false，
-          //   if(pl) au.play() 失败 → 卡在暂停。手动用 wasPlaying 决定 resume）
-          const wasPlaying = pl;
           au.volume=0;
-          au.pause();
           au.currentTime=seekTarget;
           let resumed=false;
           const safeResume=()=>{
             if(resumed)return;
-            // 验证 seek 是否真的发生
+            // 验证 seek 是否真的发生（差距 < 0.05s 算成功）
             if(Math.abs(au.currentTime - seekTarget) > 0.05) {
               setTimeout(safeResume, 50);
               return;
             }
             resumed=true;
-            // 等 80ms drain OS buffer 中的旧位置样本
+            au.volume=0;
             setTimeout(()=>{
-              if(wasPlaying) au.play();  // 用保存的 state，绕过 'pause' 事件副作用
-              // 5 阶 fade-in over 40ms
-              setTimeout(()=>{au.volume=sv0*0.2},8);
-              setTimeout(()=>{au.volume=sv0*0.4},16);
-              setTimeout(()=>{au.volume=sv0*0.6},24);
-              setTimeout(()=>{au.volume=sv0*0.8},32);
-              setTimeout(()=>{au.volume=sv0},40);
-              scheduleNextSkip();
-            }, 80);
+              au.volume=sv0*0.5;
+              setTimeout(()=>{au.volume=sv0},10);
+            },5);
+            scheduleNextSkip();
           };
           au.addEventListener('seeked', safeResume, {once:true});
-          setTimeout(safeResume, 250);  // 兜底 250ms，覆盖慢 seek
-        }, 40);  // 40ms 后 fade-out 完成才 seek
+          setTimeout(safeResume, 250);
+        }, 10);
       }
       return;
     }
