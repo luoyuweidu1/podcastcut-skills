@@ -324,6 +324,89 @@ const deletedCount = S.filter(s => s.ai).length;
 console.log(`   总句: ${S.length}, 删除: ${deletedCount}, 保留: ${S.length - deletedCount}`);
 console.log(`   删除块: ${BLK.length}, 章节: ${CHAPS.length}`);
 
+// ===== A.5: 预生成 cut audio 作为 preview 源（task #8）=====
+// 跑一次 cut_audio.py 把 default-state 的 cut 出片成 preview_cut.mp3。
+// preview audio 直接拿这个，浏览器线性播放，preview = cut byte-exact，无 JS skip
+// 抖动 / buffer 泄漏 / fade 不匹配等老问题。
+// 注意：只反映**当前 delete_segments_edited.json 状态**——user 在审查页 toggle
+// 不会即时改变 preview audio（Step 2 才加 toggle 支持）。
+const ACTIVE_DELETES = [];  // 顺序 [start, end] 数组，给 JS 做 virtual ↔ source 映射
+let previewCutSrc = audioSrc;  // 默认 fallback：没成功生成时用原 audioSrc
+
+(function tryGenerateCutPreview() {
+  // 从 fine_analysis + roughcut + partial deletes 收集 active delete intervals
+  // 用同一个 doExport 思路：S/pdel/FE 合并 → 排序 → 合并相邻
+  const ranges = [];
+  S.forEach(s => { if (s.ai) ranges.push([s.s, s.e]); });
+  Object.keys(ROUGHCUT_PARTIALS || {}).forEach(idx => {
+    if (S.find(s => s.idx === parseInt(idx) && s.ai)) return;
+    (ROUGHCUT_PARTIALS[idx] || []).forEach(p => ranges.push([p.s, p.e]));
+  });
+  FE.forEach(f => { if (S.find(s => s.idx === f.idx && s.ai)) return; ranges.push([f.s, f.e]); });
+  ranges.sort((a, b) => a[0] - b[0]);
+  const merged = [];
+  for (const r of ranges) {
+    if (merged.length && r[0] <= merged[merged.length - 1][1] + 0.05) {
+      merged[merged.length - 1][1] = Math.max(merged[merged.length - 1][1], r[1]);
+    } else {
+      merged.push([r[0], r[1]]);
+    }
+  }
+  if (merged.length > 0 && merged[0][0] < 5) merged[0][0] = 0;
+
+  merged.forEach(r => ACTIVE_DELETES.push([
+    Math.round(r[0] * 1000) / 1000,
+    Math.round(r[1] * 1000) / 1000
+  ]));
+
+  if (ACTIVE_DELETES.length === 0) {
+    console.log('   no active deletes, preview = original audio');
+    return;
+  }
+
+  // 找 audio_original.* 和 cut_audio.py
+  const baseDir = path.dirname(path.resolve(outputFile));
+  const transcribeDir = path.join(baseDir, '1_转录');
+  let audioOriginal = null;
+  try {
+    const originals = fs.readdirSync(transcribeDir).filter(f => f.startsWith('audio_original.'));
+    if (originals.length > 0) audioOriginal = path.join(transcribeDir, originals[0]);
+  } catch (e) {}
+  if (!audioOriginal) {
+    console.warn('   ⚠️  audio_original.* 不存在，preview 退化用 audioSrc（JS skip 旧路径）');
+    return;
+  }
+
+  // 写一份临时 delete_segments.json（A.5 用 default state）
+  const tmpSegs = path.join(baseDir, '_a5_segments_tmp.json');
+  fs.writeFileSync(tmpSegs, JSON.stringify({
+    segments: ACTIVE_DELETES.map(([s, e]) => ({ start: s, end: e }))
+  }));
+
+  const previewCutOut = path.join(baseDir, 'preview_cut.mp3');
+  const cutAudioPy = path.resolve(scriptDir, 'cut_audio.py');
+  if (!fs.existsSync(cutAudioPy)) {
+    console.warn('   ⚠️  cut_audio.py 不存在，preview 退化');
+    try { fs.unlinkSync(tmpSegs); } catch (e) {}
+    return;
+  }
+
+  console.log('🎬 跑 cut_audio.py 出 preview_cut.mp3 (default state)...');
+  try {
+    require('child_process').execSync(
+      `python3 "${cutAudioPy}" "${previewCutOut}" "${audioOriginal}" "${tmpSegs}"`,
+      { cwd: baseDir, stdio: ['ignore', 'inherit', 'inherit'] }
+    );
+    if (fs.existsSync(previewCutOut)) {
+      previewCutSrc = path.relative(baseDir, previewCutOut);
+      console.log(`   preview 源切到 ${previewCutSrc}`);
+    }
+  } catch (e) {
+    console.warn(`   ⚠️  cut_audio.py 失败: ${e.message}，preview 退化`);
+  }
+  try { fs.unlinkSync(tmpSegs); } catch (e) {}
+})();
+
 // ===== 注入模板 =====
 console.log('📝 生成 HTML...');
 let template = fs.readFileSync(templateFile, 'utf8');
@@ -335,6 +418,8 @@ template = template.replace('__FINE_EDITS_DATA__', JSON.stringify(FE));
 template = template.replace('__ROUGHCUT_DELETES_DATA__', JSON.stringify(ROUGHCUT_DELETES));
 template = template.replace('__ROUGHCUT_PARTIALS_DATA__', JSON.stringify(ROUGHCUT_PARTIALS));
 template = template.replace('__INCOMING_SILENCES_DATA__', JSON.stringify(INCOMING_SILENCES));
+template = template.replace('__ACTIVE_DELETES_DATA__', JSON.stringify(ACTIVE_DELETES));
+template = template.replace('__PREVIEW_CUT_SRC__', JSON.stringify(previewCutSrc));
 template = template.replace(/__AUDIO_SRC__/g, audioSrc);
 template = template.replace(/__TITLE__/g, title);
 template = template.replace(/__PROJECT_NAME__/g, title);
