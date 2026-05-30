@@ -1123,8 +1123,26 @@ function skipIfNeeded(){
       for(const r2 of ranges){
         if(seekTarget>=r2[0] && seekTarget<r2[1]) seekTarget=r2[1];
       }
-      const isSil=(r[3]==='sil');
-      if(!isSil) seekTarget+=0.03;  // 非静音多 30ms 防 onset transient
+      const isSil=(r[3]==='sil' || r[3]==='trim');
+      // 【陷阱 50】+30ms onset transient offset 自适应：
+      // 原本 +30ms 是防 MP3 帧 seek 误差导致 deleted 词尾巴漏出来的"onset transient"。
+      // 但如果下一个 kept 词刚好从 e 开始（比如 stutter 删完第一个"很久"，第二个
+      // "很久"在 e=28.6 处），+30ms 直接吃进 kept 词的"很"音节 → 用户报告"很 also
+      // 被剪了"。
+      // 改自适应：扫词级数据看 [e-0.02, e+0.05] 内有没有 kept 词起头，有就跳过 offset。
+      if(!isSil){
+        let keptWordAtSeek=false;
+        for(const sent of S){
+          if(del.has(sent.idx))continue;
+          if(!sent.w)continue;
+          if(sent.s>e+0.1)break;
+          for(const w of sent.w){
+            if(w.s>=e-0.02 && w.s<=e+0.05){keptWordAtSeek=true;break;}
+          }
+          if(keptWordAtSeek)break;
+        }
+        if(!keptWordAtSeek) seekTarget+=0.03;
+      }
       _lastSkipTime=performance.now();
       if(isSil){
         // 静音段无需 fade（喇叭里本就没东西）
@@ -1139,13 +1157,16 @@ function skipIfNeeded(){
           let resumed=false;
           const resume=()=>{
             if(resumed)return; resumed=true;
+            // 【陷阱 50】post-seek fade 从 90ms（40ms 沉默 + 50ms 4 阶 ramp）压到 15ms
+            // （5ms 沉默 + 10ms 2 阶 ramp）。
+            // 原来 90ms 会吃掉 next kept 词的前 25% 内容——sent 7 "很久#2" 才 360ms 长，
+            // 前 90ms 整个"很"音节没了。15ms 仍然够防 click（5-10ms 临界），又不会
+            // 吃 kept 词的可感知起音。
             au.volume=0;
             setTimeout(()=>{
-              au.volume=sv0*0.15;
-              setTimeout(()=>{au.volume=sv0*0.4},12);
-              setTimeout(()=>{au.volume=sv0*0.7},25);
-              setTimeout(()=>{au.volume=sv0},50);
-            },40);
+              au.volume=sv0*0.5;
+              setTimeout(()=>{au.volume=sv0},10);
+            },5);
             if(pl && au.paused) au.play();
             scheduleNextSkip();
           };
