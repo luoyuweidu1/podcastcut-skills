@@ -1167,29 +1167,35 @@ function skipIfNeeded(){
         setTimeout(()=>{au.volume=sv0*0.4},24);
         setTimeout(()=>{au.volume=sv0*0.2},32);
         setTimeout(()=>{
-          // 【陷阱 51】fade-in 必须等 seek 确认完成。
-          // 不用 au.pause() —— 它会触发 'pause' 事件让 pl=false，导致 fade-in 后
-          // au.play() 不被调用（因为 if(pl) 是 false），用户体验上看是"每个切点
-          // 都停下来等手动 play"。
-          // 改用 volume=0 + seek + 等 seeked + 验证 + fade-in，不动 play state。
+          // 【陷阱 51 v3】完整修法：pause + seek + 80ms drain + play + fade-in。
+          // - pause 让 decoder 立刻停推新样本进 OS buffer
+          // - 80ms drain 让 buffer 内的旧样本被 mixer 处理掉（耳机泄漏消失）
+          // - 保存 wasPlaying 状态在 pause 之前（pause 事件会让 pl=false，
+          //   if(pl) au.play() 失败 → 卡在暂停。手动用 wasPlaying 决定 resume）
+          const wasPlaying = pl;
           au.volume=0;
+          au.pause();
           au.currentTime=seekTarget;
           let resumed=false;
           const safeResume=()=>{
             if(resumed)return;
-            // 验证 seek 是否真的发生（差距 < 0.05s 算成功）
+            // 验证 seek 是否真的发生
             if(Math.abs(au.currentTime - seekTarget) > 0.05) {
               setTimeout(safeResume, 50);
               return;
             }
             resumed=true;
-            // 5 阶 fade-in over 40ms (镜像 fade-out)
-            setTimeout(()=>{au.volume=sv0*0.2},8);
-            setTimeout(()=>{au.volume=sv0*0.4},16);
-            setTimeout(()=>{au.volume=sv0*0.6},24);
-            setTimeout(()=>{au.volume=sv0*0.8},32);
-            setTimeout(()=>{au.volume=sv0},40);
-            scheduleNextSkip();
+            // 等 80ms drain OS buffer 中的旧位置样本
+            setTimeout(()=>{
+              if(wasPlaying) au.play();  // 用保存的 state，绕过 'pause' 事件副作用
+              // 5 阶 fade-in over 40ms
+              setTimeout(()=>{au.volume=sv0*0.2},8);
+              setTimeout(()=>{au.volume=sv0*0.4},16);
+              setTimeout(()=>{au.volume=sv0*0.6},24);
+              setTimeout(()=>{au.volume=sv0*0.8},32);
+              setTimeout(()=>{au.volume=sv0},40);
+              scheduleNextSkip();
+            }, 80);
           };
           au.addEventListener('seeked', safeResume, {once:true});
           setTimeout(safeResume, 250);  // 兜底 250ms，覆盖慢 seek
