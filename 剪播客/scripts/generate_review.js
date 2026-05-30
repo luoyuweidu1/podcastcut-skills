@@ -324,6 +324,65 @@ const deletedCount = S.filter(s => s.ai).length;
 console.log(`   总句: ${S.length}, 删除: ${deletedCount}, 保留: ${S.length - deletedCount}`);
 console.log(`   删除块: ${BLK.length}, 章节: ${CHAPS.length}`);
 
+// ===== F1: silencedetect on source audio for preview trim modeling =====
+// 在 review-page 生成时跑一次 ffmpeg silencedetect，把"原音频里所有 >0.3s 静音段"
+// 注入到模板。preview 用这份数据 + 当前 delete ranges 预测 trim_silences.py post-pass
+// 行为，让 ≥0.8s 停顿在预览里跟成品一样短，恢复 WYSIWYG。
+// 阈值放宽到 0.3s（trim 实际 cut 是 >0.8s）是因为：两个相邻 delete 之间的两段短
+// 静音 cut 后会融合，融合后可能 >0.8s 触发 trim。生成时无法预知 cut 后融合，所以
+// 把"潜在融合源"都收集进来，由 preview-side 算融合后实际 output 时长。
+console.log('🔇 检测原音频静音段（用于 preview trim 建模）...');
+const RAW_SILENCES = (function detectRawSilences() {
+  // 解析 audioSrc 到绝对路径：audioSrc 是相对 HTML 输出的路径，HTML 在 outputFile
+  // 旁边，所以 audio 绝对路径 = dirname(outputFile) + audioSrc。优先用 audio_original.*
+  // （未压缩源，silencedetect 最准），找不到回退到 audioSrc 本身。
+  const htmlDir = path.dirname(path.resolve(outputFile));
+  const audioForDetect = (function resolveDetectionAudio() {
+    const transcribeDir = path.join(htmlDir, '1_转录');
+    try {
+      const originals = fs.readdirSync(transcribeDir).filter(f => f.startsWith('audio_original.'));
+      if (originals.length > 0) return path.join(transcribeDir, originals[0]);
+    } catch (e) {}
+    return path.resolve(htmlDir, audioSrc);
+  })();
+
+  if (!fs.existsSync(audioForDetect)) {
+    console.warn(`   ⚠️  音频文件不存在 ${audioForDetect}，跳过 silencedetect（preview 不会建模 trim）`);
+    return [];
+  }
+  console.log(`   源: ${audioForDetect}`);
+
+  try {
+    const result = require('child_process').spawnSync('ffmpeg', [
+      '-v', 'info',
+      '-i', audioForDetect,
+      '-af', 'silencedetect=noise=-30dB:d=0.3',
+      '-f', 'null', '-'
+    ], { encoding: 'utf8', maxBuffer: 100 * 1024 * 1024 });
+    if (result.error) throw result.error;
+    const stderr = result.stderr || '';
+    const silences = [];
+    // 解析行 "silence_end: <T> | silence_duration: <D>"
+    const rx = /silence_end:\s*([\d.]+)\s*\|\s*silence_duration:\s*([\d.]+)/g;
+    let m;
+    while ((m = rx.exec(stderr)) !== null) {
+      const end = parseFloat(m[1]);
+      const dur = parseFloat(m[2]);
+      const start = end - dur;
+      silences.push({
+        s: parseFloat(start.toFixed(3)),
+        e: parseFloat(end.toFixed(3)),
+        d: parseFloat(dur.toFixed(3))
+      });
+    }
+    console.log(`   检测到 ${silences.length} 段 ≥0.3s 静音`);
+    return silences;
+  } catch (e) {
+    console.warn(`   ⚠️  silencedetect 失败: ${e.message}，preview 不会建模 trim`);
+    return [];
+  }
+})();
+
 // ===== 注入模板 =====
 console.log('📝 生成 HTML...');
 let template = fs.readFileSync(templateFile, 'utf8');
@@ -335,6 +394,7 @@ template = template.replace('__FINE_EDITS_DATA__', JSON.stringify(FE));
 template = template.replace('__ROUGHCUT_DELETES_DATA__', JSON.stringify(ROUGHCUT_DELETES));
 template = template.replace('__ROUGHCUT_PARTIALS_DATA__', JSON.stringify(ROUGHCUT_PARTIALS));
 template = template.replace('__INCOMING_SILENCES_DATA__', JSON.stringify(INCOMING_SILENCES));
+template = template.replace('__RAW_SILENCES_DATA__', JSON.stringify(RAW_SILENCES));
 template = template.replace(/__AUDIO_SRC__/g, audioSrc);
 template = template.replace(/__TITLE__/g, title);
 template = template.replace(/__PROJECT_NAME__/g, title);

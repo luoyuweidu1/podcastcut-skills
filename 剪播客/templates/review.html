@@ -681,6 +681,12 @@ const pdel = __ROUGHCUT_PARTIALS_DATA__;
 const FE = __FINE_EDITS_DATA__;
 // 句首停顿标记：目标 sentenceIdx → [{duration, key, fromIdx}]（key 与 fdis 同源）
 const IS_BY_SENT = __INCOMING_SILENCES_DATA__;
+// F1: 原音频里所有 ≥0.3s 静音段（用于在 preview 里建模 trim_silences.py post-pass）
+// 格式: [{s, e, d}]。生成时 ffmpeg silencedetect 一次性扫出，preview 在 getSkipRanges()
+// 里用它合成 trim pseudo-skip-ranges。
+const RAW_SILENCES = __RAW_SILENCES_DATA__;
+const TRIM_THRESHOLD = 0.8;  // 跟 trim_silences.py --threshold 0.8 同步
+const TRIM_TARGET = 0.6;     // 跟 trim_silences.py --target 0.6 同步
 // 精剪整句删除集合（精剪页用于折叠展示）；精剪阶段为 []
 const RD_LIST = __ROUGHCUT_DELETES_DATA__;
 const RD = new Set(RD_LIST);
@@ -973,14 +979,17 @@ function collectActiveRanges(){
   return out;
 }
 
-// 6b 边界 nudge：紧密间隙前移，吃掉 ASR onset lag (~30-100ms)
-// gap < 0.02 (词边界): 100ms；gap < 0.30: min(100ms, gap/2)；否则 min(50ms, gap/2)
-// 纯静音 ranges 不动（边界已精确，nudge 会吃前一保留词）
+// 6b 边界 nudge：在 prev kept 词尾巴和 cut 起点之间的 gap 里前移 cut 起点，吃掉
+// ASR onset lag (~30-100ms) 不让 deleted 词的起音泄露。
+// 【陷阱 50】绝不吃 prev kept 词：pullback 上限严格卡在 gap 之内（留 10ms 安全余
+// 量）。原本 tight-gap (gap<0.02) 分支 unconditional 拉 100ms，会吃掉前一个 kept
+// 词的尾音——sent 7 "住了" 的 "了" 被吃就是这条触发。
+// 纯静音 / trim ranges 不动（边界已精确，nudge 会吃前一保留词）
 function applyBoundaryNudge(merged, isSil){
   for(let i=0;i<merged.length;i++){
     if(isSil[i])continue;
     const s=merged[i][0];
-    if(s<=0)continue;
+    if(s<=0.05)continue;
     let prevEnd=0;
     for(const sent of S){
       if(del.has(sent.idx))continue;
@@ -989,19 +998,79 @@ function applyBoundaryNudge(merged, isSil){
       for(const w of sent.w) if(w.e<=s && w.e>prevEnd) prevEnd=w.e;
     }
     const gap=s-prevEnd;
-    if(gap<0.02 && s>0.10) merged[i][0]=Math.max(0,s-0.10);
-    else if(gap<0.30 && s>0.05) merged[i][0]=Math.max(0,s-Math.min(0.10,gap/2));
-    else if(s>0.05) merged[i][0]=Math.max(0,s-Math.min(0.05,gap/2));
+    // 安全 pullback: 上限 100ms，但绝不超过 gap-10ms（绝不吃 prev kept 词的尾巴）
+    const pullback = Math.max(0, Math.min(0.10, gap - 0.01));
+    merged[i][0] = s - pullback;
   }
 }
 
-// 合并相邻 (<0.05s) + 录前噪声延伸 + 过滤 <50ms 碎片 + nudge
+// F1: 模拟 trim_silences.py post-pass
+// 输入：current merged delete ranges
+// 输出：额外的 pseudo-skip-ranges，使预览里 ≥0.8s 停顿被裁到 0.6s，跟成品一致
+// 算法：对每个 raw silence，看在当前 delete 配置下，它在输出时间线上 surviving 多少。
+//      surviving 时长 > 0.8s 就加 pseudo-skip 裁掉中间 (excess/2 from each side)。
+//
+// 限制：当前实现处理 silence 完全或部分落在 kept span 的 case（覆盖 ~80% 听感差异）。
+// 未处理"两个 raw silence 通过中间 delete 在输出里融合"的 case 4——稍后迭代。
+function computeTrimSilenceRanges(merged_deletes) {
+  if (!RAW_SILENCES || RAW_SILENCES.length === 0) return [];
+  // 构建 kept spans（merged_deletes 之间的间隙 + 头尾）
+  // total duration 用音频元素的 duration，可能未加载完，用一个 fallback
+  const totalDur = (au && au.duration && isFinite(au.duration)) ? au.duration : 1e9;
+  const kept_spans = [];
+  let cursor = 0;
+  for (const r of merged_deletes) {
+    const ds = r[0], de = r[1];
+    if (cursor < ds) kept_spans.push([cursor, ds]);
+    cursor = de;
+  }
+  if (cursor < totalDur) kept_spans.push([cursor, totalDur]);
+
+  const trims = [];
+  for (const sil of RAW_SILENCES) {
+    for (const [ks, ke] of kept_spans) {
+      const ov_s = Math.max(sil.s, ks);
+      const ov_e = Math.min(sil.e, ke);
+      if (ov_e <= ov_s + 0.01) continue; // 无 overlap
+      const ov_dur = ov_e - ov_s;
+      if (ov_dur > TRIM_THRESHOLD) {
+        // 裁到 TRIM_TARGET：前后各保留 TARGET/2，中间多余部分加进 skip
+        const half = TRIM_TARGET / 2;
+        const trim_start = ov_s + half;
+        const trim_end = ov_e - half;
+        if (trim_end > trim_start + 0.01) {
+          trims.push([trim_start, trim_end, 0, 'trim']);
+        }
+      }
+    }
+  }
+  return trims;
+}
+
+// 合并相邻 (<0.05s) + 录前噪声延伸 + 过滤 <50ms 碎片 + nudge + F1 trim 建模
 function buildMergedRanges(){
   const raw=collectActiveRanges();
+  // F1: 先按 active delete ranges 算出 trim pseudo-skip-ranges，加进 raw 一起合并
+  // 注：trim ranges 只进 preview 的 merged，**不进 doExport**（doExport 走 raw 路径
+  // 由后期 trim_silences.py 在成品上做，避免在 export JSON 里混入 preview-only 状态）
   raw.sort((a,b)=>a[0]-b[0]);
+  // 先做一次 merge 拿到当前 delete 配置
+  const pre_merged = [];
+  for (const r of raw) {
+    if (pre_merged.length && r[0] <= pre_merged[pre_merged.length-1][1] + 0.05) {
+      pre_merged[pre_merged.length-1][1] = Math.max(pre_merged[pre_merged.length-1][1], r[1]);
+    } else {
+      pre_merged.push([r[0], r[1]]);
+    }
+  }
+  const trim_ranges = computeTrimSilenceRanges(pre_merged);
+  // 把 trim ranges 加进 raw（标 'sil' 类，nudge 不动）
+  for (const t of trim_ranges) raw.push(t);
+  raw.sort((a,b)=>a[0]-b[0]);
+
   const merged=[], isSil=[];
   for(const r of raw){
-    const rSil=r[3]==='sil';
+    const rSil=r[3]==='sil' || r[3]==='trim';
     if(merged.length && r[0]<=merged[merged.length-1][1]+0.05){
       merged[merged.length-1][1]=Math.max(merged[merged.length-1][1],r[1]);
       if(!rSil) isSil[merged.length-1]=false;
@@ -1057,34 +1126,61 @@ function skipIfNeeded(){
       for(const r2 of ranges){
         if(seekTarget>=r2[0] && seekTarget<r2[1]) seekTarget=r2[1];
       }
-      const isSil=(r[3]==='sil');
-      if(!isSil) seekTarget+=0.03;  // 非静音多 30ms 防 onset transient
+      const isSil=(r[3]==='sil' || r[3]==='trim');
+      // 【陷阱 50】+30ms onset transient offset 自适应：
+      // 原本 +30ms 是防 MP3 帧 seek 误差导致 deleted 词尾巴漏出来的"onset transient"。
+      // 但如果下一个 kept 词刚好从 e 开始（比如 stutter 删完第一个"很久"，第二个
+      // "很久"在 e=28.6 处），+30ms 直接吃进 kept 词的"很"音节 → 用户报告"很 also
+      // 被剪了"。
+      // 改自适应：扫词级数据看 [e-0.02, e+0.05] 内有没有 kept 词起头，有就跳过 offset。
+      if(!isSil){
+        let keptWordAtSeek=false;
+        for(const sent of S){
+          if(del.has(sent.idx))continue;
+          if(!sent.w)continue;
+          if(sent.s>e+0.1)break;
+          for(const w of sent.w){
+            if(w.s>=e-0.02 && w.s<=e+0.05){keptWordAtSeek=true;break;}
+          }
+          if(keptWordAtSeek)break;
+        }
+        if(!keptWordAtSeek) seekTarget+=0.03;
+      }
       _lastSkipTime=performance.now();
       if(isSil){
         // 静音段无需 fade（喇叭里本就没东西）
         au.currentTime=seekTarget;
         scheduleNextSkip();
       } else {
+        // 【方案 C】简单 verify-seek + 短 fade-in。
+        // **不再试图 sample-级匹配 cut**——browser audio buffer/MP3 frame seek
+        // 是物理限制，所有补偿手段（F3 对称 fade / pause + drain / 长 buffer
+        // hold）都引入新副作用（耳机泄漏 / 卡播放 / 跳跃感）。
+        // 长期解：task #8 chunk-preview（pre-cut → MediaSource API）。
+        // 短期：接受 preview 是 approximate，记 trap doc。
         const sv0=au.volume;
         au.volume=sv0*0.3;
         setTimeout(()=>{
           au.volume=0;
           au.currentTime=seekTarget;
           let resumed=false;
-          const resume=()=>{
-            if(resumed)return; resumed=true;
+          const safeResume=()=>{
+            if(resumed)return;
+            // 验证 seek 是否真的发生（差距 < 0.05s 算成功）
+            if(Math.abs(au.currentTime - seekTarget) > 0.05) {
+              setTimeout(safeResume, 50);
+              return;
+            }
+            resumed=true;
             au.volume=0;
             setTimeout(()=>{
-              au.volume=sv0*0.15;
-              setTimeout(()=>{au.volume=sv0*0.4},12);
-              setTimeout(()=>{au.volume=sv0*0.7},25);
-              setTimeout(()=>{au.volume=sv0},50);
-            },40);
-            if(pl && au.paused) au.play();
+              au.volume=sv0*0.5;
+              setTimeout(()=>{au.volume=sv0},10);
+            },5);
             scheduleNextSkip();
           };
-          au.addEventListener('seeked', resume, {once:true});
-          setTimeout(resume, 80);  // seeked 不触发的兜底
+          au.addEventListener('seeked', safeResume, {once:true});
+          setTimeout(safeResume, 250);
         }, 10);
       }
       return;
