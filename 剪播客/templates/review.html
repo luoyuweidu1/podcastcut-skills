@@ -454,6 +454,16 @@ body.preview .sug-reason { opacity: 0; }
 }
 .p-spd:hover { color: var(--sage-light); }
 
+/* A.5 cut 试听按钮（task #8） */
+.p-cut {
+  font-size: 12px; padding: 6px 14px; background: transparent;
+  color: var(--muted); border: 1.5px solid var(--muted); border-radius: 18px;
+  cursor: pointer; transition: all .12s; letter-spacing: 1px; font-weight: 600;
+}
+.p-cut:hover { color: var(--sage-light); border-color: var(--sage-light); }
+.p-cut.active { background: #d4831a; color: white; border-color: #d4831a; }
+.p-cut.active:hover { background: #c47218; }
+
 /* Info icon */
 .info-icon {
   width: 22px; height: 22px; border-radius: 50%;
@@ -625,6 +635,9 @@ body.preview .sug-reason { opacity: 0; }
   <span class="p-total mono" id="pdur">0:00</span>
   <button class="p-btn" id="pbtn" onclick="tgPlay()">播放</button>
   <button class="p-spd" id="pspd" onclick="cySpd()">1.0×</button>
+  <!-- A.5 task #8: 听 cut 按钮，切到 preview_cut.mp3 线性播放（byte-exact 跟成品一致），
+       关掉 JS skip 逻辑，跑完 review 想最后听一遍"实际成品"用这个。再点切回 review 模式。 -->
+  <button class="p-cut" id="pcut" onclick="tgCutPreview()" title="切换 cut 试听 / review 模式">🎧 cut</button>
 </div>
 
 
@@ -681,6 +694,15 @@ const pdel = __ROUGHCUT_PARTIALS_DATA__;
 const FE = __FINE_EDITS_DATA__;
 // 句首停顿标记：目标 sentenceIdx → [{duration, key, fromIdx}]（key 与 fdis 同源）
 const IS_BY_SENT = __INCOMING_SILENCES_DATA__;
+// A.5 (task #8): cut 试听模式。
+// PREVIEW_CUT_SRC = 当前 delete 状态对应的 cut audio 文件（generate 时跑 cut_audio.py
+// 出片）。点击 "🎧 cut" 按钮 → audio src 切到这个，**线性播放，关掉 JS skip**——
+// 你听到的就是 byte-exact 跟成品文件一样的东西。
+// ACTIVE_DELETES = 当前 cut 对应的 delete 区间（排序）。给 virtual ↔ source 映射用。
+const PREVIEW_CUT_SRC = __PREVIEW_CUT_SRC__;
+const ACTIVE_DELETES = __ACTIVE_DELETES_DATA__;
+const SOURCE_AUDIO_SRC = '__AUDIO_SRC__';  // 原始音频，用于切回 review 模式
+let cutPreviewMode = false;
 // 精剪整句删除集合（精剪页用于折叠展示）；精剪阶段为 []
 const RD_LIST = __ROUGHCUT_DELETES_DATA__;
 const RD = new Set(RD_LIST);
@@ -1042,6 +1064,8 @@ function getSkipRanges(){
 // 6c/6d 主跳过：fade-out → mute → seek → settle → fade-in
 function skipIfNeeded(){
   if(!pl || au.paused) return;
+  // A.5: cut 模式下 audio 是预生成的 cut.mp3，时间线已经"扣掉删除"，不需要 skip
+  if(cutPreviewMode) return;
   const now=performance.now();
   if(now-_lastSkipTime<150){ setTimeout(skipIfNeeded, 150-(now-_lastSkipTime)); return; }
   const t=au.currentTime, rate=au.playbackRate||1;
@@ -1269,6 +1293,41 @@ function startDrag(e){
 }
 function seekFromPos(e){const rc=document.getElementById('ptrk').getBoundingClientRect();const pct=Math.max(0,Math.min(1,(e.clientX-rc.left)/rc.width));if(au.duration){au.currentTime=pct*au.duration;document.getElementById('pfill').style.width=(pct*100)+'%'}}
 function cySpd(){si=(si+1)%spds.length;au.playbackRate=spds[si];document.getElementById('pspd').textContent=spds[si]+'×'}
+
+// A.5 cut 试听 toggle（task #8 Step 1）
+// review 模式（默认）：audio.src = SOURCE_AUDIO_SRC（原音频），JS skip 跳过删除段
+// cut 模式：audio.src = PREVIEW_CUT_SRC（预生成的 cut.mp3），线性播放，**跳过 skip
+//   逻辑** ——你听到的就是 byte-exact 跟成品文件一样的内容
+// 关键：cut 模式下 timeupdate 不调 skipIfNeeded，因为 cut audio 时间线已经是
+// "扣掉删除"的，不需要再 skip 任何东西
+function tgCutPreview() {
+  if (!PREVIEW_CUT_SRC || PREVIEW_CUT_SRC === SOURCE_AUDIO_SRC) {
+    alert('preview_cut.mp3 没生成（可能没有 delete 段或 cut_audio.py 失败）。\n请检查 generate_review.js 日志。');
+    return;
+  }
+  const btn = document.getElementById('pcut');
+  const wasPlaying = pl;
+  const oldRate = au.playbackRate;
+  au.pause();
+  cutPreviewMode = !cutPreviewMode;
+  if (cutPreviewMode) {
+    au.src = PREVIEW_CUT_SRC;
+    btn.classList.add('active');
+    btn.textContent = '🎧 review';
+    btn.title = '当前 cut 试听模式 — 点击切回 review';
+  } else {
+    au.src = SOURCE_AUDIO_SRC;
+    btn.classList.remove('active');
+    btn.textContent = '🎧 cut';
+    btn.title = '切换 cut 试听 / review 模式';
+  }
+  // 加载新 src 后等 metadata，再恢复 rate + 自动 play 状态
+  au.addEventListener('loadedmetadata', () => {
+    au.playbackRate = oldRate;
+    if (wasPlaying) au.play();
+  }, { once: true });
+  au.load();
+}
 
 au.addEventListener('play',()=>{pl=true;document.getElementById('pbtn').textContent='暂停';scheduleNextSkip();});
 au.addEventListener('pause',()=>{pl=false;document.getElementById('pbtn').textContent='播放';if(_skipScheduled){clearTimeout(_skipScheduled);_skipScheduled=null;}});
